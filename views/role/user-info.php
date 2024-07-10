@@ -2,10 +2,9 @@
 
 use yii\helpers\Html;
 
-/* @var $users \humhub\modules\user\models\User[] */
-
 ?>
 
+<!-- View for displaying informations about the users. -->
 <div class="user-info-container">
     <div class="user-info-card">
         <h1>User Info</h1>
