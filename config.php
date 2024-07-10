@@ -1,7 +1,9 @@
 <?php
 
 use humhub\widgets\TopMenu;
-use humhub\modules\user\components\User;
+// use humhub\modules\user\components\User;
+use yii\base\Event;
+use yii\web\User;
 use humhub\modules\employeeTraining\Events;
 
 return [
@@ -15,7 +17,7 @@ return [
             'callback' => ['humhub\modules\employeeTraining\Events', 'onTopMenuInit']
         ],
         [
-            'class'=> User::class,
+            'class'=> User::className(),
             // TODO EVENT AFTER LOGIN DOESNT EXIST
             'event' => User::EVENT_AFTER_LOGIN,
             'callback' => ['humhub\modules\employeeTraining\Events', 'onUserLogin']
