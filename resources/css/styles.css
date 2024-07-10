@@ -1,0 +1,29 @@
+/* protected/modules/employeeTraining/assets/css/style.css */
+
+.user-info-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.user-info-card {
+    width: 100%;
+    max-width: 800px;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 20px;
+}
+
+.user-info-card h1 {
+    margin-bottom: 20px;
+}
+
+.user-info-card p {
+    margin-bottom: 15px;
+}
+
+.user-info-card hr {
+    margin: 20px 0;
+}

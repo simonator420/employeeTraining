@@ -1,0 +1,14 @@
+{
+    "id": "employeeTraining",
+    "version": "1.0.0",
+    "name": "Employee Training Module",
+    "description": "Module for training our employees.",
+    "keywords": ["ille", "training", "employee"],
+    "authors": [
+        {
+            "name": "Simon Salaj",
+            "email": "s.salaj@ille.de",
+            "role": "Developer Intern"
+        }
+    ]
+}
