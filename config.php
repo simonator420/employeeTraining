@@ -16,6 +16,7 @@ return [
         ],
         [
             'class'=> User::class,
+            // TODO EVENT AFTER LOGIN DOESNT EXIST
             'event' => User::EVENT_AFTER_LOGIN,
             'callback' => ['humhub\modules\employeeTraining\Events', 'onUserLogin']
         ]

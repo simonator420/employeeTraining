@@ -5,7 +5,6 @@ namespace humhub\modules\employeeTraining;
 use humhub\widgets\TopMenu;
 use yii\base\Event;
 use yii\helpers\Url;
-use yii\log\Logger;
 use Yii;
 
 /**
@@ -38,16 +37,13 @@ class Events
     {
         $user = $event->identity;
 
-        // Add logging to verify the function is called and the user's profile title
-        Yii::info('onUserLogin called for user: ', __METHOD__);
-
         // Check if the user has the title 'Driver'
         if ($user->profile->title === 'Driver') {
             // Set flash message to show driver popup
             Yii::$app->session->setFlash('showDriverPopup', true);
             
             // Log a message to confirm the function is being executed
-            // Yii::debug('Driver user logged in: ' . $user->username, __METHOD__);
+            Yii::debug('Driver user logged in: ' . $user->username, __METHOD__);
         }
     }
 }
