@@ -20,8 +20,30 @@ class RoleController extends Controller
         $users = User::find()->all();
 
         // Render the 'user-info' view and pass the users data to it
+        if (Yii::$app->user->identity->profile->title != "System Administration") {
+            return $this->redirect(['site/access-denied']);
+        }
+
         return $this->render('user-info', [
             'users' => $users,
         ]);
+    }
+
+    public function actionDriver()
+    {
+        $user = Yii::$app->user;
+        $title = $user->identity->profile->title;
+
+        // Check if the user is logged in and if their title is "Service Driver"
+        if (!$user->isGuest && $title != 'System Administration') {
+            Yii::info('User is Service Driver, rendering driver popup');
+            return $this->render('driver', [
+                'title' => $title
+            ]);
+        }
+
+        Yii::info('User is not a Service Driver, redirecting to access denied');
+        // Redirect to access denied if the conditions are not met
+        return $this->redirect(['site/access-denied']);
     }
 }
