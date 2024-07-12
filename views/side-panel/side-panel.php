@@ -13,6 +13,7 @@ use yii\helpers\Html;
 </div>
 
 <style>
+    
 .side-panel {
     background-color: #fff;
     padding: 20px;

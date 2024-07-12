@@ -9,6 +9,7 @@ return [
     'id' => 'employeeTraining',
     'namespace' => 'humhub\modules\employeeTraining',
     'class' => 'humhub\modules\employeeTraining\Module',
+    'controllerNamespace' => 'humhub\modules\employeeTraining\controllers',
     'events' => [
         [TopMenu::class, TopMenu::EVENT_INIT, [Events::class, 'onTopMenuInit']],
         [AuthController::class, AuthController::EVENT_AFTER_LOGIN, [Events::class, 'onAfterLogin']],

@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 
 ?>
 
@@ -26,3 +27,35 @@ use yii\helpers\Html;
         <?php endforeach; ?>
     </div>
 </div>
+
+<?php
+$toggleTrainingUrl = Url::to(['role/toggle-training']);
+$script = <<< JS
+    $(document).on('change', '.toggle-info-btn', function() {
+        var userId = $(this).data('id');
+        var assignedTraining = $(this).is(':checked') ? 1 : 0;
+
+        $.ajax({
+            url: '$toggleTrainingUrl',
+            type: 'POST',
+            data: {
+                id: userId,
+                assigned_training: assignedTraining,
+                _csrf: yii.getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Update successful');
+                } else {
+                    console.log('Update failed');
+                }
+            },
+            error: function() {
+                console.log('Error in AJAX request');
+                alert("Error uz zase");
+            }
+        });
+    });
+JS;
+$this->registerJs($script);
+?>
