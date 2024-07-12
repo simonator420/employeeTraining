@@ -76,10 +76,11 @@ class RoleController extends Controller
         $user = User::findOne($userId);
         if ($user) {
             $user->profile->assigned_training = $assignedTraining;
+            $user->profile->training_assigned_time = $trainingAssignedTime;
+    
+            // Clear training_complete_time if assigned_training is set to 1
             if ($assignedTraining) {
-                $user->profile->training_assigned_time = $trainingAssignedTime;
-            } else {
-                $user->profile->training_assigned_time = null;
+                $user->profile->training_complete_time = null;
             }
     
             if ($user->profile->save()) {
@@ -89,20 +90,23 @@ class RoleController extends Controller
         return ['success' => false];
     }
     
+
 
     public function actionCompleteTraining()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $userId = Yii::$app->user->id;
+        $userId = \Yii::$app->user->id; // Assuming the user is logged in and you are using Yii's authentication
         $user = User::findOne($userId);
+
         if ($user) {
+            $user->profile->training_complete_time = new \yii\db\Expression('NOW()');
             $user->profile->assigned_training = 0;
+
             if ($user->profile->save()) {
                 return ['success' => true];
             }
         }
         return ['success' => false];
     }
-
 }

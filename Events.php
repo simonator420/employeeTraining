@@ -34,11 +34,11 @@ class Events
     {
         $user = Yii::$app->user;
         $username = $user->identity->username;
-        $title =$user->identity->profile->title;
+        $title = $user->identity->profile->title;
         $userId = $user->getId();
         $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-        ->bindValue(':userId', $userId)
-        ->queryScalar();
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
 
         Yii::info('User : ' . $username . ' with id: ' . $userId . ' and title: ' . $title . ' and his training status is: ' . $assigned_training);
 
@@ -62,13 +62,13 @@ class Events
         $user = Yii::$app->user;
         $userId = $user->getId();
         $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-        ->bindValue(':userId', $userId)
-        ->queryScalar();
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
 
         // change this to not title but if training_assigned == true
         if ($assigned_training == 1) {
             $firstName = $user->identity->profile->firstname;
-            $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), ['firstName' => $firstName], ['sortOrder' => 10]); 
+            $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), ['firstName' => $firstName], ['sortOrder' => 10]);
         }
     }
 }
