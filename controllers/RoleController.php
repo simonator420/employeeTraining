@@ -57,9 +57,7 @@ class RoleController extends Controller
         // Check if the user is logged in and if their title is not System Administrator
         if ($assigned_training === 1) {
             // Yii::info('User is Service Driver, rendering driver popup');
-            return $this->render('driver', [
-                'title' => $title
-            ]);
+            return $this->render('driver', ['title' => $title]);
         }
 
         Yii::info('User does not have a training assigned, redirecting to access denied');

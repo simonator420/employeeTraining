@@ -6,7 +6,7 @@ use yii\helpers\Html;
 
 <div class="side-panel">
     <h3>Training Assignment</h3>
-    <p class="training-message">Dear user, you have been assigned a mandatory training. Please complete it at your earliest convenience.</p>
+    <p class="training-message">Dear <b> <?= Html::encode($firstName) ?> </b>, you have been assigned a mandatory training. Please complete it at your earliest convenience.</p>
     <div class="text-center">
         <?= Html::a('Go to Training', ['/employeeTraining/role/driver'], ['class' => 'btn btn-primary']) ?>
     </div>

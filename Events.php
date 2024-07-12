@@ -66,8 +66,9 @@ class Events
         ->queryScalar();
 
         // change this to not title but if training_assigned == true
-        if ($assigned_training === 1){
-           $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), [], ['sortOrder' => 10]); 
+        if ($assigned_training == 1) {
+            $firstName = $user->identity->profile->firstname;
+            $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), ['firstName' => $firstName], ['sortOrder' => 10]); 
         }
     }
 }

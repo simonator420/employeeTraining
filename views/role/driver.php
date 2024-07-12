@@ -49,7 +49,7 @@ $('#submit-btn').on('click', function(e) {
                 if (response.success) {
                     alert('Thank you for completing the training!');
                     trainingCompleted = true;
-                    window.onbeforeunload = null; // Allow navigation away from the page
+                    // window.onbeforeunload = null;
                     window.location.href = $('#submit-btn').attr('href');
                 } else {
                     alert('Failed to complete the training. Please try again.');
