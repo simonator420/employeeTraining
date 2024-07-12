@@ -11,18 +11,50 @@ use yii\helpers\Url;
         <h1>User Info</h1>
         <?php foreach ($users as $user): ?>
             <p>
-                <strong>User:</strong> <?= Html::encode($user->username) ?> (ID: <?= $user->id ?>)<br>
-                <strong>Title:</strong> <?= Html::encode($user->profile->title) ?> <br>
+                <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
+                <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
+                <strong>Address:</strong>
+                <?php
+                $addressComponents = [
+                    $user->profile->street,
+                    $user->profile->city,
+                    $user->profile->zip,
+                    $user->profile->country,
+                    $user->profile->state,
+                ];
+
+                $filteredAddressComponents = array_filter($addressComponents);
+
+                if (empty($filteredAddressComponents)) {
+                    echo 'N/A';
+                } else {
+                    echo Html::encode(implode(', ', $filteredAddressComponents));
+                }
+                ?>
+                <br>
                 <strong>Roles:</strong>
                 <?php
                 $groups = $user->getGroups()->all();
                 $groupNames = array_map(function ($group) {
                     return $group->name;
                 }, $groups);
-                echo Html::encode(implode(', ', $groupNames));
-                ?>
+                echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
+                ?><br>
+                <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?> <br> <br>
+                <strong>Training Assigned Time:</strong> <span
+                    id="training-assigned-time-<?= $user->id ?>"><?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?></span>
             </p>
-            <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>" <?= $user->profile->assigned_training ? 'checked' : '' ?>>
+            <label>
+                <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
+                    <?= $user->profile->assigned_training ? 'checked' : '' ?>>
+                Assigned Training
+            </label>
+            <div class="training-completed-time" id="completed-time-<?= $user->id ?>">
+                <!-- This div will hold the timestamp when the checkbox is checked -->
+            </div>
+
+            <!-- TODO Add Training completed at: -->
+
             <hr>
         <?php endforeach; ?>
     </div>
@@ -30,10 +62,11 @@ use yii\helpers\Url;
 
 <?php
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
-$script = <<< JS
+$script = <<<JS
     $(document).on('change', '.toggle-info-btn', function() {
         var userId = $(this).data('id');
         var assignedTraining = $(this).is(':checked') ? 1 : 0;
+        var currentTime = assignedTraining ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
 
         $.ajax({
             url: '$toggleTrainingUrl',
@@ -41,11 +74,17 @@ $script = <<< JS
             data: {
                 id: userId,
                 assigned_training: assignedTraining,
+                training_assigned_time: currentTime,
                 _csrf: yii.getCsrfToken()
             },
             success: function(response) {
                 if (response.success) {
                     console.log('Update successful');
+                    if (currentTime) {
+                        $('#training-assigned-time-' + userId).text(currentTime);
+                    } else {
+                        $('#training-assigned-time-' + userId).text('N/A');
+                    }
                 } else {
                     console.log('Update failed');
                 }

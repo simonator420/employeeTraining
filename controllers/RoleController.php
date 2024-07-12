@@ -68,25 +68,33 @@ class RoleController extends Controller
     public function actionToggleTraining()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
+    
         $userId = \Yii::$app->request->post('id');
         $assignedTraining = \Yii::$app->request->post('assigned_training');
-
+        $trainingAssignedTime = \Yii::$app->request->post('training_assigned_time');
+    
         $user = User::findOne($userId);
         if ($user) {
             $user->profile->assigned_training = $assignedTraining;
+            if ($assignedTraining) {
+                $user->profile->training_assigned_time = $trainingAssignedTime;
+            } else {
+                $user->profile->training_assigned_time = null;
+            }
+    
             if ($user->profile->save()) {
                 return ['success' => true];
             }
         }
         return ['success' => false];
     }
+    
 
     public function actionCompleteTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $userId = Yii::$app->user->id;  // Assuming the user is logged in and we use their ID
+        $userId = Yii::$app->user->id;
         $user = User::findOne($userId);
         if ($user) {
             $user->profile->assigned_training = 0;
