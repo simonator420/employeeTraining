@@ -12,7 +12,8 @@ use yii\helpers\Url;
         <?php foreach ($users as $user): ?>
             <p>
                 <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
-                <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?> <?= Html::encode($user->profile->lastname) ?> <br>
+                <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
+                <?= Html::encode($user->profile->lastname) ?> <br>
                 <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
                 <strong>Address:</strong>
                 <?php
@@ -44,8 +45,8 @@ use yii\helpers\Url;
                 <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
                 <strong>Training Assigned Time:</strong> <span
                     id="training-assigned-time-<?= $user->id ?>"><?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?></span><br>
-                <strong>Training Complete Time:</strong> <span
-                    id="training-complete-time-<?= $user->id ?>"><?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?></span>
+                <strong>Training Complete Time:</strong> <span id="training-complete-time-<?= $user->id ?>"
+                    class="<?= $user->profile->training_complete_time ? 'text-green' : ($user->profile->assigned_training && $user->profile->training_assigned_time !== null ? 'text-red' : 'text-black') ?>"><?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?></span>
 
             </p>
             <label>
@@ -78,11 +79,14 @@ $script = <<<JS
             success: function(response) {
                 if (response.success) {
                     console.log('Update successful');
+                    var assignedTimeElement = $('#training-assigned-time-' + userId);
+                    var completeTimeElement = $('#training-complete-time-' + userId);
                     if (assignedTraining) {
-                        $('#training-assigned-time-' + userId).text(currentTime);
-                        $('#training-complete-time-' + userId).text('N/A');
+                        assignedTimeElement.text(currentTime);
+                        completeTimeElement.text('N/A').removeClass('text-green text-black').addClass('text-red');
                     } else {
-                        $('#training-assigned-time-' + userId).text('N/A');
+                        assignedTimeElement.text('N/A');
+                        completeTimeElement.text('N/A').removeClass('text-green text-red').addClass('text-black');
                     }
                 } else {
                     console.log('Update failed');
@@ -97,3 +101,15 @@ $script = <<<JS
 JS;
 $this->registerJs($script);
 ?>
+
+<style>
+    .text-green {
+        color: green;
+    }
+    .text-red {
+        color: red;
+    }
+    .text-black {
+        color: rgb(85, 85, 85);
+    }
+</style>
