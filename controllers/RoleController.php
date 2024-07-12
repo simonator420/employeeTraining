@@ -16,9 +16,14 @@ class RoleController extends Controller
     {
         // Fetch all users from the database
         $users = User::find()->all();
+        $user = Yii::$app->user;
+        $userId = $user->getId();
+        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+        ->bindValue(':userId', $userId)
+        ->queryScalar();
 
         // Checks if the user isn't System Administrator
-        if (Yii::$app->user->identity->profile->title != "System Administration") {
+        if ($assigned_training != 1) {
             return $this->redirect(['site/access-denied']);
         }
 
@@ -29,21 +34,25 @@ class RoleController extends Controller
     }
 
     // Function for displaying training screen after login
-    // TODO rename the function so it suits all the employees
+    // TODO rename the function so it fits all the employees
     public function actionDriver()
     {
         $user = Yii::$app->user;
+        $userId = $user->getId();
         $title = $user->identity->profile->title;
+        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+        ->bindValue(':userId', $userId)
+        ->queryScalar();
 
         // Check if the user is logged in and if their title is not System Administrator
-        if (!$user->isGuest && $title != 'System Administration') {
-            Yii::info('User is Service Driver, rendering driver popup');
+        if ($assigned_training === 1) {
+            // Yii::info('User is Service Driver, rendering driver popup');
             return $this->render('driver', [
                 'title' => $title
             ]);
         }
 
-        Yii::info('User is not a Service Driver, redirecting to access denied');
+        Yii::info('User does not have a training assigned, redirecting to access denied');
         // Redirect to access denied if the conditions are not met
         return $this->redirect(['site/access-denied']);
     }

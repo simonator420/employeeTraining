@@ -21,6 +21,7 @@ use yii\helpers\Html;
                 echo Html::encode(implode(', ', $groupNames));
                 ?>
             </p>
+            <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>" <?= $user->profile->assigned_training ? 'checked' : '' ?>>
             <hr>
         <?php endforeach; ?>
     </div>

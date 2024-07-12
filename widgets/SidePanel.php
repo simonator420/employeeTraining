@@ -8,6 +8,6 @@ class SidePanel extends Widget
 {
     public function run()
     {
-        return $this->render('sidePanel');
+        return $this->render('@humhub/modules/employeeTraining/views/side-panel/side-panel');
     }
 }

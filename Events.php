@@ -14,9 +14,7 @@ use Yii;
  */
 class Events
 {
-    /**
-     * This method adds a "User Info" item to the top menu.
-     */
+    // This method adds a "User Info" item to the top menu.
     public static function onTopMenuInit(Event $event)
     {
         $menu = $event->sender;
@@ -37,12 +35,17 @@ class Events
         $user = Yii::$app->user;
         $username = $user->identity->username;
         $title =$user->identity->profile->title;
+        $userId = $user->getId();
+        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+        ->bindValue(':userId', $userId)
+        ->queryScalar();
 
-        Yii::info('User : ' . $username . ' with id: ' . $user->getId() . ' and title: ' . $title);
+        Yii::info('User : ' . $username . ' with id: ' . $userId . ' and title: ' . $title . ' and his training status is: ' . $assigned_training);
 
+        // Retrive the userSpaces in case I want to display the training site based on the spaces they are in
         $userSpaces = $user->identity->getSpaces()->all();
 
-        if ($title === 'Service Driver' || $title === 'Accountant') {
+        if ($assigned_training === 1) {
             Yii::$app->response->redirect(Url::to(['/employeeTraining/role/driver']));
         }
 
@@ -53,8 +56,18 @@ class Events
         // }
     }
 
-    public static function onDashboardSidebarInit($event)
+    // Displays the side panel on users screen if he has training assigned
+    public static function onDashboardSidebarInit(Event $event)
     {
-        $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), [], ['sortOrder' => 10]);
+        $user = Yii::$app->user;
+        $userId = $user->getId();
+        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+        ->bindValue(':userId', $userId)
+        ->queryScalar();
+
+        // change this to not title but if training_assigned == true
+        if ($assigned_training === 1){
+           $event->sender->addWidget(\humhub\modules\employeeTraining\widgets\SidePanel::className(), [], ['sortOrder' => 10]); 
+        }
     }
 }
