@@ -25,7 +25,7 @@ class RoleController extends Controller
             $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
                 ->bindValue(':userId', $user->id) // Replaces userID in the SQL command with the actual user ID
                 ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
-            
+
             // Sets the assigned_training property of the user's profile to the retrieved value
             $user->profile->assigned_training = $assigned_training;
         }
@@ -40,9 +40,20 @@ class RoleController extends Controller
             return $this->redirect(['site/access-denied']);
         }
 
+        // Retrieve all unique titles from the profile table
+        $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')
+            ->queryColumn();
+
+        // Retrieve all unique storage locations from the profile table
+        $storage_locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
+        ->queryColumn();
+
+
         // Render the 'user-info' view and pass the users data to it
         return $this->render('user-info', [
             'users' => $users,
+            'titles' => $titles,
+            'storage_locations' => $storage_locations,
         ]);
     }
 
@@ -104,7 +115,7 @@ class RoleController extends Controller
         return ['success' => false];
     }
 
-
+    // Handling the AJAX request to mark the training as complete for the current user
     public function actionCompleteTraining()
     {
         // Setting the response format to JSON

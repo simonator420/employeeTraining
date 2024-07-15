@@ -9,80 +9,111 @@ use yii\helpers\Url;
 <div class="user-info-container">
     <div class="user-info-card">
         <h1>Employee Training Overview</h1>
+
+        <!-- Checkboxes for each title with label "Assign to all" -->
+        <label>Assign training to all employees with title:</label>
+        <div id="title-checkboxes">
+            <?php foreach ($titles as $title): ?>
+                <label>
+                    <input type="checkbox" class="title-checkbox" value="<?= Html::encode($title) ?>">
+                    <?= Html::encode($title) ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
+        <br>
+
+        <!-- Checkboxes for each storage location with label "with storage location in:" -->
+        <label>With storage location in:</label>
+        <div id="storage-location-checkboxes">
+            <?php foreach ($storage_locations as $location): ?>
+                <label>
+                    <input type="checkbox" class="location-checkbox" value="<?= Html::encode($location) ?>">
+                    <?= Html::encode($location) ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
+        <button id="confirm-selection-btn">OK</button>
+        <br>
+        <hr>
+
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
-            <p>
-                <!-- Display the user's username and id -->
-                <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
+            <div class="user-info" data-title="<?= Html::encode($user->profile->title) ?>"
+                data-location="<?= Html::encode($user->profile->storage_location) ?>">
 
-                <!-- Display the user's fullname -->
-                <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
-                <?= Html::encode($user->profile->lastname) ?> <br>
+                <p>
+                    <!-- Display the user's username and id -->
+                    <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
 
-                <!-- Display the user's title -->
-                <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
+                    <!-- Display the user's fullname -->
+                    <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
+                    <?= Html::encode($user->profile->lastname) ?> <br>
 
-                <!-- Display the user's address by concatenating available address components -->
-                <strong>Address:</strong>
-                <?php
-                $addressComponents = [
-                    $user->profile->street,
-                    $user->profile->city,
-                    $user->profile->zip,
-                    $user->profile->country,
-                    $user->profile->state,
-                ];
+                    <!-- Display the user's title -->
+                    <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
 
-                // Filtering out any empty values from the array
-                $filteredAddressComponents = array_filter($addressComponents);
+                    <!-- Display the user's address by concatenating available address components -->
+                    <strong>Address:</strong>
+                    <?php
+                    $addressComponents = [
+                        $user->profile->street,
+                        $user->profile->city,
+                        $user->profile->zip,
+                        $user->profile->country,
+                        $user->profile->state,
+                    ];
 
-                if (empty($filteredAddressComponents)) {
-                    echo 'N/A';
-                } else {
-                    echo Html::encode(implode(', ', $filteredAddressComponents)); // implode joins all elements into one string
-                }
-                ?><br>
+                    // Filtering out any empty values from the array
+                    $filteredAddressComponents = array_filter($addressComponents);
 
-                <!-- Display the user's roles by concatenating group names -->
-                <strong>Roles:</strong>
-                <?php
-                // Retrieves all the groups that the user is a part of
-                $groups = $user->getGroups()->all();
-                // Aplying callback to each element (group) in the array (groups) and getting array (groupNames) of all the group names
-                $groupNames = array_map(function ($group) {
-                    return $group->name;
-                }, $groups);
-                echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
-                ?><br>
+                    if (empty($filteredAddressComponents)) {
+                        echo 'N/A';
+                    } else {
+                        echo Html::encode(implode(', ', $filteredAddressComponents)); // implode joins all elements into one string
+                    }
+                    ?><br>
 
-                <!-- Display the user's last login time -->
-                <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
+                    <!-- Display the user's roles by concatenating group names -->
+                    <strong>Roles:</strong>
+                    <?php
+                    // Retrieves all the groups that the user is a part of
+                    $groups = $user->getGroups()->all();
+                    // Aplying callback to each element (group) in the array (groups) and getting array (groupNames) of all the group names
+                    $groupNames = array_map(function ($group) {
+                        return $group->name;
+                    }, $groups);
+                    echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
+                    ?><br>
 
-                <!-- Display the time when last training was assigned for user -->
-                <strong>Training Assigned Time:</strong>
-                <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
-                <span id="training-assigned-time-<?= $user->id ?>">
-                    <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
-                </span><br>
+                    <!-- Display the user's last login time -->
+                    <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
 
-                <!-- Display the time when user completed the training with dynamic class for color coding-->
-                <!-- Assigning right CSS class (text color) based on the conditions -->
-                <strong>Training Complete Time:</strong>
-                <span id="training-complete-time-<?= $user->id ?>"
-                    class="<?= $user->profile->training_complete_time ? 'text-green' : ($user->profile->assigned_training && $user->profile->training_assigned_time !== null ? 'text-red' : 'text-black') ?>">
-                    <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
-                </span>
+                    <!-- Display the time when last training was assigned for user -->
+                    <strong>Training Assigned Time:</strong>
+                    <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
+                    <span id="training-assigned-time-<?= $user->id ?>">
+                        <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
+                    </span><br>
 
-            </p>
+                    <!-- Display the time when user completed the training with dynamic class for color coding-->
+                    <!-- Assigning right CSS class (text color) based on the conditions -->
+                    <strong>Training Complete Time:</strong>
+                    <span id="training-complete-time-<?= $user->id ?>"
+                        class="<?= $user->profile->training_complete_time ? 'text-green' : ($user->profile->assigned_training && $user->profile->training_assigned_time !== null ? 'text-red' : 'text-black') ?>">
+                        <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
+                    </span>
 
-            <!-- Checkbox to assign/unassign training -->
-            <label>
-                <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
-                <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
-                    <?= $user->profile->assigned_training ? 'checked' : '' ?>>
-                Assigned Training
-            </label>
-            <hr>
+                </p>
+
+                <!-- Checkbox to assign/unassign training -->
+                <label>
+                    <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
+                    <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
+                        <?= $user->profile->assigned_training ? 'checked' : '' ?>>
+                    Assigned Training
+                </label>
+                <hr>
+            </div>
         <?php endforeach; ?>
     </div>
 </div>
@@ -133,7 +164,7 @@ $script = <<<JS
             success: function(response) {
                 // Check if the server response indicates success
                 if (response.success) {
-                    console.log('Success');
+                    console.log('Success')
                     // Selecting the two spans
                     var assignedTimeElement = $('#training-assigned-time-' + userId);
                     var completeTimeElement = $('#training-complete-time-' + userId);
@@ -157,6 +188,54 @@ $script = <<<JS
             }
         });
     });
+    // Event handler for "Assign to all" title checkboxes click
+    $(document).ready(function() {
+    var toggleState = false;
+
+    $('#confirm-selection-btn').on('click', function() {
+        var selectedTitles = [];
+        $('.title-checkbox:checked').each(function() {
+            selectedTitles.push($(this).val());
+        });
+
+        var selectedLocations = [];
+        $('.location-checkbox:checked').each(function() {
+            selectedLocations.push($(this).val());
+        });
+
+        var toggleAction = toggleState ? 'uncheck' : 'check';
+
+        $('.user-info').each(function() {
+            var userTitle = $(this).data('title');
+            var userLocation = $(this).data('location');
+            var checkbox = $(this).find('.toggle-info-btn');
+
+            var titleMatch = selectedTitles.includes(userTitle);
+            var locationMatch = selectedLocations.includes(userLocation);
+
+            if (selectedTitles.length > 0 && selectedLocations.length > 0) {
+                // Both titles and locations are selected
+                if (titleMatch && locationMatch) {
+                    checkbox.prop('checked', toggleAction === 'check').trigger('change');
+                }
+            } else if (selectedTitles.length > 0) {
+                // Only titles are selected
+                if (titleMatch) {
+                    checkbox.prop('checked', toggleAction === 'check').trigger('change');
+                }
+            } else if (selectedLocations.length > 0) {
+                // Only locations are selected
+                if (locationMatch) {
+                    checkbox.prop('checked', toggleAction === 'check').trigger('change');
+                }
+            }
+        });
+
+        toggleState = !toggleState; // Toggle the state for the next click
+    });
+});
+
+
 JS;
 $this->registerJs($script);
 ?>
