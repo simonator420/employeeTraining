@@ -8,7 +8,7 @@ use yii\helpers\Url;
 <!-- View for displaying informations about the users. -->
 <div class="user-info-container">
     <div class="user-info-card">
-        <h1>Employee Training Overviews</h1>
+        <h1>Employee Training Overview</h1>
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
             <p>
@@ -133,6 +133,7 @@ $script = <<<JS
             success: function(response) {
                 // Check if the server response indicates success
                 if (response.success) {
+                    console.log('Success');
                     // Selecting the two spans
                     var assignedTimeElement = $('#training-assigned-time-' + userId);
                     var completeTimeElement = $('#training-complete-time-' + userId);
