@@ -6,6 +6,7 @@ use yii\helpers\Url;
 ?>
 
 <!-- View for displaying informations about the users. -->
+<!-- TODO center content, make it more nice, add content based on title of the user (probably forms), figure out the way how to send the data somewhere -->
 <div class="user-info-container">
     <div class="user-info-card">
         <h1>Welcome to the <b> <?= Html::encode($title) ?> </b> training</h1>

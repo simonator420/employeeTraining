@@ -21,7 +21,7 @@ class Events
 
         if (Yii::$app->user->isAdmin()) {
             $menu->addItem([
-                'label' => 'User Info',
+                'label' => 'Training',
                 'url' => Url::to(['/employeeTraining/role/user-info']),
                 'icon' => '<i class="fa fa-info"></i>',
                 'sortOrder' => 100,
