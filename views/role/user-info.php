@@ -14,7 +14,7 @@ use yii\helpers\Url;
         <label>Assign training to all employees with title:</label>
         <div id="title-checkboxes">
             <?php foreach ($titles as $title): ?>
-                <label>
+                <label class="checkbox-label">
                     <input type="checkbox" class="title-checkbox" value="<?= Html::encode($title) ?>">
                     <?= Html::encode($title) ?>
                 </label>
@@ -26,12 +26,13 @@ use yii\helpers\Url;
         <label>With storage location in:</label>
         <div id="storage-location-checkboxes">
             <?php foreach ($storage_locations as $location): ?>
-                <label>
+                <label class="checkbox-label">
                     <input type="checkbox" class="location-checkbox" value="<?= Html::encode($location) ?>">
                     <?= Html::encode($location) ?>
                 </label>
             <?php endforeach; ?>
         </div>
+        <br>
         <button id="confirm-selection-btn">OK</button>
         <br>
         <hr>
@@ -84,6 +85,9 @@ use yii\helpers\Url;
                     }, $groups);
                     echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
                     ?><br>
+
+                    <!-- Display the user's storage_location -->
+                    <strong>Storage Location:</strong> <?= Html::encode($user->profile->storage_location ?: 'N/A') ?><br>
 
                     <!-- Display the user's last login time -->
                     <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
@@ -251,5 +255,9 @@ $this->registerJs($script);
 
     .text-black {
         color: rgb(85, 85, 85);
+    }
+
+    .checkbox-label {
+        font-weight: normal;
     }
 </style>
