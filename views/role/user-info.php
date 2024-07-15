@@ -33,8 +33,11 @@ use yii\helpers\Url;
             <?php endforeach; ?>
         </div>
         <br>
+        
+        <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
         <button id="select-all-btn">Select all</button>
         <button id="confirm-selection-btn">OK</button>
+        
         <br>
         <hr>
 

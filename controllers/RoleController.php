@@ -34,8 +34,8 @@ class RoleController extends Controller
         $currentUser = Yii::$app->user;
         $title = $currentUser->identity->profile->title;
 
-        // Checks if the user isn't System Administrator
-        if ($title != 'System Administration') {
+        // Checks if the user isn't admin
+        if (!$currentUser->isAdmin()) {
             // Redirect the user to an access denied page if he's not admin
             return $this->redirect(['site/access-denied']);
         }

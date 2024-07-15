@@ -2,6 +2,8 @@
 
 namespace humhub\modules\employeeTraining;
 
+use Yii;
+
 /**
  * This class represents the Employee Training module in HumHub.
  */

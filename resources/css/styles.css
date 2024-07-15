@@ -1,4 +1,4 @@
-/* protected/modules/employeeTraining/assets/css/style.css */
+protected/modules/employeeTraining/assets/css/style.css
 
 .user-info-container {
     display: flex;
@@ -17,7 +17,7 @@
 }
 
 .user-info-card h1 {
-    margin-bottom: 20px;
+    margin-bottom: 80px;
 }
 
 .user-info-card p {
@@ -26,4 +26,11 @@
 
 .user-info-card hr {
     margin: 20px 0;
+}
+.user-info-card label {
+    color: chocolate;
+}
+
+.checkbox-label {
+    font-weight: normal;
 }

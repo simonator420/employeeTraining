@@ -13,10 +13,11 @@ use yii\web\AssetBundle;
  */
 class EmployeeTrainingAsset extends AssetBundle
 {
+    public $defer = true;
      // The directory that contains the asset files
     public $sourcePath = '@employeeTraining/resources';
     public $css = [
-        'css/styles.css',
+        'css/styles.css'
     ];
     public $js = [
         'js/script.js'
