@@ -2,6 +2,9 @@
 
 namespace humhub\modules\employeeTraining\assets;
 
+use humhub\modules\fcmPush\module;
+use humuhub\modules\fcmPush\services\DriverService;
+use Yii;
 use yii\web\AssetBundle;
 
 
@@ -17,5 +20,5 @@ class EmployeeTrainingAsset extends AssetBundle
     ];
     public $js = [
         'js/script.js'
-    ];  
+    ];
 }

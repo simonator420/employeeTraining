@@ -33,6 +33,7 @@ use yii\helpers\Url;
             <?php endforeach; ?>
         </div>
         <br>
+        <button id="select-all-btn">Select all</button>
         <button id="confirm-selection-btn">OK</button>
         <br>
         <hr>
@@ -195,6 +196,7 @@ $script = <<<JS
     // Event handler for "Assign to all" title checkboxes click
     $(document).ready(function() {
     var toggleState = false;
+    var selectAll = false;
 
     $('#confirm-selection-btn').on('click', function() {
         var selectedTitles = [];
@@ -237,8 +239,13 @@ $script = <<<JS
 
         toggleState = !toggleState; // Toggle the state for the next click
     });
-});
 
+    $('#select-all-btn').on('click', function() {
+        selectAll = !selectAll; // Toggle the select all state
+        $('.title-checkbox').prop('checked', selectAll);
+        $('.location-checkbox').prop('checked', selectAll);
+    });
+});
 
 JS;
 $this->registerJs($script);

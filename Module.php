@@ -7,6 +7,9 @@ namespace humhub\modules\employeeTraining;
  */
 class Module extends \humhub\components\Module
 {
+
+    public $resoucePath = 'resources';
+
     /**
      * This method is called when the module is being initialized and registers necessary assets.
      */

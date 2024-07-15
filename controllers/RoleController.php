@@ -44,10 +44,13 @@ class RoleController extends Controller
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')
             ->queryColumn();
 
+        sort($titles);
+
         // Retrieve all unique storage locations from the profile table
         $storage_locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
         ->queryColumn();
 
+        sort($storage_locations);
 
         // Render the 'user-info' view and pass the users data to it
         return $this->render('user-info', [
