@@ -68,6 +68,7 @@ class RoleController extends Controller
         $user = Yii::$app->user;
         $userId = $user->getId();
         $title = $user->identity->profile->title;
+        $firstName = $user->identity->profile->firstname;
         // Retrieve the assigned_training status from the profile table
         $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
             ->bindValue(':userId', $userId) // Replaces userID in the SQL command with the actual user ID
@@ -76,7 +77,7 @@ class RoleController extends Controller
         // Check if the user has an assigned training
         if ($assigned_training === 1) {
             // Render the driver view
-            return $this->render('employee', ['title' => $title]);
+            return $this->render('employee', ['title' => $title, 'firstName' => $firstName]);
         }
 
         // Redirect to access denied if the conditions are not met
