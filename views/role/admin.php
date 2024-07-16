@@ -6,8 +6,8 @@ use yii\helpers\Url;
 ?>
 
 <!-- View for displaying informations about the users. -->
-<div class="user-info-container">
-    <div class="user-info-card">
+<div class="employee-overview-container">
+    <div class="employee-info-card">
         <h1>Employee Training Overview</h1>
 
         <!-- Checkboxes for each title with label "Assign to all" -->
@@ -43,7 +43,7 @@ use yii\helpers\Url;
 
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
-            <div class="user-info" data-title="<?= Html::encode($user->profile->title) ?>"
+            <div class="employee-info" data-title="<?= Html::encode($user->profile->title) ?>"
                 data-location="<?= Html::encode($user->profile->storage_location) ?>">
 
                 <p>
@@ -214,7 +214,7 @@ $script = <<<JS
 
         var toggleAction = toggleState ? 'uncheck' : 'check';
 
-        $('.user-info').each(function() {
+        $('.employee-info').each(function() {
             var userTitle = $(this).data('title');
             var userLocation = $(this).data('location');
             var checkbox = $(this).find('.toggle-info-btn');
@@ -253,21 +253,3 @@ $script = <<<JS
 JS;
 $this->registerJs($script);
 ?>
-
-<style>
-    .text-green {
-        color: green;
-    }
-
-    .text-red {
-        color: red;
-    }
-
-    .text-black {
-        color: rgb(85, 85, 85);
-    }
-
-    .checkbox-label {
-        font-weight: normal;
-    }
-</style>

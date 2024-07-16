@@ -25,7 +25,7 @@ class Events
             // Add a new menu item for the administrator
             $menu->addItem([
                 'label' => 'Training', // The label of the menu item
-                'url' => Url::to(['/employeeTraining/role/user-info']), // The url of the menu item
+                'url' => Url::to(['/employeeTraining/role/admin']), // The url of the menu item
                 'icon' => '<i class="fa fa-info"></i>', // The icon of the menu item
                 'sortOrder' => 100, // The order in which the menu item should appear
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
@@ -54,7 +54,7 @@ class Events
         // Check if the user has an assigned training
         if ($assigned_training === 1) {
             // Redirects to the Employee Training Page
-            Yii::$app->response->redirect(Url::to(['/employeeTraining/role/driver']));
+            Yii::$app->response->redirect(Url::to(['/employeeTraining/role/employee']));
         }
     }
 

@@ -15,7 +15,7 @@ class RoleController extends Controller
 {
 
     // Function for handling the request to display the Employee Training Overview page
-    public function actionUserInfo()
+    public function actionAdmin()
     {
         // Retrieve all users from the database
         $users = User::find()->all();
@@ -53,7 +53,7 @@ class RoleController extends Controller
         sort($storage_locations);
 
         // Render the 'user-info' view and pass the users data to it
-        return $this->render('user-info', [
+        return $this->render('admin', [
             'users' => $users,
             'titles' => $titles,
             'storage_locations' => $storage_locations,
@@ -62,7 +62,7 @@ class RoleController extends Controller
 
     // Function for handling the request to display Employee Training Overview page
     // TODO rename the function so it fits all the employees
-    public function actionDriver()
+    public function actionEmployee()
     {
         // Retrieve the current logged-in user's information
         $user = Yii::$app->user;
@@ -76,7 +76,7 @@ class RoleController extends Controller
         // Check if the user has an assigned training
         if ($assigned_training === 1) {
             // Render the driver view
-            return $this->render('driver', ['title' => $title]);
+            return $this->render('employee', ['title' => $title]);
         }
 
         // Redirect to access denied if the conditions are not met
