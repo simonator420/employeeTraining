@@ -61,7 +61,6 @@ class RoleController extends Controller
     }
 
     // Function for handling the request to display Employee Training Overview page
-    // TODO rename the function so it fits all the employees
     public function actionEmployee()
     {
         // Retrieve the current logged-in user's information
@@ -130,6 +129,12 @@ class RoleController extends Controller
 
         // Find the user by ID
         $user = User::findOne($userId);
+
+        // Get the request data
+        $requestData = Yii::$app->request->post();
+        // Yii::info('Complete Training request data: ' . var_export($requestData, true));
+        $accountingOne = isset($requestData['accounting_one']) ? $requestData['accounting_one'] : null;
+        Yii::info('Accounting One: ' . $accountingOne);
 
         // Check if the user exists
         if ($user) {

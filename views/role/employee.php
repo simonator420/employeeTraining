@@ -45,7 +45,7 @@ use yii\helpers\Url;
                 </div>
             </div>
             <div class="question-container">
-                <p><b>Using the range display how much do you enjoy working with your colleagues</b></p>
+                <p><b>Using the range display how much do you enjoy working with your colleagues.</b></p>
                 <div class="range-container">
                     <span>Not much</span>
                     <?= Html::input('range', 'accounting_four', '50', ['class' => 'form-control accountant-input', 'min' => '1', 'max' => '100']) ?>
@@ -61,58 +61,81 @@ use yii\helpers\Url;
 </div>
 
 <?php
-// URL for the function in RoleController
+// URL for the function in RoleController - endpoint
 $completeTrainingUrl = Url::to(['role/complete-training']);
 $script = <<<JS
 
-// Initializing a flag to prevent multiple submissions
-// Initializing a flag to prevent multiple submissions
+// Initializing a flag so the form can be submitted once until the page is reloaded
 let trainingCompleted = false;
+
 
 $('#submit-btn').on('click', function(e) {
     e.preventDefault();
     
+    // Ensuring that the form can be only submitted once
     if (!trainingCompleted) {
+        // Flag to determine if all form inputs are valid
         let isValid = true;
+        // Object initialized with CSRF token for secure server-side processing
         let data = {
             _csrf: yii.getCsrfToken()
         };
 
         // Function to gather input values and check if they are valid
         function gatherInputValues(inputClass, data) {
+            // Itirating over each element with the given class
             $('.' + inputClass).each(function() {
+                // Retrieves the name attribute of the current input element
                 let inputName = $(this).attr('name');
+                // Retrieves the value of the current input element
                 let inputValue = $(this).val();
 
+                // If the input field is empty then the border is colored red
                 if (!inputValue) {
                     isValid = false;
                     $(this).css('border', '2px solid red');
-                } else {
+                }
+                // If the input field is not empty, it stays black 
+                else {
                     $(this).css('border', '1px solid #dee2e6');
                 }
 
+                // The value is added to the data object with the key as inputName e.g. 'accounting_one' => 'I like it here'
                 data[inputName] = inputValue;
             });
         }
 
+        // If the user has title Service Driver
         if ('$title' === 'Service Driver') {
             gatherInputValues('driver-input', data);
-        } else if ('$title' === 'Accountant') {
+        } 
+        // If the user has title Accountant
+        else if ('$title' === 'Accountant') {
             gatherInputValues('accountant-input', data);
         }
 
+        // Execution of the code only if all the input data are valid
         if (isValid) {
-            console.log(data);
+            // console.log(data);
+            // Request to the server to submit the form data
             $.ajax({
+                // Pointer to actionCompleteTraining function in RoleController where the data shoudl be send
                 url: '$completeTrainingUrl',
+                // HTTP method used for the request
                 type: 'POST',
+                // Data object that contains the form data and CSRF token
                 data: data,
+                // This function is executed if the AJAX request is successful, it receives the server's response as its argument
                 success: function(response) {
+                    // Checks if the the response is success
                     if (response.success) {
                         alert('Thank you for completing the training!');
+                        // Setting the trainingCompleted to true to prevent further submissions
                         trainingCompleted = true;
+                        // Getting the current time and setting the context of the element with training-complete-time and user's id to currentTime string
                         var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
                         $('#training-complete-time-' + response.userId).text(currentTime);
+                        // Redirects the user to the specified url in the href attribute of submit-btn
                         window.location.href = $('#submit-btn').attr('href');
                     } else {
                         alert('Failed to complete the training. Please try again or contact System Administrator.');
@@ -126,11 +149,16 @@ $('#submit-btn').on('click', function(e) {
     }
 });
 
+// Selecting all input elements of type "number" that also have the class form-controll
 $('.form-control[type="number"]').on('input', function() {
+    // Storing the current input element in the value variable
     var value = $(this).val();
+    // If the input is less than 1 then the value is set to 1
     if (value < 1) {
         $(this).val(1);
-    } else if (value > 5) {
+    } 
+    // If the input is bigger then 5 then the value is sey to 5
+    else if (value > 5) {
         $(this).val(5);
     }
 });
