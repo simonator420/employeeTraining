@@ -34,6 +34,8 @@ use yii\helpers\Url;
         </div>
         <br>
 
+        <label>Select only particular users</label>
+
         <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
         <button id="select-all-btn">Select all</button>
         <button id="confirm-selection-btn">Assign Now</button>
@@ -46,7 +48,6 @@ use yii\helpers\Url;
         <button id="confirm-time-btn">OK</button>
         <br>
 
-        <br>
         <hr>
 
         <!-- Loop through each user and display their information -->
@@ -106,6 +107,7 @@ use yii\helpers\Url;
 
                     <!-- Display the time when last training was assigned for user -->
                     <strong>Training Assigned Time:</strong>
+                    
                     <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
                     <span id="training-assigned-time-<?= $user->id ?>">
                         <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
@@ -115,16 +117,25 @@ use yii\helpers\Url;
                     <!-- Assigning right CSS class (text color) based on the conditions -->
                     <strong>Training Complete Time:</strong>
                     <span id="training-complete-time-<?= $user->id ?>" class="<?php
+
+                      // Training has been completed by the employee
                       if ($user->profile->training_complete_time) {
                           echo 'text-green';
-                      } elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
+                      }
+                      // Training has been scheduled for employee by admin
+                      elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
                           echo 'text-orange';
-                      } elseif ($user->profile->assigned_training) {
+                      }
+                      // Training has been either set by the admin straight away or employee has seen the training that was scheduled but didn't complete it yet
+                      elseif ($user->profile->assigned_training) {
                           echo 'text-red';
-                      } else {
+                      }
+                      // Employee doesn't have any training set either completed 
+                      else {
                           echo 'text-black';
                       }
                       ?>">
+                        <!-- If employee didn't complete the training yet display N/A -->
                         <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
                     </span>
 
@@ -144,7 +155,7 @@ use yii\helpers\Url;
 </div>
 
 <?php
-// URL for the function in RoleController
+// URLs for the function in RoleController
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $assignTrainingUrl = Url::to(['role/assign-training']);
 $script = <<<JS
