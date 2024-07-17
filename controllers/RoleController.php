@@ -118,55 +118,34 @@ class RoleController extends Controller
         return ['success' => false];
     }
 
+    public function actionAssignTraining()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-    // Next two functions not working due to missing cron jobs
+        $rawTime = \Yii::$app->request->post('selected_time');
+        $selectedTitles = \Yii::$app->request->post('selected_titles');
+        $selectedLocations = \Yii::$app->request->post('selected_locations');
+        $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
 
-    // public function actionAssignTraining()
-    // {
-    //     \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $users = User::find()
+            ->joinWith('profile')
+            ->andFilterWhere(['profile.title' => $selectedTitles])
+            ->andFilterWhere(['profile.storage_location' => $selectedLocations])
+            ->all();
 
-    //     $rawTime = \Yii::$app->request->post('selected_time');
-    //     $selectedTitles = \Yii::$app->request->post('selected_titles');
-    //     $selectedLocations = \Yii::$app->request->post('selected_locations');
-    //     $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
+        foreach ($users as $user) {
+            // Update training_assigned_time and reset assigned_training if time is now
+            $user->profile->training_assigned_time = $selectedTime;
+            $user->profile->assigned_training = 0;
+            $user->profile->training_complete_time = null;
 
-    //     $users = User::find()
-    //         ->joinWith('profile')
-    //         ->andFilterWhere(['profile.title' => $selectedTitles])
-    //         ->andFilterWhere(['profile.storage_location' => $selectedLocations])
-    //         ->all();
+            if (!$user->profile->save()) {
+                return ['success' => false];
+            }
+        }
 
-    //     foreach ($users as $user) {
-    //         // Update training_assigned_time and reset assigned_training if time is now
-    //         $user->profile->training_assigned_time = $selectedTime;
-    //         $user->profile->assigned_training = 0;
-
-    //         if (!$user->profile->save()) {
-    //             return ['success' => false];
-    //         }
-    //     }
-
-    //     return ['success' => true];
-    // }
-
-    // public function actionCheckTrainingAssignments()
-    // {
-    //     $currentTime = new \DateTime();
-    //     $users = User::find()
-    //         ->joinWith('profile')
-    //         ->where(['assigned_training' => 0])
-    //         ->andWhere(['<=', 'training_assigned_time', $currentTime->format('Y-m-d H:i:s')])
-    //         ->all();
-
-    //     foreach ($users as $user) {
-    //         $user->profile->assigned_training = 1;
-    //         if (!$user->profile->save()) {
-    //             return ['success' => false];
-    //         }
-    //     }
-
-    //     return ['success' => true];
-    // }
+        return ['success' => true];
+    }
 
     // Handling the AJAX request to mark the training as complete for the current user
     public function actionCompleteTraining()
@@ -192,6 +171,7 @@ class RoleController extends Controller
             // Update the user's training_complete_time attribute with current time
             $user->profile->training_complete_time = new \yii\db\Expression('NOW()');
 
+            Yii::info('Accounting One: ' . $accountingOne . 'training completed');
             // Update the user's assigned_training attribute to 0
             $user->profile->assigned_training = 0;
 

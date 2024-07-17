@@ -44,6 +44,11 @@
     color: rgb(85, 85, 85);
 }
 
+.text-orange {
+    color: orange;
+}
+
+
 #select-all-btn, #confirm-selection-btn, #confirm-time-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;

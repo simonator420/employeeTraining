@@ -45,7 +45,7 @@ use yii\helpers\Url;
         <input type="datetime-local" id="training-time-picker" name="training-time">
         <button id="confirm-time-btn">OK</button>
         <br>
-        
+
         <br>
         <hr>
 
@@ -114,8 +114,17 @@ use yii\helpers\Url;
                     <!-- Display the time when user completed the training with dynamic class for color coding-->
                     <!-- Assigning right CSS class (text color) based on the conditions -->
                     <strong>Training Complete Time:</strong>
-                    <span id="training-complete-time-<?= $user->id ?>"
-                        class="<?= $user->profile->training_complete_time ? 'text-green' : ($user->profile->assigned_training && $user->profile->training_assigned_time !== null ? 'text-red' : 'text-black') ?>">
+                    <span id="training-complete-time-<?= $user->id ?>" class="<?php
+                      if ($user->profile->training_complete_time) {
+                          echo 'text-green';
+                      } elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
+                          echo 'text-orange';
+                      } elseif ($user->profile->assigned_training) {
+                          echo 'text-red';
+                      } else {
+                          echo 'text-black';
+                      }
+                      ?>">
                         <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
                     </span>
 
@@ -189,12 +198,12 @@ $script = <<<JS
                         // Sets the text to current time if training is assigned 
                         assignedTimeElement.text(currentTime);
                         // Sets the text to N/A and sets it to red color
-                        completeTimeElement.text('N/A').removeClass('text-green text-black').addClass('text-red');
+                        completeTimeElement.text('N/A').removeClass('text-green text-black text-orange').addClass('text-red');
                     } else {
                         // Sets the text to N/A if training is not assigned
                         assignedTimeElement.text('N/A');
                         // Sets the text to black color
-                        completeTimeElement.text('N/A').removeClass('text-green text-red').addClass('text-black');
+                        completeTimeElement.text('N/A').removeClass('text-green text-red text-orange').addClass('text-black');
                     }
                 } else {
                     console.log('Update failed');
@@ -324,7 +333,7 @@ $script = <<<JS
                 },
                 success: function(response) {
                     if (response.success) {
-                        alert('Training assigned time set successfully.');
+                        // alert('Training assigned time set successfully.');
                         location.reload(); // Reload the page to update the training times
                     } else {
                         alert('Failed to set training assigned time.');
@@ -341,3 +350,9 @@ $script = <<<JS
 JS;
 $this->registerJs($script);
 ?>
+
+<style>
+    .text-orange {
+        color: orange;
+    }
+</style>

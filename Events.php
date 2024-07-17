@@ -52,7 +52,11 @@ class Events
 
         Yii::info('User : ' . $username . ' with id: ' . $userId . ' and title: ' . $title . ' and his training status is: ' . $assigned_training . '. A jeho cas kdy mu byl nebo bude nebo byl prirazen trenink je: ' . $training_assigned_time);
 
-        if ($training_assigned_time && strtotime($training_assigned_time) <= time()) {
+        $training_complete_time = Yii::$app->db->createCommand('SELECT training_complete_time FROM profile WHERE user_id=:userId')
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
+
+        if ($training_assigned_time && strtotime($training_assigned_time) <= time() && !$training_complete_time) {
             // Update the assigned_training status to 1
             Yii::$app->db->createCommand()
                 ->update('profile', ['assigned_training' => 1], 'user_id = :userId')
@@ -83,6 +87,26 @@ class Events
         $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
             ->bindValue(':userId', $userId) // Replaces userID in the SQL command with the actual user ID
             ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
+
+
+        $training_assigned_time = Yii::$app->db->createCommand('SELECT training_assigned_time FROM profile WHERE user_id=:userId')
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
+
+        $training_complete_time = Yii::$app->db->createCommand('SELECT training_complete_time FROM profile WHERE user_id=:userId')
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
+
+        if ($training_assigned_time && strtotime($training_assigned_time) <= time() && !$training_complete_time) {
+            // Update the assigned_training status to 1
+            Yii::$app->db->createCommand()
+                ->update('profile', ['assigned_training' => 1], 'user_id = :userId')
+                ->bindValue(':userId', $userId)
+                ->execute();
+
+            // Refresh assigned_training status
+            $assigned_training = 1;
+        }
 
         // Check if the user has an assigned training
         if ($assigned_training == 1) {
