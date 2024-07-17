@@ -33,11 +33,19 @@ use yii\helpers\Url;
             <?php endforeach; ?>
         </div>
         <br>
-        
+
         <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
         <button id="select-all-btn">Select all</button>
-        <button id="confirm-selection-btn">OK</button>
-        
+        <button id="confirm-selection-btn">Assign Now</button>
+
+        <br>
+        <br>
+
+        <label>Or select time when the training should be assigned.</label>
+        <input type="datetime-local" id="training-time-picker" name="training-time">
+        <button id="confirm-time-btn">OK</button>
+        <br>
+
         <br>
         <hr>
 
@@ -129,6 +137,7 @@ use yii\helpers\Url;
 <?php
 // URL for the function in RoleController
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
+$assignTrainingUrl = Url::to(['role/assign-training']);
 $script = <<<JS
     // jQuery event handler for checkbox change 
     $(document).on('change', '.toggle-info-btn', function() {
@@ -247,6 +256,33 @@ $script = <<<JS
         selectAll = !selectAll; // Toggle the select all state
         $('.title-checkbox').prop('checked', selectAll);
         $('.location-checkbox').prop('checked', selectAll);
+    });
+
+    $('#confirm-time-btn').on('click', function() {
+        var selectedTime = $('#training-time-picker').val();
+        if (!selectedTime) {
+            alert('Please select a time.');
+            return;
+        }
+
+        $.ajax({
+            url: '$assignTrainingUrl',
+            type: 'POST',
+            data: {
+                selected_time: selectedTime,
+                _csrf: yii.getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Training assigned successfully.');
+                } else {
+                    alert('Failed to assign training.');
+                }
+            },
+            error: function() {
+                alert('Error in AJAX request.');
+            }
+        });
     });
 });
 

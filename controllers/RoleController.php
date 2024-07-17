@@ -118,6 +118,19 @@ class RoleController extends Controller
         return ['success' => false];
     }
 
+    public function actionAssignTraining()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $rawTime = \Yii::$app->request->post('selected_time');
+        $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
+
+
+        Yii::info('Tak tohle je ten vybrany cas: ' . $selectedTime);
+
+        return ['success' => true];
+    }
+
     // Handling the AJAX request to mark the training as complete for the current user
     public function actionCompleteTraining()
     {
