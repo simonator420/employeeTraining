@@ -45,7 +45,7 @@ use yii\helpers\Url;
         <input type="datetime-local" id="training-time-picker" name="training-time">
         <button id="confirm-time-btn">OK</button>
         <br>
-
+        
         <br>
         <hr>
 
@@ -265,24 +265,76 @@ $script = <<<JS
             return;
         }
 
-        $.ajax({
-            url: '$assignTrainingUrl',
-            type: 'POST',
-            data: {
-                selected_time: selectedTime,
-                _csrf: yii.getCsrfToken()
-            },
-            success: function(response) {
-                if (response.success) {
-                    alert('Training assigned successfully.');
-                } else {
-                    alert('Failed to assign training.');
-                }
-            },
-            error: function() {
-                alert('Error in AJAX request.');
-            }
+        var selectedTitles = [];
+        $('.title-checkbox:checked').each(function() {
+            selectedTitles.push($(this).val());
         });
+
+        var selectedLocations = [];
+        $('.location-checkbox:checked').each(function() {
+            selectedLocations.push($(this).val());
+        });
+
+        if (selectedTitles.length === 0 && selectedLocations.length === 0) {
+            alert('Please select at least one title or location.');
+            return;
+        }
+
+        var now = new Date();
+        var localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        var currentTime = localNow.toISOString().slice(0, 19).replace('T', ' ');
+
+        if (selectedTime === currentTime) {
+            // Handle assigning training now
+            $('.employee-info').each(function() {
+                var userTitle = $(this).data('title');
+                var userLocation = $(this).data('location');
+                var checkbox = $(this).find('.toggle-info-btn');
+
+                var titleMatch = selectedTitles.includes(userTitle);
+                var locationMatch = selectedLocations.includes(userLocation);
+
+                if (selectedTitles.length > 0 && selectedLocations.length > 0) {
+                    // Both titles and locations are selected
+                    if (titleMatch && locationMatch) {
+                        checkbox.prop('checked', true).trigger('change');
+                    }
+                } else if (selectedTitles.length > 0) {
+                    // Only titles are selected
+                    if (titleMatch) {
+                        checkbox.prop('checked', true).trigger('change');
+                    }
+                } else if (selectedLocations.length > 0) {
+                    // Only locations are selected
+                    if (locationMatch) {
+                        checkbox.prop('checked', true).trigger('change');
+                    }
+                }
+            });
+        } else {
+            // Handle assigning training at a specific time
+            $.ajax({
+                url: '$assignTrainingUrl',
+                type: 'POST',
+                data: {
+                    selected_time: selectedTime,
+                    selected_titles: selectedTitles,
+                    selected_locations: selectedLocations,
+                    _csrf: yii.getCsrfToken()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Training assigned time set successfully.');
+                        location.reload(); // Reload the page to update the training times
+                    } else {
+                        alert('Failed to set training assigned time.');
+                    }
+                },
+                error: function() {
+                    alert('Error in AJAX request.');
+                }
+            });
+        }
     });
 });
 

@@ -118,18 +118,55 @@ class RoleController extends Controller
         return ['success' => false];
     }
 
-    public function actionAssignTraining()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $rawTime = \Yii::$app->request->post('selected_time');
-        $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
+    // Next two functions not working due to missing cron jobs
 
+    // public function actionAssignTraining()
+    // {
+    //     \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        Yii::info('Tak tohle je ten vybrany cas: ' . $selectedTime);
+    //     $rawTime = \Yii::$app->request->post('selected_time');
+    //     $selectedTitles = \Yii::$app->request->post('selected_titles');
+    //     $selectedLocations = \Yii::$app->request->post('selected_locations');
+    //     $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
 
-        return ['success' => true];
-    }
+    //     $users = User::find()
+    //         ->joinWith('profile')
+    //         ->andFilterWhere(['profile.title' => $selectedTitles])
+    //         ->andFilterWhere(['profile.storage_location' => $selectedLocations])
+    //         ->all();
+
+    //     foreach ($users as $user) {
+    //         // Update training_assigned_time and reset assigned_training if time is now
+    //         $user->profile->training_assigned_time = $selectedTime;
+    //         $user->profile->assigned_training = 0;
+
+    //         if (!$user->profile->save()) {
+    //             return ['success' => false];
+    //         }
+    //     }
+
+    //     return ['success' => true];
+    // }
+
+    // public function actionCheckTrainingAssignments()
+    // {
+    //     $currentTime = new \DateTime();
+    //     $users = User::find()
+    //         ->joinWith('profile')
+    //         ->where(['assigned_training' => 0])
+    //         ->andWhere(['<=', 'training_assigned_time', $currentTime->format('Y-m-d H:i:s')])
+    //         ->all();
+
+    //     foreach ($users as $user) {
+    //         $user->profile->assigned_training = 1;
+    //         if (!$user->profile->save()) {
+    //             return ['success' => false];
+    //         }
+    //     }
+
+    //     return ['success' => true];
+    // }
 
     // Handling the AJAX request to mark the training as complete for the current user
     public function actionCompleteTraining()
