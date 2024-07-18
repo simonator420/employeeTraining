@@ -46,8 +46,6 @@ use yii\helpers\Url;
         <button id="confirm-time-btn">OK</button>
         <br>
 
-        <hr>
-
         <button id="toggle-user-list-btn">
             Assign training to specific user <span id="arrow-down">▼</span>
         </button>
@@ -257,8 +255,6 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
     var toggleState = false;
 
     // Variable to track whether all checkboxes should be selected or deselected when the "Select All" button is clicked
-    var selectAll = false;
-    var selectAllUsers = false;
 
     // Function that is executed whenever the "Assign Now" button is clicked
     $('#confirm-selection-btn').on('click', function() {
@@ -343,11 +339,25 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
     // Function to toggle the state (check/uncheck) of all title and location checkboxes
     $('#select-all-btn').on('click', function() {
+        var selectAll = true;
+
+        $('.title-checkbox, .location-checkbox').each(function() {
+            if (!$(this).is(':checked')) {
+                selectAll = false;
+                return false;
+            }
+        })
+
         // Variable to keep track of whether the checkboxes should be selected or deselected
         selectAll = !selectAll;
         // Setting the checked property of all title and location checkboxes to the value of selectAll
         $('.title-checkbox').prop('checked', selectAll);
         $('.location-checkbox').prop('checked', selectAll);
+
+        $('#toggle-user-list-btn').prop('disabled', selectAll);
+        $('.user-checkbox').prop('disabled', selectAll);
+        $('#user-list').hide();
+        $('#arrow-down').text('▼');
     });
 
     // Function to assign training at a specific time or immediately
@@ -439,6 +449,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
             });
         }
     });
+
     $('#toggle-user-list-btn').on('click', function() {
         var userList = $('#user-list');
         userList.toggle(); // Toggle the visibility of the user list
@@ -446,7 +457,14 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         if (userList.is(':visible')) {
             arrow.text('▲'); // Change arrow to up if the list is visible
         } else {
-            arrow.text('▼'); // Change arrow to down if the list is hidden
+            arrow.text('▼');
+            $('.user-checkbox:checked').each(function() {
+                $(this).prop('checked', false);
+                $('.title-checkbox').prop('disabled', false);
+                $('.location-checkbox').prop('disabled', false);
+                $('#select-all-btn').prop('disabled', false);
+                $('#confirm-selection-btn').prop('disabled', false);
+            });
         }
     });
 
@@ -505,10 +523,21 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
     });
 
     $('#select-all-users-btn').on('click', function() {
+        var selectAllUsers = true;
+        $('.user-checkbox').each(function() {
+            if (!$(this).is(':checked')) {
+                selectAllUsers = false;
+                return false;
+            }
+        });
+
         selectAllUsers = !selectAllUsers;
         $('.user-checkbox').prop('checked', selectAllUsers);
+
         $('.title-checkbox').prop('disabled', selectAllUsers);
         $('.location-checkbox').prop('disabled', selectAllUsers);
+        $('#select-all-btn').prop('disabled', selectAllUsers);
+        $('#confirm-selection-btn').prop('disabled', selectAllUsers);
     })
 
     $('.user-checkbox').on('change', function() {
@@ -526,15 +555,13 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         $('#toggle-user-list-btn').prop('disabled', anyTitleOrLocationChecked);
         $('#arrow-down').text('▼');
         $('#select-all-btn').prop('disabled', false);
+        $('#confirm-selection-btn').prop('disabled', false);
+        
     });
+
+
 });
 
 JS;
 $this->registerJs($script);
 ?>
-
-<style>
-    .text-orange {
-        color: orange;
-    }
-</style>

@@ -49,7 +49,7 @@
 }
 
 
-#select-all-btn, #confirm-selection-btn, #confirm-time-btn {
+#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-user-btn, #select-all-user-btn, #toggle-user-list-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -66,11 +66,16 @@
     margin-left: 7px;
 }
 
-#select-all-btn:hover, #confirm-selection-btn:hover, #confirm-time-btn:hover {
+#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover {
     background-color: #ffffff;
     color: rgb(85, 85, 85);
     border-color: rgb(85, 85, 85);
     border-radius: 4px;
+}
+
+#select-all-btn:disabled, #confirm-selection-btn:disabled, #toggle-user-list-btn:disabled{
+    background-color: lightgray;
+    cursor: not-allowed;
 }
 
 .employee-training-container {
@@ -117,6 +122,10 @@
 .question-container {
     text-align: left;
     margin-bottom: 20px;
+}
+
+input[type='checkbox'] {
+    cursor: pointer;
 }
 
 
