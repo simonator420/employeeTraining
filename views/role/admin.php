@@ -66,104 +66,114 @@ use yii\helpers\Url;
 
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
-            <div class="employee-info" data-id="<?= Html::encode($user->id) ?>"
-                data-title="<?= Html::encode($user->profile->title) ?>"
-                data-location="<?= Html::encode($user->profile->storage_location) ?>">
+            <div class="employee-info-container" style="display: flex;">
+                <div class="employee-info" style="flex: 1; width: 50%;" data-id="<?= Html::encode($user->id) ?>"
+                    data-title="<?= Html::encode($user->profile->title) ?>"
+                    data-location="<?= Html::encode($user->profile->storage_location) ?>">
 
-                <p>
-                    <!-- Display the user's username and id -->
-                    <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
+                    <p>
+                        <!-- Display the user's username and id -->
+                        <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
 
-                    <!-- Display the user's fullname -->
-                    <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
-                    <?= Html::encode($user->profile->lastname) ?> <br>
+                        <!-- Display the user's fullname -->
+                        <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
+                        <?= Html::encode($user->profile->lastname) ?> <br>
 
-                    <!-- Display the user's title -->
-                    <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
+                        <!-- Display the user's title -->
+                        <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
 
-                    <!-- Display the user's address by concatenating available address components -->
-                    <strong>Address:</strong>
+                        <!-- Display the user's address by concatenating available address components -->
+                        <!-- <strong>Address:</strong>
                     <?php
-                    $addressComponents = [
-                        $user->profile->street,
-                        $user->profile->city,
-                        $user->profile->zip,
-                        $user->profile->country,
-                        $user->profile->state,
-                    ];
+                    // $addressComponents = [
+                    //     $user->profile->street,
+                    //     $user->profile->city,
+                    //     $user->profile->zip,
+                    //     $user->profile->country,
+                    //     $user->profile->state,
+                    // ];
+                
+                    // // Filtering out any empty values from the array
+                    // $filteredAddressComponents = array_filter($addressComponents);
+                
+                    // if (empty($filteredAddressComponents)) {
+                    //     echo 'N/A';
+                    // } else {
+                    //     echo Html::encode(implode(', ', $filteredAddressComponents)); // implode joins all elements into one string
+                    // }
+                    ?>
+                    <br> -->
 
-                    // Filtering out any empty values from the array
-                    $filteredAddressComponents = array_filter($addressComponents);
+                        <!-- Display the user's roles by concatenating group names -->
+                        <strong>Roles:</strong>
+                        <?php
+                        // Retrieves all the groups that the user is a part of
+                        $groups = $user->getGroups()->all();
+                        // Aplying callback to each element (group) in the array (groups) and getting array (groupNames) of all the group names
+                        $groupNames = array_map(function ($group) {
+                            return $group->name;
+                        }, $groups);
+                        echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
+                        ?><br>
 
-                    if (empty($filteredAddressComponents)) {
-                        echo 'N/A';
-                    } else {
-                        echo Html::encode(implode(', ', $filteredAddressComponents)); // implode joins all elements into one string
-                    }
-                    ?><br>
+                        <!-- Display the user's storage_location -->
+                        <strong>Storage Location:</strong>
+                        <?= Html::encode($user->profile->storage_location ?: 'N/A') ?><br>
 
-                    <!-- Display the user's roles by concatenating group names -->
-                    <strong>Roles:</strong>
-                    <?php
-                    // Retrieves all the groups that the user is a part of
-                    $groups = $user->getGroups()->all();
-                    // Aplying callback to each element (group) in the array (groups) and getting array (groupNames) of all the group names
-                    $groupNames = array_map(function ($group) {
-                        return $group->name;
-                    }, $groups);
-                    echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
-                    ?><br>
+                        <!-- Display the user's last login time -->
+                        <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
 
-                    <!-- Display the user's storage_location -->
-                    <strong>Storage Location:</strong> <?= Html::encode($user->profile->storage_location ?: 'N/A') ?><br>
+                        <!-- Display the time when last training was assigned for user -->
+                        <strong>Training Assigned Time:</strong>
 
-                    <!-- Display the user's last login time -->
-                    <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
+                        <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
+                        <span id="training-assigned-time-<?= $user->id ?>">
+                            <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
+                        </span><br>
 
-                    <!-- Display the time when last training was assigned for user -->
-                    <strong>Training Assigned Time:</strong>
+                        <!-- Display the time when user completed the training with dynamic class for color coding-->
+                        <!-- Assigning right CSS class (text color) based on the conditions -->
+                        <strong>Training Complete Time:</strong>
+                        <span id="training-complete-time-<?= $user->id ?>" class="<?php
 
-                    <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
-                    <span id="training-assigned-time-<?= $user->id ?>">
-                        <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
-                    </span><br>
+                          // Training has been completed by the employee
+                          if ($user->profile->training_complete_time) {
+                              echo 'text-green';
+                          }
+                          // Training has been scheduled for employee by admin
+                          elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
+                              echo 'text-orange';
+                          }
+                          // Training has been either set by the admin straight away or employee has seen the training that was scheduled but didn't complete it yet
+                          elseif ($user->profile->assigned_training) {
+                              echo 'text-red';
+                          }
+                          // Employee doesn't have any training set either completed 
+                          else {
+                              echo 'text-black';
+                          }
+                          ?>">
+                            <!-- If employee didn't complete the training yet display N/A -->
+                            <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
+                        </span>
 
-                    <!-- Display the time when user completed the training with dynamic class for color coding-->
-                    <!-- Assigning right CSS class (text color) based on the conditions -->
-                    <strong>Training Complete Time:</strong>
-                    <span id="training-complete-time-<?= $user->id ?>" class="<?php
+                    </p>
 
-                      // Training has been completed by the employee
-                      if ($user->profile->training_complete_time) {
-                          echo 'text-green';
-                      }
-                      // Training has been scheduled for employee by admin
-                      elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
-                          echo 'text-orange';
-                      }
-                      // Training has been either set by the admin straight away or employee has seen the training that was scheduled but didn't complete it yet
-                      elseif ($user->profile->assigned_training) {
-                          echo 'text-red';
-                      }
-                      // Employee doesn't have any training set either completed 
-                      else {
-                          echo 'text-black';
-                      }
-                      ?>">
-                        <!-- If employee didn't complete the training yet display N/A -->
-                        <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
-                    </span>
-
-                </p>
-
-                <!-- Checkbox to assign/unassign training -->
-                <label>
-                    <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
-                    <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
-                        <?= $user->profile->assigned_training ? 'checked' : '' ?>>
-                    Assigned Training
-                </label>
-                <hr>
+                    <!-- Checkbox to assign/unassign training -->
+                    <label>
+                        <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
+                        <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
+                            <?= $user->profile->assigned_training ? 'checked' : '' ?>>
+                        Assigned Training
+                    </label>
+                    <hr>
+                </div>
+                <?php if ($user->profile->training_complete_time): ?>
+                    <div class="right-panel"
+                        style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto;">
+                        USER HAS COMPLETED TRAINING
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>
