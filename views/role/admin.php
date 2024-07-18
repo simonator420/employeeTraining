@@ -34,8 +34,6 @@ use yii\helpers\Url;
         </div>
         <br>
 
-        <label>Select only particular users</label>
-
         <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
         <button id="select-all-btn">Select all</button>
         <button id="confirm-selection-btn">Assign Now</button>
@@ -50,9 +48,28 @@ use yii\helpers\Url;
 
         <hr>
 
+        <button id="toggle-user-list-btn">
+            Assign training to specific user <span id="arrow-down">▼</span>
+        </button>
+        <br><br>
+        <div id="user-list" style="display: none;">
+            <?php foreach ($users as $user): ?>
+                <label class="checkbox-label">
+                    <input type="checkbox" class="user-checkbox" value="<?= Html::encode($user->id) ?>">
+                    <?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
+                </label>
+                <br>
+            <?php endforeach; ?>
+            <button id="select-all-users-btn">Select All</button>
+            <button id="confirm-specific-users-btn">Assign Now</button>
+        </div>
+        <hr>
+        <br>
+
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
-            <div class="employee-info" data-title="<?= Html::encode($user->profile->title) ?>"
+            <div class="employee-info" data-id="<?= Html::encode($user->id) ?>"
+                data-title="<?= Html::encode($user->profile->title) ?>"
                 data-location="<?= Html::encode($user->profile->storage_location) ?>">
 
                 <p>
@@ -107,7 +124,7 @@ use yii\helpers\Url;
 
                     <!-- Display the time when last training was assigned for user -->
                     <strong>Training Assigned Time:</strong>
-                    
+
                     <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
                     <span id="training-assigned-time-<?= $user->id ?>">
                         <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
@@ -159,9 +176,17 @@ use yii\helpers\Url;
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $assignTrainingUrl = Url::to(['role/assign-training']);
 $script = <<<JS
-    // jQuery event handler for checkbox change 
+
+var currentTime = null;
+var now = new Date();
+// Adjusting the time to local timezone
+var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
+document.getElementById("training-time-picker").setAttribute("min", currentTime);
+    
+// jQuery event handler for checkbox change 
     $(document).on('change', '.toggle-info-btn', function() {
-        
+
         // Get user ID from the data attribute
         // this refers to the checkbox
         // data('id') refers to the data-id attribute
@@ -225,81 +250,139 @@ $script = <<<JS
             }
         });
     });
-    // Event handler for "Assign to all" title checkboxes click
+    // Function ensuring that the code inside runs only after the whole HTML document has been fully loaded
     $(document).ready(function() {
+    
+    // Variable to track the toggle state of the action (check/uncheck)
     var toggleState = false;
-    var selectAll = false;
 
+    // Variable to track whether all checkboxes should be selected or deselected when the "Select All" button is clicked
+    var selectAll = false;
+    var selectAllUsers = false;
+
+    // Function that is executed whenever the "Assign Now" button is clicked
     $('#confirm-selection-btn').on('click', function() {
+
+        // Array to store the selected titles
         var selectedTitles = [];
+        // Iterate through all checked title checkboxes
         $('.title-checkbox:checked').each(function() {
+            // For each checked checkbox, its value is added to the selectedTitles array
             selectedTitles.push($(this).val());
         });
 
+        // Array to store the selected locations 
         var selectedLocations = [];
+        // Iterate through all checked title checkboxes
         $('.location-checkbox:checked').each(function() {
+            // For each checked checkbox, its value is added to the selectedLocations array
             selectedLocations.push($(this).val());
         });
 
-        var toggleAction = toggleState ? 'uncheck' : 'check';
+        // Determine the toggle action based on the current state of toggleState
+        // If toggleState is true, set toggleAction to 'uncheck', otherwise set it to 'check'
+        var toggleAction = 'check';
+        var userNumber = $('.toggle-info-btn').length
+        var anyChecked = $('.toggle-info-btn:checked').length;
+        if (userNumber === anyChecked) {
+            toggleAction = 'uncheck';
+        }
 
+        // Iterating over all elements with the class '.employee-info' (the card with the details about each employee)
         $('.employee-info').each(function() {
+
+            // Retrieves the value of the data-title attribute for the current .employee-info element (this)
+            // This value represents the storage location of the user
             var userTitle = $(this).data('title');
+
+            // Retrieve the value of the data-locate attribute for the current .employee-info element
+            // This value represents the storage location of the user
             var userLocation = $(this).data('location');
+
+            // Finding the checkbox element within the current .employee-info element
+            // This checkbox will be toggled based on the selected titles and location
             var checkbox = $(this).find('.toggle-info-btn');
 
+            // Checks if the userTitle is in the selectedTitles array
             var titleMatch = selectedTitles.includes(userTitle);
+            
+            // Checks if the userLocation is in the selectedLocations array
             var locationMatch = selectedLocations.includes(userLocation);
 
+            // If both titles and locations are selected (at least one title and one location checkbox in the filter section)
             if (selectedTitles.length > 0 && selectedLocations.length > 0) {
-                // Both titles and locations are selected
-                if (titleMatch && locationMatch) {
+                // Check if both titles and locations are true
+                if (titleMatch && locationMatch) {   
+                    // Set the checkbox's checked property base on the value of toggleAction and trigger the change event
                     checkbox.prop('checked', toggleAction === 'check').trigger('change');
                 }
-            } else if (selectedTitles.length > 0) {
-                // Only titles are selected
+            } 
+            
+            // If only titles are selected
+            else if (selectedTitles.length > 0) {
+                // Check if titleMatch is true
                 if (titleMatch) {
+                    // If matches, set the checkbox's chcekd property base on the value of 'toggleAction' and triger the 'change' event
                     checkbox.prop('checked', toggleAction === 'check').trigger('change');
                 }
-            } else if (selectedLocations.length > 0) {
-                // Only locations are selected
+            }
+            
+            // If only locations are selected
+            else if (selectedLocations.length > 0) {
+                // Check if locationMatch is true
                 if (locationMatch) {
+                    // If matches, set the checkbox's checked property base on the value of 'toggleAction' and trigger the 'change' event
                     checkbox.prop('checked', toggleAction === 'check').trigger('change');
                 }
             }
         });
 
-        toggleState = !toggleState; // Toggle the state for the next click
+        // Toggle the state for the next click
+        toggleState = !toggleState;
     });
 
+    // Function to toggle the state (check/uncheck) of all title and location checkboxes
     $('#select-all-btn').on('click', function() {
-        selectAll = !selectAll; // Toggle the select all state
+        // Variable to keep track of whether the checkboxes should be selected or deselected
+        selectAll = !selectAll;
+        // Setting the checked property of all title and location checkboxes to the value of selectAll
         $('.title-checkbox').prop('checked', selectAll);
         $('.location-checkbox').prop('checked', selectAll);
     });
 
+    // Function to assign training at a specific time or immediately
     $('#confirm-time-btn').on('click', function() {
+        // Retrieve the selected time from the datetime-local input
         var selectedTime = $('#training-time-picker').val();
+        // If no time is selected, it shows an alert and exits the function
         if (!selectedTime) {
             alert('Please select a time.');
             return;
         }
 
+        // Array to store the selected titles
         var selectedTitles = [];
+        // Iterate through all checked title checkboxes
         $('.title-checkbox:checked').each(function() {
+            // For each checked checkbox, its value is added to the selectedTitless array
             selectedTitles.push($(this).val());
         });
 
+        // Array to store the selected locations
         var selectedLocations = [];
+        // Iterate through all checked location checkboxes
         $('.location-checkbox:checked').each(function() {
+            // For each checked checkbox, its value is added to the selectedLocations array
             selectedLocations.push($(this).val());
         });
 
+        // If no title or location is selected, show an alert and exit the function
         if (selectedTitles.length === 0 && selectedLocations.length === 0) {
             alert('Please select at least one title or location.');
             return;
         }
 
+        // Get the current time and adjust it to the local timezone and format it as a string in the ISO format
         var now = new Date();
         var localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
         var currentTime = localNow.toISOString().slice(0, 19).replace('T', ' ');
@@ -355,6 +438,94 @@ $script = <<<JS
                 }
             });
         }
+    });
+    $('#toggle-user-list-btn').on('click', function() {
+        var userList = $('#user-list');
+        userList.toggle(); // Toggle the visibility of the user list
+        var arrow = $('#arrow-down');
+        if (userList.is(':visible')) {
+            arrow.text('▲'); // Change arrow to up if the list is visible
+        } else {
+            arrow.text('▼'); // Change arrow to down if the list is hidden
+        }
+    });
+
+    // Event handler for "Assign Now" button in user list
+    $('#confirm-specific-users-btn').on('click', function() {
+        // Array to store the selected user IDs
+        var selectedUsers = [];
+        // Iterate through all checked user checkboxes
+        $('.user-checkbox:checked').each(function() {
+            // For each checked checkbox, its value (user ID) is added to the selectedUsers array
+            selectedUsers.push($(this).val());
+        });
+
+        console.log("Selected users:", selectedUsers);
+
+        var toggleAction = 'check';
+        var userNumber = $('.toggle-info-btn').length
+        var anyChecked = $('.toggle-info-btn:checked').length;
+        if (userNumber === anyChecked) {
+            toggleAction = 'uncheck';
+        }
+        console.log("Toggle action:", toggleAction);
+
+        // Iterate over all elements with the class '.employee-info' (the card with the details about each employee)
+        $('.employee-info').each(function() {
+            // Retrieves the user ID from the data-id attribute of the current .employee-info element (this)
+            var userId = $(this).data('id');
+            console.log("Checking user ID:", userId);
+
+            // Check if userId is undefined and log it
+            if (typeof userId === 'undefined') {
+                console.error("userId is undefined for element", $(this));
+                return;
+            }
+
+            // Finding the checkbox element within the current .employee-info element
+            // This checkbox will be toggled based on the selected users
+            var checkbox = $(this).find('.toggle-info-btn');
+
+            // Checks if the userId is in the selectedUsers array
+            var userMatch = selectedUsers.includes(userId.toString());
+            console.log("Does user ID match?", userMatch);
+
+            // If the user ID matches one of the selected users
+            if (userMatch) {
+                console.log("Match found, toggling checkbox for user ID:", userId);
+                // Toggle the checkbox's checked property based on the toggleAction value and trigger the change event
+                checkbox.prop('checked', toggleAction === 'check').trigger('change');
+            } else {
+                console.log("No match, not toggling checkbox for user ID:", userId);
+            }
+        });
+
+        // Toggle the state for the next click
+        toggleState = !toggleState;
+    });
+
+    $('#select-all-users-btn').on('click', function() {
+        selectAllUsers = !selectAllUsers;
+        $('.user-checkbox').prop('checked', selectAllUsers);
+        $('.title-checkbox').prop('disabled', selectAllUsers);
+        $('.location-checkbox').prop('disabled', selectAllUsers);
+    })
+
+    $('.user-checkbox').on('change', function() {
+        var anyUserChecked = $('.user-checkbox:checked').length > 0;
+        $('.title-checkbox').prop('disabled', anyUserChecked);
+        $('.location-checkbox').prop('disabled', anyUserChecked);
+        $('#select-all-btn').prop('disabled', anyUserChecked);
+        $('#confirm-selection-btn').prop('disabled', anyUserChecked);
+    });
+    
+    $('.title-checkbox, .location-checkbox').on('change', function() {
+        var anyTitleOrLocationChecked = $('.title-checkbox:checked').length > 0 || $('.location-checkbox:checked').length > 0;
+        $('.user-checkbox').prop('disabled', anyTitleOrLocationChecked);
+        $('#user-list').hide();
+        $('#toggle-user-list-btn').prop('disabled', anyTitleOrLocationChecked);
+        $('#arrow-down').text('▼');
+        $('#select-all-btn').prop('disabled', false);
     });
 });
 

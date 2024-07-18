@@ -15,6 +15,7 @@ class RoleController extends Controller
 {
 
     // Function for handling the request to display the Employee Training Overview page
+    // TODO implement here to set assigned_training to 1 for every user that has been assigned the training with the date picker
     public function actionAdmin()
     {
         // Retrieve all users from the database
