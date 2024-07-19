@@ -6,45 +6,51 @@ use yii\helpers\Url;
 
 ?>
 
-<div class="training-questions-form">
+<div class="training-question-container">
+    <div class="training-questions-form">
 
-    <h1>Create Training Questions</h1>
+        <h1>Edit Training Questions</h1>
 
-    <?php $form = ActiveForm::begin([
-        'id' => 'training-questions-form',
-        'enableAjaxValidation' => false,
-        'enableClientValidation' => true,
-    ]); ?>
+        <br>
 
-    <div class="form-group">
-        <label>Select Title</label><br>
-        <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control', 'id' => 'title-select']) ?>
-    </div>
+        <?php $form = ActiveForm::begin([
+            'id' => 'training-questions-form',
+            'enableAjaxValidation' => false,
+            'enableClientValidation' => true,
+        ]); ?>
 
-    <div id="questions-container">
-        <!-- Questions will be dynamically loaded here -->
-        <div class="question-item">
-            <label>Question 1</label>
-            <div class="form-group">
-                <?= Html::dropDownList('TrainingQuestions[0][type]', null, ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['prompt' => 'Select Type', 'class' => 'form-control question-type']) ?>
-            </div>
-            <div class="form-group">
-                <?= Html::textInput('TrainingQuestions[0][question]', '', ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']) ?>
+
+        <div class="form-group">
+            <label>Select Title</label><br>
+            <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control', 'id' => 'title-select']) ?>
+        </div>
+
+        <div id="questions-container" style="display: none;">
+            <div class="question-item">
+                <label>Question 1</label>
+                <div class="form-group">
+                    <?= Html::dropDownList('TrainingQuestions[0][type]', null, ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['prompt' => 'Select Type', 'class' => 'form-control question-type']) ?>
+                </div>
+                <div class="form-group">
+                    <?= Html::textInput('TrainingQuestions[0][question]', '', ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']) ?>
+                </div>
             </div>
         </div>
+
+        <div class="form-group">
+            <button type="button" id="add-question-btn" class="btn btn-secondary" style="display: none;">+ Add
+                Question</button>
+            <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">- Remove
+                Question</button>
+        </div>
+
+        <div class="form-group">
+            <?= Html::button('OK', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
+        </div>
+
+        <?php ActiveForm::end(); ?>
+
     </div>
-
-    <div class="form-group">
-        <button type="button" id="add-question-btn" class="btn btn-secondary">+ Add Question</button>
-        <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">- Remove Question</button>
-    </div>
-
-    <div class="form-group">
-        <?= Html::button('OK', ['class' => 'btn btn-success', 'id' => 'submit-btn']) ?>
-    </div>
-
-    <?php ActiveForm::end(); ?>
-
 </div>
 
 <?php
@@ -63,9 +69,7 @@ $('#title-select').on('change', function() {
             success: function(response) {
                 if (response.success) {
                     $('#questions-container').html(response.html);
-                    console.log("Fetched Questions:", response.html);
                 } else {
-                    // If no records, display the initial empty question
                     $('#questions-container').html(
                         '<div class="question-item">' +
                             '<label>Question 1</label>' +
@@ -82,9 +86,10 @@ $('#title-select').on('change', function() {
                             '</div>' +
                         '</div>'
                     );
-                    console.log("No questions found for the selected title.");
                 }
+                $('#questions-container').show();
                 $('#add-question-btn').show();
+                $('#submit-btn').show();
                 updateQuestionLabels();
                 if ($('.question-item').length > 1) {
                     $('#remove-question-btn').show();
@@ -114,8 +119,10 @@ $('#title-select').on('change', function() {
                 '</div>' +
             '</div>'
         );
+        $('#questions-container').hide();
         $('#add-question-btn').hide();
         $('#remove-question-btn').hide();
+        $('#submit-btn').hide();
     }
 });
 

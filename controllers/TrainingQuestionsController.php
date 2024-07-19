@@ -33,18 +33,9 @@ class TrainingQuestionsController extends Controller
             ->bindValue(':title', $title)
             ->queryAll();
 
-        if ($questions) {
-            foreach ($questions as $question) {
-                Yii::info('Question: ' . $question['question']);
-            }
-        } else {
-            Yii::info('No questions found for the title: ' . $title);
-        }
-
         $html = '';
         if ($questions) {
             foreach ($questions as $index => $question) {
-                Yii::info('Question ' . ($index + 1) . ': ' . json_encode($question)); // Log the question details
                 $html .= '<div class="question-item">';
                 $html .= '<label>Question ' . ($index + 1) . '</label>';
                 $html .= '<div class="form-group">';

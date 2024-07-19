@@ -10,7 +10,7 @@ use yii\helpers\Url;
     <div class="employee-info-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h1>Employee Training Overview</h1>
-            <?= Html::a('Edit Questions', Url::to(['training-questions/questions']), ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Edit Questions', Url::to(['training-questions/questions']), ['class' => 'btn edit-question-btn']) ?>
         </div>
 
         <!-- Checkboxes for each title with label "Assign to all" -->
