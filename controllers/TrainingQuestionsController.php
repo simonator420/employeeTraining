@@ -84,4 +84,62 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
+
+    public function actionDisplayQuestions($title)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+    
+        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE title = :title ORDER BY `order`')
+            ->bindValue(':title', $title)
+            ->queryAll();
+    
+        $html = '';
+        if ($questions) {
+            foreach ($questions as $index => $question) {
+                $html .= '<div class="question-item">';
+                $html .= '<div class="form-group">';
+                $html .= '<p class="question-employee"><b>' . Html::encode($question['question']) . '</b></p>';
+                switch ($question['type']) {
+                    case 'text':
+                        $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', ['class' => 'form-control question-input', 'placeholder' => 'Enter your answer here']);
+                        break;
+                    case 'number':
+                        $html .= Html::input('number', "TrainingQuestions[$index][answer]", '', ['class' => 'form-control question-input number-input', 'min' => '1', 'max' => '5', 'placeholder' => '1-5']);
+                        break;
+                    case 'range':
+                        $html .= '<div class="range-container">';
+                        $html .= '<span>Not much</span>';
+                        $html .= Html::input('range', "TrainingQuestions[$index][answer]", '50', ['class' => 'form-control question-input', 'min' => '1', 'max' => '100']);
+                        $html .= '<span>Very much</span>';
+                        $html .= '</div>';
+                        break;
+                }
+                $html .= '</div>';
+                $html .= '</div>';
+            }
+            
+            $html .= '<script>';
+            $html .= '$(document).ready(function() {';
+            $html .= '$(".form-control[type=\"number\"]").on("input", function() {
+                var value = $(this).val();
+                if (value < 1) {
+                    $(this).val(1);
+                } else if (value > 5) {
+                    $(this).val(5);
+                }
+            });';
+            $html .= '$(".form-control[type=\"number\"]").on("keypress", function(e) {
+                var charCode = (e.which) ? e.which : e.keyCode;
+                if (charCode < 49 || charCode > 53) {
+                    e.preventDefault();
+                }
+            });';
+            $html .= '});';
+            $html .= '</script>';
+    
+            return ['success' => true, 'html' => $html];
+        } else {
+            return ['success' => false];
+        }
+    }
 }
