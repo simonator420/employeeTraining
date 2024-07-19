@@ -32,7 +32,7 @@ $(document).ready(function() {
             if (response.success) {
                 $('#questions-container').html(response.html);
             } else {
-                $('#questions-container').html('<p>No questions available for this title.</p>');
+                $('#questions-container').html('<p>No questions available.</p>');
             }
         },
         error: function() {

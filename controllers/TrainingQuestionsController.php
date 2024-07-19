@@ -9,14 +9,19 @@ use yii\helpers\Html;
 
 class TrainingQuestionsController extends Controller
 {
+    // Function for displaying the questions page
     public function actionQuestions()
     {
+
         $currentUser = Yii::$app->user;
 
+        // Check if the logged in user is admin
         if (!$currentUser->isAdmin()) {
+            // Redirect to acces denied if the user isn't admin
             return $this->redirect(['site/access-denied']);
         }
 
+        
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')->queryColumn();
         sort($titles);
 
@@ -25,6 +30,7 @@ class TrainingQuestionsController extends Controller
         ]);
     }
 
+    // Function for retrieving the questions from database and displaying it for admin
     public function actionFetchQuestions($title)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -51,7 +57,8 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
-
+    // Function for saving the questions into database by admin
+    // TODO Id always start from the lowest, adjust the size of the dropboxes
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -85,6 +92,7 @@ class TrainingQuestionsController extends Controller
         }
     }
 
+    // Function for displaying the questions from database in the form for the user
     public function actionDisplayQuestions($title)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

@@ -45,7 +45,7 @@ use yii\helpers\Url;
         </div>
 
         <div class="form-group">
-            <?= Html::button('OK', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
+            <?= Html::button('Submit', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         </div>
 
         <?php ActiveForm::end(); ?>
