@@ -49,7 +49,7 @@ class RoleController extends Controller
 
         // Retrieve all unique storage locations from the profile table
         $storage_locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
-        ->queryColumn();
+            ->queryColumn();
 
         sort($storage_locations);
 
@@ -121,37 +121,47 @@ class RoleController extends Controller
 
     public function actionAssignTraining()
     {
+        // Set the response format to JSON
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $rawTime = \Yii::$app->request->post('selected_time');
-        $selectedTitles = \Yii::$app->request->post('selected_titles');
-        $selectedLocations = \Yii::$app->request->post('selected_locations');
+        // Retrieve the posted data for selected time, titles, and locations
+        $rawTime = \Yii::$app->request->post('selected_time'); // Raw time selected by the user
+        $selectedTitles = \Yii::$app->request->post('selected_titles'); // Array of selected titles
+        $selectedLocations = \Yii::$app->request->post('selected_locations'); // Array of selected storage locations
+
+        // Convert the raw time to a standard format
         $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
 
+        // Find users whose profiles match the selected titles and storage locations
         $users = User::find()
-            ->joinWith('profile')
-            ->andFilterWhere(['profile.title' => $selectedTitles])
-            ->andFilterWhere(['profile.storage_location' => $selectedLocations])
-            ->all();
+            ->joinWith('profile') // Join with the profile table
+            ->andFilterWhere(['profile.title' => $selectedTitles]) // Filter by selected titles
+            ->andFilterWhere(['profile.storage_location' => $selectedLocations]) // Filter by selected storage locations
+            ->all(); // Get all matching users
 
+        // Iterate over each user and update their profile
         foreach ($users as $user) {
-            // Update training_assigned_time and reset assigned_training if time is now
+            // Update training_assigned_time with the selected time
             $user->profile->training_assigned_time = $selectedTime;
+            // Reset assigned_training to 0 (not assigned)
             $user->profile->assigned_training = 0;
+            // Clear training_complete_time (set to null)
             $user->profile->training_complete_time = null;
 
+            // Save the updated profile and check for errors
             if (!$user->profile->save()) {
+                // If saving fails, return a failure response
                 return ['success' => false];
             }
         }
-
+        // Return a success response if all updates are successful
         return ['success' => true];
     }
 
     // Handling the AJAX request to mark the training as complete for the current user
     public function actionCompleteTraining()
     {
-        // Setting the response format to JSON
+        // Set the response format to JSON
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         // Retrieve the id of the currently logged-in user
@@ -162,17 +172,27 @@ class RoleController extends Controller
 
         // Get the request data
         $requestData = Yii::$app->request->post();
-        // Yii::info('Complete Training request data: ' . var_export($requestData, true));
-        $accountingOne = isset($requestData['accounting_one']) ? $requestData['accounting_one'] : null;
-        Yii::info('Accounting One: ' . $accountingOne);
-
+    
+        // Extracting answers
+        $answers = [];
+        if (isset($requestData['TrainingQuestions'])) {
+            foreach ($requestData['TrainingQuestions'] as $index => $question) {
+                if (isset($question['answer'])) {
+                    $answers["TrainingQuestions[$index][answer]"] = $question['answer'];
+                    Yii::info($question['answer']);
+                }
+            }
+        }
+    
+        // Debug: Log extracted answers
+        Yii::info('Extracted Answers: ' . json_encode($answers, JSON_PRETTY_PRINT));
+    
         // Check if the user exists
         if ($user) {
 
             // Update the user's training_complete_time attribute with current time
             $user->profile->training_complete_time = new \yii\db\Expression('NOW()');
 
-            Yii::info('Accounting One: ' . $accountingOne . 'training completed');
             // Update the user's assigned_training attribute to 0
             $user->profile->assigned_training = 0;
 

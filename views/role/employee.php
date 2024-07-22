@@ -21,62 +21,88 @@ use yii\helpers\Url;
 </div>
 
 <?php
+// URL to display questions based on the title
 $displayQuestionsUrl = Url::to(['training-questions/display-questions', 'title' => $title]);
+// URL to complete the training
 $completeTrainingUrl = Url::to(['role/complete-training']);
 $script = <<<JS
+// Document ready function to initialize when the page is loaded
 $(document).ready(function() {
+    // AJAX request to fetch questions based on the title
     $.ajax({
         url: '$displayQuestionsUrl',
         type: 'GET',
         success: function(response) {
+            // If the response is successful, display the questions in the container
             if (response.success) {
                 $('#questions-container').html(response.html);
-            } else {
+            }
+            // If no questions are available, display a message
+            else {
                 $('#questions-container').html('<p>No questions available.</p>');
             }
         },
+        // Error function if an error occurs while fetching questions
         error: function() {
             alert('Error occurred while fetching questions.');
         }
     });
 });
 
+// Flag to check if training is completed
 let trainingCompleted = false;
 
+// Event handler for the submit button click
 $('#submit-btn').on('click', function(e) {
+    // Prevent the default form submissions
     e.preventDefault();
     
     if (!trainingCompleted) {
+        // Flag to check if the form inputs are valid
         let isValid = true;
+        // Data object to hold form inputs and CSRF token
         let data = { _csrf: yii.getCsrfToken() };
 
+        // Iterate over each input field to collect data and validate
         $('.question-input').each(function() {
+            // Get the name attribute of the input
             let inputName = $(this).attr('name');
+            // Get the value of the input
             let inputValue = $(this).val();
 
+            // If the input value is empty, mark the input as invalid and highlight it
             if (!inputValue) {
                 isValid = false;
                 $(this).css('border', '2px solid red');
-            } else {
+            }
+            // If input value is valid, reset the border color
+            else {
                 $(this).css('border', '1px solid #dee2e6');
             }
 
+            // Add the input name and value to the data object
             data[inputName] = inputValue;
         });
-
+        
         if (isValid) {
+            // If all inputs are valid, make an AJAX POST request to complete the training
             $.ajax({
                 url: '$completeTrainingUrl',
                 type: 'POST',
                 data: data,
                 success: function(response) {
                     if (response.success) {
+                        // If the response is successful, mark the training as completed
+                        console.log(data)
                         alert('Thank you for completing the training!');
                         trainingCompleted = true;
                         var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                        // Update the training completion time
                         $('#training-complete-time-' + response.userId).text(currentTime);
+                        // Redirect to the dashboard
                         window.location.href = $('#submit-btn').attr('href');
                     } else {
+                        // If the response is not successful, alert the user
                         alert('Failed to complete the training. Please try again or contact System Administrator.');
                     }
                 },
@@ -88,11 +114,15 @@ $('#submit-btn').on('click', function(e) {
     }
 });
 
+
+// Event handler for number input validation
 $('.form-control[type="number"]').on('input', function() {
     var value = $(this).val();
     if (value < 1) {
+        // Set minimum value to 1
         $(this).val(1);
     } else if (value > 5) {
+        // Set maximum value to 5
         $(this).val(5);
     }
 });

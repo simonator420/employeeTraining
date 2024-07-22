@@ -13,6 +13,7 @@ use yii\helpers\Url;
 
         <br>
 
+        <!-- Begin the ActiveForm -->
         <?php $form = ActiveForm::begin([
             'id' => 'training-questions-form',
             'enableAjaxValidation' => false,
@@ -22,14 +23,14 @@ use yii\helpers\Url;
 
         <div class="form-group">
             <label>Select Title</label><br>
-            <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control', 'id' => 'title-select']) ?>
+            <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control title-dropdown', 'id' => 'title-select']) ?>
         </div>
 
         <div id="questions-container" style="display: none;">
             <div class="question-item">
                 <label>Question 1</label>
                 <div class="form-group">
-                    <?= Html::dropDownList('TrainingQuestions[0][type]', null, ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['prompt' => 'Select Type', 'class' => 'form-control question-type']) ?>
+                    <?= Html::dropDownList('TrainingQuestions[0][type]', 'text', ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['class' => 'form-control question-type']) ?>
                 </div>
                 <div class="form-group">
                     <?= Html::textInput('TrainingQuestions[0][question]', '', ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']) ?>
@@ -45,7 +46,20 @@ use yii\helpers\Url;
         </div>
 
         <div class="form-group">
+            <button type="button" id="advanced-settings-btn" style="display:none;">Advanced settings</button> <br>
+            <div id="assign-to-all" style="display: none;">
+                <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
+                <label for="all-users">Assign questions to all titles</label>
+            </div>
+        </div>
+
+
+        <div class="form-group">
             <?= Html::button('Submit', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
+        </div>
+
+        <div class="form-group">
+
         </div>
 
         <?php ActiveForm::end(); ?>
@@ -57,24 +71,34 @@ use yii\helpers\Url;
 $createQuestionsUrl = Url::to(['training-questions/save-questions']);
 $fetchQuestionsUrl = Url::to(['training-questions/fetch-questions']);
 $script = <<<JS
+
+// Event handler for title selection change
 $('#title-select').on('change', function() {
     var selectedTitle = $(this).val();
     var titleText = $('#title-select option:selected').text();
     console.log(titleText);
     if (selectedTitle) {
+        // Make an AJAX request to fetch questions related to the selected title
         $.ajax({
+            // Url to fetch questions
             url: '$fetchQuestionsUrl',
+            // Request method
             type: 'GET',
+            // Data sent to the server
             data: { title: titleText },
+            // Callback function for successful request
             success: function(response) {
+                // If the response is successfull, update the constraints
                 if (response.success) {
                     $('#questions-container').html(response.html);
-                } else {
+                } 
+                // If no questions found, display a default question form
+                else {
                     $('#questions-container').html(
                         '<div class="question-item">' +
                             '<label>Question 1</label>' +
                             '<div class="form-group">' +
-                                '<select name="TrainingQuestions[0][type]" class="form-control question-type">' +
+                                '<select name="TrainingQuestions[0][type]" class="form-control question-type title-dropdown">' +
                                     '<option value="">Select Type</option>' +
                                     '<option value="text">Text</option>' +
                                     '<option value="number">Number</option>' +
@@ -87,27 +111,34 @@ $('#title-select').on('change', function() {
                         '</div>'
                     );
                 }
+                // Show the questions container and action buttons
                 $('#questions-container').show();
                 $('#add-question-btn').show();
+                $('#advanced-settings-btn').show();
                 $('#submit-btn').show();
+                // Update the labels for each question
                 updateQuestionLabels();
+                // Show the remove question button if there is more than one question
                 if ($('.question-item').length > 1) {
                     $('#remove-question-btn').show();
                 } else {
                     $('#remove-question-btn').hide();
                 }
             },
+            // Callback function for error response
             error: function(xhr, status, error) {
                 alert('Error occurred while fetching questions.');
                 console.log("Error details:", xhr.responseText, status, error);
             }
         });
-    } else {
+    } 
+    // If no title is selected, reset the questions container with a default question form
+    else {
         $('#questions-container').html(
             '<div class="question-item">' +
                 '<label>Question 1</label>' +
                 '<div class="form-group">' +
-                    '<select name="TrainingQuestions[0][type]" class="form-control question-type">' +
+                    '<select name="TrainingQuestions[0][type]" class="form-control question-type title-dropdown">' +
                         '<option value="">Select Type</option>' +
                         '<option value="text">Text</option>' +
                         '<option value="number">Number</option>' +
@@ -119,22 +150,27 @@ $('#title-select').on('change', function() {
                 '</div>' +
             '</div>'
         );
+        // Hide the questions container and action buttons
         $('#questions-container').hide();
         $('#add-question-btn').hide();
         $('#remove-question-btn').hide();
+        $('#advanced-settings-btn').hide();
         $('#submit-btn').hide();
+        $('#assign-to-all').hide();
     }
 });
-
+// Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {
+    // Get the current number of question items
     var questionIndex = $('.question-item').length;
+    
+    // Generate a new question item HTML
     var newQuestionItem = 
         '<div class="question-item">' +
             '<label>Question ' + (questionIndex + 1) + '</label>' +
             '<div class="form-group">' +
                 '<select name="TrainingQuestions[' + questionIndex + '][type]" class="form-control question-type">' +
-                    '<option value="">Select Type</option>' +
-                    '<option value="text">Text</option>' +
+                    '<option value="text" selected>Text</option>' +
                     '<option value="number">Number</option>' +
                     '<option value="range">Range</option>' +
                 '</select>' +
@@ -144,58 +180,115 @@ $('#add-question-btn').on('click', function() {
             '</div>' +
         '</div>';
 
+    // Appemd the new question item to the questions container
     $('#questions-container').append(newQuestionItem);
+    // Update the labels for all question items
     updateQuestionLabels();
+    // Show the "Remmove Question" button if there is more than one question item
     if ($('.question-item').length > 1) {
         $('#remove-question-btn').show();
     }
 });
 
+// Event handler for the "Remove Question" button click
 $('#remove-question-btn').on('click', function() {
+    // Remove the last question item
     $('.question-item').last().remove();
+    // Update the labels for all remaining question items
     updateQuestionLabels();
+    // Hide the "Remove Question" button if only one question item remains
     if ($('.question-item').length <= 1) {
         $('#remove-question-btn').hide();
     }
 });
 
+// TODO make button unchecked if the it's not toggle
+$('#advanced-settings-btn').on('click', function() {
+    var allUsers = $('#assign-to-all');
+    allUsers.toggle();
+})
+
+// Event handler for "Submit" button click
 $('#submit-btn').on('click', function() {
+    // Get the form element
     var form = document.getElementById('training-questions-form');
+    // Create a FormData object from the form
     var formData = new FormData(form);
 
-    $.ajax({
-        url: '$createQuestionsUrl',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                alert('Questions saved successfully!');
-            } else {
-                alert('Failed to save questions.');
-                console.log(response.errors);
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error occurred while saving questions.');
-            console.log(xhr.responseText);
+    let isValid = true;
+
+    // Iterate over each input field to collect data and validate
+    $('.question-text').each(function() {
+        // Get the name attribute of the input
+        let inputName = $(this).attr('name');
+        // Get the value of the input
+        let inputValue = $(this).val();
+
+        // If the input value is empty, mark the input as invalid and highlight it
+        if (!inputValue) {
+            isValid = false;
+            $(this).css('border', '2px solid red');
+        }
+        // If input value is valid, reset the border color
+        else {
+            $(this).css('border', '1px solid #dee2e6');
         }
     });
+
+    if (isValid) {
+        // Make an AJAX request to submit the form data
+        $.ajax({
+            // URL to save questions
+            url: '$createQuestionsUrl',
+            // Request method
+            type: 'POST',
+            // Form data
+            data: formData,
+            // Prevent jQuerry from processing the data
+            processData: false,
+            // Prevent jQuerry from setting the content type
+            contentType: false,
+            // Callback function for successful response
+            success: function(response) {
+                if (response.success) {
+                    alert('Questions saved successfully!');
+                } else {
+                    alert('Failed to save questions.');
+                    console.log(response.errors);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error occurred while saving questions.');
+                console.log(xhr.responseText);
+            }
+        });
+    }
 });
 
+// Function to update labels of all question items
 function updateQuestionLabels() {
     $('.question-item').each(function(index) {
+        // Update label text
         $(this).find('label').text('Question ' + (index + 1));
     });
 }
 
+// Document ready function to initialize the form
 $(document).ready(function() {
+    // Update labels when the document is ready
     updateQuestionLabels();
     if ($('.question-item').length <= 1) {
+        // Hide the "Remove Question" button if only one question item
         $('#remove-question-btn').hide();
     }
 });
 JS;
 $this->registerJs($script);
 ?>
+
+<style>
+    .title-dropdown {
+        width: 190px;
+        /* Adjust the width as needed */
+    }
+</style>

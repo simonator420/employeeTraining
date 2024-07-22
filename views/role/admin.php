@@ -44,15 +44,19 @@ use yii\helpers\Url;
         <br>
         <br>
 
+        <!-- Input for selecting date and time when the training should be assigned -->
         <label>Or select time when the training should be assigned.</label>
         <input type="datetime-local" id="training-time-picker" name="training-time">
         <button id="confirm-time-btn">OK</button>
         <br>
 
+        <!-- Button to toggle visibility of the user list for specific training assignment -->
         <button id="toggle-user-list-btn">
             Assign training to specific user <span id="arrow-down">▼</span>
         </button>
         <br><br>
+
+        <!-- User list for specific training assignment, hidden by default -->
         <div id="user-list" style="display: none;">
             <?php foreach ($users as $user): ?>
                 <label class="checkbox-label">
@@ -171,12 +175,15 @@ use yii\helpers\Url;
                     </label>
                     <hr>
                 </div>
+
+                <!-- Windows for displaying answers from user -->
                 <?php if ($user->profile->training_complete_time): ?>
                     <div class="right-panel"
                         style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto;">
                         USER HAS COMPLETED TRAINING
                     </div>
                 <?php endif; ?>
+                
             </div>
         <?php endforeach; ?>
     </div>
@@ -188,9 +195,9 @@ $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $assignTrainingUrl = Url::to(['role/assign-training']);
 $script = <<<JS
 
+// Get the current time and adjust it to the local timezone
 var currentTime = null;
 var now = new Date();
-// Adjusting the time to local timezone
 var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 document.getElementById("training-time-picker").setAttribute("min", currentTime);
@@ -352,24 +359,30 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
     // Function to toggle the state (check/uncheck) of all title and location checkboxes
     $('#select-all-btn').on('click', function() {
+        // Variable to determine if all checkboxes are currently selected
         var selectAll = true;
 
+        // Iterate through each title and location checkbox
         $('.title-checkbox, .location-checkbox').each(function() {
+            // If any checkbox is not checked, set selectAll to false and break the loop
             if (!$(this).is(':checked')) {
                 selectAll = false;
-                return false;
+                return false; // Break the loop
             }
         })
 
-        // Variable to keep track of whether the checkboxes should be selected or deselected
+        // Toggle the state of selectAll (if all were selected, it will now be false, and vice versa)
         selectAll = !selectAll;
         // Setting the checked property of all title and location checkboxes to the value of selectAll
         $('.title-checkbox').prop('checked', selectAll);
         $('.location-checkbox').prop('checked', selectAll);
 
+        // Disable or enable the user list button and user checkboxes based on selectAll state
         $('#toggle-user-list-btn').prop('disabled', selectAll);
         $('.user-checkbox').prop('disabled', selectAll);
+        // Hide the user list
         $('#user-list').hide();
+        // Reset the arrow indicator
         $('#arrow-down').text('▼');
     });
 
@@ -410,8 +423,9 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         var localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
         var currentTime = localNow.toISOString().slice(0, 19).replace('T', ' ');
 
+        // Check if the selected time is the same as the current time
         if (selectedTime === currentTime) {
-            // Handle assigning training now
+            // Handle assigning training immediately
             $('.employee-info').each(function() {
                 var userTitle = $(this).data('title');
                 var userLocation = $(this).data('location');
@@ -420,18 +434,20 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
                 var titleMatch = selectedTitles.includes(userTitle);
                 var locationMatch = selectedLocations.includes(userLocation);
 
+                // Check if both titles and locations are selected and match                
                 if (selectedTitles.length > 0 && selectedLocations.length > 0) {
-                    // Both titles and locations are selected
                     if (titleMatch && locationMatch) {
                         checkbox.prop('checked', true).trigger('change');
                     }
-                } else if (selectedTitles.length > 0) {
-                    // Only titles are selected
+                }
+                // Check if only titles are selected and match
+                else if (selectedTitles.length > 0) {
                     if (titleMatch) {
                         checkbox.prop('checked', true).trigger('change');
                     }
-                } else if (selectedLocations.length > 0) {
-                    // Only locations are selected
+                }
+                // Check if only locations are selected and match
+                else if (selectedLocations.length > 0) {
                     if (locationMatch) {
                         checkbox.prop('checked', true).trigger('change');
                     }
@@ -440,8 +456,10 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         } else {
             // Handle assigning training at a specific time
             $.ajax({
+                // URL to assign training
                 url: '$assignTrainingUrl',
                 type: 'POST',
+                // Specifies the data to be sent to the server with the request
                 data: {
                     selected_time: selectedTime,
                     selected_titles: selectedTitles,
@@ -463,25 +481,34 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         }
     });
 
+    // Event handler for toggling the visibility of the user list when the button is clicked
     $('#toggle-user-list-btn').on('click', function() {
+         // Get the user list element
         var userList = $('#user-list');
-        userList.toggle(); // Toggle the visibility of the user list
+         // Toggle the visibility of the user list
+        userList.toggle();
+        // Get the arrow elemetn
         var arrow = $('#arrow-down');
+
+        // Check if the user list is visible after toggling
         if (userList.is(':visible')) {
-            arrow.text('▲'); // Change arrow to up if the list is visible
+            // Change arrow to up if the list is visible
+            arrow.text('▲');
         } else {
+            // Change arrow to down if the list is hidden
             arrow.text('▼');
+            // Uncheck all user checkboxes and re-enable title and location checkboxes
             $('.user-checkbox:checked').each(function() {
-                $(this).prop('checked', false);
-                $('.title-checkbox').prop('disabled', false);
-                $('.location-checkbox').prop('disabled', false);
-                $('#select-all-btn').prop('disabled', false);
-                $('#confirm-selection-btn').prop('disabled', false);
+                $(this).prop('checked', false); // Uncheck the checkbox
+                $('.title-checkbox').prop('disabled', false); // Enable title checkbox
+                $('.location-checkbox').prop('disabled', false); // Enable location checkbox
+                $('#select-all-btn').prop('disabled', false); // Enable the select all button
+                $('#confirm-selection-btn').prop('disabled', false); // Enable the confirm selection button
             });
         }
     });
 
-    // Event handler for "Assign Now" button in user list
+    // Event handler for "Assign Now" button in the user list
     $('#confirm-specific-users-btn').on('click', function() {
         // Array to store the selected user IDs
         var selectedUsers = [];
@@ -493,9 +520,11 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
         console.log("Selected users:", selectedUsers);
 
+        // Determine the toggle action based on the number of checked checkboxes
         var toggleAction = 'check';
-        var userNumber = $('.toggle-info-btn').length
-        var anyChecked = $('.toggle-info-btn:checked').length;
+        var userNumber = $('.toggle-info-btn').length // Total number of user checkboxes
+        var anyChecked = $('.toggle-info-btn:checked').length; // Number of checked checkboxes
+        // If all checkboxes are checked, set toggle action to uncheck
         if (userNumber === anyChecked) {
             toggleAction = 'uncheck';
         }
@@ -503,7 +532,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
         // Iterate over all elements with the class '.employee-info' (the card with the details about each employee)
         $('.employee-info').each(function() {
-            // Retrieves the user ID from the data-id attribute of the current .employee-info element (this)
+            // Retrieve the user ID from the data-id attribute of the current .employee-info element (this)
             var userId = $(this).data('id');
             console.log("Checking user ID:", userId);
 
@@ -521,7 +550,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
             var userMatch = selectedUsers.includes(userId.toString());
             console.log("Does user ID match?", userMatch);
 
-            // If the user ID matches one of the selected users
+            // If the user ID matches one of the selected users, toggle the checkbox
             if (userMatch) {
                 console.log("Match found, toggling checkbox for user ID:", userId);
                 // Toggle the checkbox's checked property based on the toggleAction value and trigger the change event
@@ -535,34 +564,44 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         toggleState = !toggleState;
     });
 
+    // Event handler for "Select All" button in the user list
     $('#select-all-users-btn').on('click', function() {
         var selectAllUsers = true;
+        // Iterate through each user checkbox
         $('.user-checkbox').each(function() {
+            // If any checkbox is not checked, set selectAllUsers to false and break the loop
             if (!$(this).is(':checked')) {
                 selectAllUsers = false;
                 return false;
             }
         });
 
+        // Toggle the state of selectAllUsers (if all were selected, it will now be false, and vice versa)
         selectAllUsers = !selectAllUsers;
+        // Set the checked property of all user checkboxes to the value of selectAllUsers
         $('.user-checkbox').prop('checked', selectAllUsers);
 
+        // Disable or enable title and location checkboxes based on selectAllUsers state
         $('.title-checkbox').prop('disabled', selectAllUsers);
         $('.location-checkbox').prop('disabled', selectAllUsers);
         $('#select-all-btn').prop('disabled', selectAllUsers);
         $('#confirm-selection-btn').prop('disabled', selectAllUsers);
     })
 
+    // Event handler to disable title and location checkboxes if any user checkbox is checked
     $('.user-checkbox').on('change', function() {
         var anyUserChecked = $('.user-checkbox:checked').length > 0;
         $('.title-checkbox').prop('disabled', anyUserChecked);
+        // Disable title and location checkboxes if any user checkbox is checked
         $('.location-checkbox').prop('disabled', anyUserChecked);
         $('#select-all-btn').prop('disabled', anyUserChecked);
         $('#confirm-selection-btn').prop('disabled', anyUserChecked);
     });
     
+    // Event handler to disable user checkboxes if any title or location checkbox is checked
     $('.title-checkbox, .location-checkbox').on('change', function() {
         var anyTitleOrLocationChecked = $('.title-checkbox:checked').length > 0 || $('.location-checkbox:checked').length > 0;
+        // Disable user checkboxes if any title or location checkbox is checked
         $('.user-checkbox').prop('disabled', anyTitleOrLocationChecked);
         $('#user-list').hide();
         $('#toggle-user-list-btn').prop('disabled', anyTitleOrLocationChecked);
