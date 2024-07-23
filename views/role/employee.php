@@ -69,6 +69,8 @@ $('#submit-btn').on('click', function(e) {
             let inputName = $(this).attr('name');
             // Get the value of the input
             let inputValue = $(this).val();
+            console.log(inputName);
+            console.log(inputValue);
 
             // If the input value is empty, mark the input as invalid and highlight it
             if (!inputValue) {

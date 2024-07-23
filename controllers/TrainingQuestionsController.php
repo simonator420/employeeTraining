@@ -104,13 +104,13 @@ class TrainingQuestionsController extends Controller
                 $usedIds[] = $nextId;
 
                 // Validate question data
-                $type = $questionData['type'];
-                $question = $questionData['question'];
-                if ($type == 'number') {
-                    if (!is_numeric($question) || $question < 1 || $question > 5) {
-                        return ['success' => false, 'errors' => 'Number questions must be between 1 and 5.'];
-                    }
-                }
+                // $type = $questionData['type'];
+                // $question = $questionData['question'];
+                // if ($type == 'number') {
+                //     if (!is_numeric($question) || $question < 1 || $question > 5) {
+                //         return ['success' => false, 'errors' => 'Number questions must be between 1 and 5.'];
+                //     }
+                // }
 
                 // Insert each question into the database
                 Yii::$app->db->createCommand()->insert('training_questions', [

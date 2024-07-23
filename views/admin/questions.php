@@ -45,6 +45,7 @@ use yii\helpers\Url;
                 Question</button>
         </div>
 
+        <!-- TODO make button unchecked if not toggled -->
         <div class="form-group">
             <button type="button" id="advanced-settings-btn" style="display:none;">Advanced settings</button> <br>
             <div id="assign-to-all" style="display: none;">
@@ -202,7 +203,7 @@ $('#remove-question-btn').on('click', function() {
     }
 });
 
-// TODO make button unchecked if the it's not toggle
+// TODO make button unchecked if not toggled
 $('#advanced-settings-btn').on('click', function() {
     var allUsers = $('#assign-to-all');
     allUsers.toggle();
@@ -289,6 +290,5 @@ $this->registerJs($script);
 <style>
     .title-dropdown {
         width: 190px;
-        /* Adjust the width as needed */
     }
 </style>

@@ -153,6 +153,7 @@ class RoleController extends Controller
                 // If saving fails, return a failure response
                 return ['success' => false];
             }
+            
         }
         // Return a success response if all updates are successful
         return ['success' => true];
@@ -166,9 +167,12 @@ class RoleController extends Controller
 
         // Retrieve the id of the currently logged-in user
         $userId = \Yii::$app->user->id;
+        $title =  \Yii::$app->user->identity->profile->title;
 
         // Find the user by ID
         $user = User::findOne($userId);
+        // $title = $user->identity->profile->title;
+
 
         // Get the request data
         $requestData = Yii::$app->request->post();
@@ -178,14 +182,30 @@ class RoleController extends Controller
         if (isset($requestData['TrainingQuestions'])) {
             foreach ($requestData['TrainingQuestions'] as $index => $question) {
                 if (isset($question['answer'])) {
-                    $answers["TrainingQuestions[$index][answer]"] = $question['answer'];
-                    Yii::info($question['answer']);
+                    $answers[] = [
+                        'index' => $index,
+                        'answer' => $question['answer']
+                    ];
+                    $spravnyIndex = $index + 1;
+                    $questionData = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE title = :title AND `order` = :spravnyIndex')
+                        ->bindValue(':title', $title)
+                        ->bindValue(':spravnyIndex', $spravnyIndex)
+                        ->queryOne();
+
+                    if ($questionData) {
+                        Yii::info("Index: $spravnyIndex, Question: " . $questionData['question'] . ", Answer: " . $question['answer']);
+                        Yii::$app->db->createCommand()->insert('training_answers', [
+                            'user_id' => $userId,
+                            'question_text' => $questionData['question'],
+                            'answer' => $question['answer'],
+                            'created_at' => new \yii\db\Expression('NOW()'),
+                        ])->execute();
+                    } else {
+                        Yii::info("Index: $spravnyIndex, No question found, Answer: " . $question['answer']);
+                    }
                 }
             }
         }
-    
-        // Debug: Log extracted answers
-        Yii::info('Extracted Answers: ' . json_encode($answers, JSON_PRETTY_PRINT));
     
         // Check if the user exists
         if ($user) {
