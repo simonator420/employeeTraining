@@ -148,16 +148,24 @@ class RoleController extends Controller
         $rawTime = \Yii::$app->request->post('selected_time'); // Raw time selected by the user
         $selectedTitles = \Yii::$app->request->post('selected_titles'); // Array of selected titles
         $selectedLocations = \Yii::$app->request->post('selected_locations'); // Array of selected storage locations
+        $selectedUsers = \Yii::$app->request->post('selected_users');
 
         // Convert the raw time to a standard format
         $selectedTime = date('Y-m-d H:i:s', strtotime($rawTime));
 
         // Find users whose profiles match the selected titles and storage locations
-        $users = User::find()
-            ->joinWith('profile') // Join with the profile table
-            ->andFilterWhere(['profile.title' => $selectedTitles]) // Filter by selected titles
-            ->andFilterWhere(['profile.storage_location' => $selectedLocations]) // Filter by selected storage locations
-            ->all(); // Get all matching users
+        if (empty($selectedUsers)) {
+            $users = User::find()
+                ->joinWith('profile') // Join with the profile table
+                ->andFilterWhere(['profile.title' => $selectedTitles]) // Filter by selected titles
+                ->andFilterWhere(['profile.storage_location' => $selectedLocations]) // Filter by selected storage locations
+                ->all(); // Get all matching users
+        } else {
+            $users = User::find()
+                ->joinWith('profile')
+                ->andFilterWhere(['profile.user_id' => $selectedUsers])
+                ->all();
+        }
 
         // Iterate over each user and update their profile
         foreach ($users as $user) {
@@ -173,7 +181,6 @@ class RoleController extends Controller
                 // If saving fails, return a failure response
                 return ['success' => false];
             }
-
         }
         // Return a success response if all updates are successful
         return ['success' => true];
@@ -192,7 +199,6 @@ class RoleController extends Controller
         // Find the user by ID
         $user = User::findOne($userId);
         // $title = $user->identity->profile->title;
-
 
         // Get the request data
         $requestData = Yii::$app->request->post();
@@ -229,13 +235,10 @@ class RoleController extends Controller
 
         // Check if the user exists
         if ($user) {
-
             // Update the user's training_complete_time attribute with current time
             $user->profile->training_complete_time = new \yii\db\Expression('NOW()');
-
             // Update the user's assigned_training attribute to 0
             $user->profile->assigned_training = 0;
-
             // Save the users profile and return success if saved
             if ($user->profile->save()) {
                 return ['success' => true];

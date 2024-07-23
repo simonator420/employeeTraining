@@ -9,7 +9,10 @@ use yii\helpers\Url;
 <div class="training-question-container">
     <div class="training-questions-form">
 
-        <h1>Edit Training Questions</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Edit Training Questions</h1>
+            <?= Html::a('<- Back', Url::to(['role/admin']), ['class'=> 'btn go-back-button']) ?>
+        </div>
 
         <br>
 

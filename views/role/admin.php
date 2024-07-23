@@ -44,12 +44,6 @@ use yii\helpers\Url;
         <br>
         <br>
 
-        <!-- Input for selecting date and time when the training should be assigned -->
-        <label>Or select time when the training should be assigned.</label>
-        <input type="datetime-local" id="training-time-picker" name="training-time">
-        <button id="confirm-time-btn">OK</button>
-        <br>
-
         <!-- Button to toggle visibility of the user list for specific training assignment -->
         <button id="toggle-user-list-btn">
             Assign training to specific user <span id="arrow-down">▼</span>
@@ -68,6 +62,13 @@ use yii\helpers\Url;
             <button id="select-all-users-btn">Select All</button>
             <button id="confirm-specific-users-btn">Assign Now</button>
         </div>
+
+        <!-- Input for selecting date and time when the training should be assigned -->
+        <label>Or select time when the training should be assigned.</label>
+        <input type="datetime-local" id="training-time-picker" name="training-time">
+        <button id="confirm-time-btn">OK</button>
+        <br>
+
         <hr>
         <br>
 
@@ -180,14 +181,15 @@ use yii\helpers\Url;
                 <?php if (!empty($latestAnswers[$user->id])): ?>
                     <div class="right-panel"
                         style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto; padding: 5px">
-                        <strong>Answers from latest training</strong><hr>
+                        <strong>Answers from latest training</strong>
+                        <hr>
                         <?php foreach ($latestAnswers[$user->id] as $answer): ?>
                             <strong>Question:</strong> <?= Html::encode($answer['question_text']) ?><br>
                             <strong>Answer:</strong> <?= Html::encode($answer['answer']) ?><br><br>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-                
+
             </div>
         <?php endforeach; ?>
     </div>
@@ -416,8 +418,13 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
             selectedLocations.push($(this).val());
         });
 
+        var selectedUsers = [];
+        $('.user-checkbox:checked').each(function() {
+            selectedUsers.push($(this).val());
+        })
+
         // If no title or location is selected, show an alert and exit the function
-        if (selectedTitles.length === 0 && selectedLocations.length === 0) {
+        if (selectedTitles.length === 0 && selectedLocations.length === 0 && selectedUsers.length === 0) {
             alert('Please select at least one title or location.');
             return;
         }
@@ -468,6 +475,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
                     selected_time: selectedTime,
                     selected_titles: selectedTitles,
                     selected_locations: selectedLocations,
+                    selected_users: selectedUsers,
                     _csrf: yii.getCsrfToken()
                 },
                 success: function(response) {
