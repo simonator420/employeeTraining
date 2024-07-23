@@ -177,10 +177,14 @@ use yii\helpers\Url;
                 </div>
 
                 <!-- Windows for displaying answers from user -->
-                <?php if ($user->profile->training_complete_time): ?>
+                <?php if (!empty($latestAnswers[$user->id])): ?>
                     <div class="right-panel"
-                        style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto;">
-                        USER HAS COMPLETED TRAINING
+                        style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto; padding: 5px">
+                        <strong>Answers from latest training</strong><hr>
+                        <?php foreach ($latestAnswers[$user->id] as $answer): ?>
+                            <strong>Question:</strong> <?= Html::encode($answer['question_text']) ?><br>
+                            <strong>Answer:</strong> <?= Html::encode($answer['answer']) ?><br><br>
+                        <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
                 

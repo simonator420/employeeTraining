@@ -21,8 +21,27 @@ class RoleController extends Controller
         // Retrieve all users from the database
         $users = User::find()->all();
 
+        $latestAnswers = [];
+
         // For each user retrieve the assigned_training status from the profile table
         foreach ($users as $user) {
+
+            foreach ($users as $user) {
+                $latestAnswers[$user->id] = Yii::$app->db->createCommand('
+            SELECT question_text, answer 
+            FROM training_answers 
+            WHERE user_id = :user_id 
+            AND created_at = (
+                SELECT MAX(created_at) 
+                FROM training_answers 
+                WHERE user_id = :user_id
+            )
+            ORDER BY created_at DESC
+        ')
+                    ->bindValue(':user_id', $user->id)
+                    ->queryAll();
+            }
+
             $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
                 ->bindValue(':userId', $user->id) // Replaces userID in the SQL command with the actual user ID
                 ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
@@ -58,6 +77,7 @@ class RoleController extends Controller
             'users' => $users,
             'titles' => $titles,
             'storage_locations' => $storage_locations,
+            'latestAnswers' => $latestAnswers,
         ]);
     }
 
@@ -153,7 +173,7 @@ class RoleController extends Controller
                 // If saving fails, return a failure response
                 return ['success' => false];
             }
-            
+
         }
         // Return a success response if all updates are successful
         return ['success' => true];
@@ -167,7 +187,7 @@ class RoleController extends Controller
 
         // Retrieve the id of the currently logged-in user
         $userId = \Yii::$app->user->id;
-        $title =  \Yii::$app->user->identity->profile->title;
+        $title = \Yii::$app->user->identity->profile->title;
 
         // Find the user by ID
         $user = User::findOne($userId);
@@ -176,7 +196,7 @@ class RoleController extends Controller
 
         // Get the request data
         $requestData = Yii::$app->request->post();
-    
+
         // Extracting answers
         $answers = [];
         if (isset($requestData['TrainingQuestions'])) {
@@ -206,7 +226,7 @@ class RoleController extends Controller
                 }
             }
         }
-    
+
         // Check if the user exists
         if ($user) {
 
