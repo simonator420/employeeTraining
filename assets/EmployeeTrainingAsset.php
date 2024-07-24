@@ -15,7 +15,7 @@ class EmployeeTrainingAsset extends AssetBundle
 {
     public $defer = true;
      // The directory that contains the asset files
-    public $sourcePath = '@app/modules/employeeTraining/assets';
+    public $sourcePath = '@app/modules/employeeTraining/resources';
     public $css = [
         'css/styles.css'
     ];

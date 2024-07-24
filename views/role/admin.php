@@ -74,13 +74,20 @@ use yii\helpers\Url;
         <hr>
         <br>
 
+
+        <!-- Search bar for filtering users -->
+        <input type="text" id="employee-search-bar" placeholder="Search employees..."
+            style="margin-bottom:20px; width:100%; padding: 10px">
+
+
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
             <div class="employee-info-container" style="display: flex;">
                 <div class="employee-info" style="flex: 1; width: 50%;" data-id="<?= Html::encode($user->id) ?>"
                     data-title="<?= Html::encode($user->profile->title) ?>"
-                    data-location="<?= Html::encode($user->profile->storage_location) ?>">
-
+                    data-location="<?= Html::encode($user->profile->storage_location) ?>"
+                    data-fullname="<?= Html::encode($user->profile->firstname . ' ' . $user->profile->lastname) ?>"
+                    data-username="<?= Html::encode($user->username) ?>">
                     <p>
                         <!-- Display the user's username and id -->
                         <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
@@ -626,7 +633,31 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         $('#confirm-selection-btn').prop('disabled', false);
     });
 
+    $('#employee-search-bar').on('input', function() {
+        var searchTerm = $(this).val().toLowerCase();
+        console.log("Search Term:", searchTerm);
+
+        $('.employee-info-container').each(function() {
+            var user = $(this).find('.employee-info');
+            var id = user.data('id').toString().toLowerCase();
+            var title = user.data('title').toLowerCase();
+            var location = user.data('location').toLowerCase();
+            var fullname = user.data('fullname').toLowerCase();
+            var username = user.data('username').toLowerCase();
+
+            console.log("Checking user:", fullname, username, title, location);
+
+            if (id.includes(searchTerm) || title.includes(searchTerm) || location.includes(searchTerm) ||
+                fullname.includes(searchTerm) || username.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
 });
+
+
 
 JS;
 $this->registerJs($script);
