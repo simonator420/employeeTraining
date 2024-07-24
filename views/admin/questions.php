@@ -30,6 +30,9 @@ use yii\helpers\Url;
             <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control title-dropdown', 'id' => 'title-select']) ?>
         </div>
 
+        <!-- Hidden input to store titles as JSON -->
+        <?= Html::hiddenInput('titles_json', json_encode($titles), ['id' => 'titles-json']) ?>
+
         <!-- Container for displaying all question with their input fields -->
         <div id="questions-container" style="display: none;">
             <div class="question-item">
@@ -58,7 +61,7 @@ use yii\helpers\Url;
                     id="arrow-down">▼</span></button>
             <div id="assign-to-all" style="display: none;">
                 <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
-                <label for="all-users">Assign questions to all titles</label>
+                <label for="all-users">Assign question(s) to all titles</label>
             </div>
         </div>
 
@@ -227,11 +230,26 @@ $('#advanced-settings-btn').on('click', function() {
 });
 
 // Event handler for "Submit" button click
+// TODO make assign to all titles if 'all-users'checkbox checked
 $('#submit-btn').on('click', function() {
     // Get the form element
     var form = document.getElementById('training-questions-form');
     // Create a FormData object from the form
     var formData = new FormData(form);
+
+    // Check if "Assign to all titles" is checked
+    var assignAll = $('#all-users').is(':checked');
+    if (assignAll) {
+        // Get the titles from the hidden input
+        var titles = JSON.parse($('#titles-json').val());
+        // Append all titles to the form data
+        titles.forEach(function(title) {
+            formData.append('titles[]', title);
+        });
+    } else {
+        var selectedTitle = $('#title-select').val();
+        formData.append('titles[]', selectedTitle);
+    }
 
     let isValid = true;
 
@@ -262,9 +280,9 @@ $('#submit-btn').on('click', function() {
             type: 'POST',
             // Form data
             data: formData,
-            // Prevent jQuerry from processing the data
+            // Prevent jQuery from processing the data
             processData: false,
-            // Prevent jQuerry from setting the content type
+            // Prevent jQuery from setting the content type
             contentType: false,
             // Callback function for successful response
             success: function(response) {
@@ -316,5 +334,4 @@ $this->registerJs($script);
     .title-dropdown {
         width: 190px;
     }
-    
 </style>

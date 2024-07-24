@@ -59,8 +59,10 @@ use yii\helpers\Url;
                 </label>
                 <br>
             <?php endforeach; ?>
-            <button id="select-all-users-btn">Select All</button>
-            <button id="confirm-specific-users-btn">Assign Now</button>
+            <div class="user-button-container">
+                <button id="select-all-users-btn">Select All</button>
+                <button id="confirm-specific-users-btn">Assign Now</button>
+            </div>
         </div>
 
         <!-- Input for selecting date and time when the training should be assigned -->

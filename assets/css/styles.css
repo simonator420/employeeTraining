@@ -162,6 +162,26 @@ input[type='checkbox'] {
     cursor: pointer;
 }
 
+#user-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Adjust the gap between items as needed */
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.user-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 8px;
+
+}
+
+.user-buttons-container {
+    margin-top: 10px; /* Adjust the margin as needed */
+    display: flex;
+    gap: 10px; /* Adjust the gap between buttons as needed */
+}
 
 
 /* .user-info-container {

@@ -73,53 +73,55 @@ class TrainingQuestionsController extends Controller
     {
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-
-        // Get posted title and questions data
-        $selectedTitle = Yii::$app->request->post('title', '');
+    
+        // Get posted titles and questions data
+        $selectedTitles = Yii::$app->request->post('titles', []);
         $questions = Yii::$app->request->post('TrainingQuestions', []);
-
-        // Return failure response if no title is provided
-        if (empty($selectedTitle)) {
-            return ['success' => false, 'errors' => 'Title is required'];
+    
+        // Return failure response if no titles are provided
+        if (empty($selectedTitles)) {
+            return ['success' => false, 'errors' => 'At least one title is required'];
         }
-
+    
         // Start a database transaction
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            // Delete existing questions for the selected title
-            Yii::$app->db->createCommand()->delete('training_questions', ['title' => $selectedTitle])->execute();
-
-            // Fetch all existing IDs
-            $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
-            $nextId = 1;
-            $usedIds = [];
-
-            // Iterate over each question and generate HTML for display
-            foreach ($questions as $index => $questionData) {
-
-                // Find the lowest available ID
-                while (in_array($nextId, $existingIds) || in_array($nextId, $usedIds)) {
-                    $nextId++;
+            // Iterate over each selected title
+            foreach ($selectedTitles as $selectedTitle) {
+                // Delete existing questions for the selected title
+                Yii::$app->db->createCommand()->delete('training_questions', ['title' => $selectedTitle])->execute();
+    
+                // Fetch all existing IDs
+                $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
+                $nextId = 1;
+                $usedIds = [];
+    
+                // Iterate over each question and generate HTML for display
+                foreach ($questions as $index => $questionData) {
+                    // Find the lowest available ID
+                    while (in_array($nextId, $existingIds) || in_array($nextId, $usedIds)) {
+                        $nextId++;
+                    }
+                    $usedIds[] = $nextId;
+    
+                    // Insert each question into the database
+                    Yii::$app->db->createCommand()->insert('training_questions', [
+                        'id' => $nextId,
+                        'title' => $selectedTitle,
+                        'type' => $questionData['type'],
+                        'question' => $questionData['question'],
+                        'order' => $index + 1,
+                    ])->execute();
                 }
-                $usedIds[] = $nextId;
-
-                // Insert each question into the database
-                Yii::$app->db->createCommand()->insert('training_questions', [
-                    'id' => $nextId,
-                    'title' => $selectedTitle,
-                    'type' => $questionData['type'],
-                    'question' => $questionData['question'],
-                    'order' => $index + 1,
-                ])->execute();
             }
             // Commit the transaction
             $transaction->commit();
             // Return success response
             return ['success' => true];
-
+    
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error (erase all modifications made from the start of the transaction)
-            // $transaction->rollBack();
+            $transaction->rollBack();
             // Return failure response with error message
             return ['success' => false, 'errors' => $e->getMessage()];
         }
