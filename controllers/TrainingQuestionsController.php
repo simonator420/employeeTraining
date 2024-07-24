@@ -103,15 +103,6 @@ class TrainingQuestionsController extends Controller
                 }
                 $usedIds[] = $nextId;
 
-                // Validate question data
-                // $type = $questionData['type'];
-                // $question = $questionData['question'];
-                // if ($type == 'number') {
-                //     if (!is_numeric($question) || $question < 1 || $question > 5) {
-                //         return ['success' => false, 'errors' => 'Number questions must be between 1 and 5.'];
-                //     }
-                // }
-
                 // Insert each question into the database
                 Yii::$app->db->createCommand()->insert('training_questions', [
                     'id' => $nextId,
@@ -128,7 +119,7 @@ class TrainingQuestionsController extends Controller
 
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error (erase all modifications made from the start of the transaction)
-            $transaction->rollBack();
+            // $transaction->rollBack();
             // Return failure response with error message
             return ['success' => false, 'errors' => $e->getMessage()];
         }

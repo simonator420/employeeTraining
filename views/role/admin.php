@@ -92,6 +92,7 @@ use yii\helpers\Url;
 
                         <!-- Display the user's address by concatenating available address components -->
                         <!-- <strong>Address:</strong>
+                         
                     <?php
                     // $addressComponents = [
                     //     $user->profile->street,
@@ -389,8 +390,9 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         // Hide the user list
         $('#user-list').hide();
         // Reset the arrow indicator
-        $('#arrow-down').text('▼');
-    });
+        var arrow = $('#arrow-down');
+        arrow.removeClass('rotated');
+        arrow.text('▼');    });
 
     // Function to assign training at a specific time or immediately
     $('#confirm-time-btn').on('click', function() {
@@ -495,28 +497,26 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
     // Event handler for toggling the visibility of the user list when the button is clicked
     $('#toggle-user-list-btn').on('click', function() {
-         // Get the user list element
+        // Get the user list element
         var userList = $('#user-list');
-         // Toggle the visibility of the user list
+        // Toggle the visibility of the user list
         userList.toggle();
-        // Get the arrow elemetn
+        // Get the arrow element
         var arrow = $('#arrow-down');
 
+        // Toggle the rotated class for the arrow animation
+        arrow.toggleClass('rotated');
+
         // Check if the user list is visible after toggling
-        if (userList.is(':visible')) {
-            // Change arrow to up if the list is visible
-            arrow.text('▲');
-        } else {
-            // Change arrow to down if the list is hidden
-            arrow.text('▼');
+        if (!userList.is(':visible')) {
             // Uncheck all user checkboxes and re-enable title and location checkboxes
             $('.user-checkbox:checked').each(function() {
                 $(this).prop('checked', false); // Uncheck the checkbox
-                $('.title-checkbox').prop('disabled', false); // Enable title checkbox
-                $('.location-checkbox').prop('disabled', false); // Enable location checkbox
-                $('#select-all-btn').prop('disabled', false); // Enable the select all button
-                $('#confirm-selection-btn').prop('disabled', false); // Enable the confirm selection button
             });
+            $('.title-checkbox').prop('disabled', false); // Enable title checkbox
+            $('.location-checkbox').prop('disabled', false); // Enable location checkbox
+            $('#select-all-btn').prop('disabled', false); // Enable the select all button
+            $('#confirm-selection-btn').prop('disabled', false); // Enable the confirm selection button
         }
     });
 
@@ -530,8 +530,6 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
             selectedUsers.push($(this).val());
         });
 
-        console.log("Selected users:", selectedUsers);
-
         // Determine the toggle action based on the number of checked checkboxes
         var toggleAction = 'check';
         var userNumber = $('.toggle-info-btn').length // Total number of user checkboxes
@@ -540,7 +538,6 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         if (userNumber === anyChecked) {
             toggleAction = 'uncheck';
         }
-        console.log("Toggle action:", toggleAction);
 
         // Iterate over all elements with the class '.employee-info' (the card with the details about each employee)
         $('.employee-info').each(function() {
@@ -617,12 +614,15 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         $('.user-checkbox').prop('disabled', anyTitleOrLocationChecked);
         $('#user-list').hide();
         $('#toggle-user-list-btn').prop('disabled', anyTitleOrLocationChecked);
-        $('#arrow-down').text('▼');
+
+        // Reset the arrow direction and remove the rotated class
+        var arrow = $('#arrow-down');
+        arrow.removeClass('rotated');
+        arrow.text('▼');
+
         $('#select-all-btn').prop('disabled', false);
         $('#confirm-selection-btn').prop('disabled', false);
-        
     });
-
 
 });
 

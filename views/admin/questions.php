@@ -9,9 +9,10 @@ use yii\helpers\Url;
 <div class="training-question-container">
     <div class="training-questions-form">
 
+        <!-- Header and button for going back to overview -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h1>Edit Training Questions</h1>
-            <?= Html::a('<- Back', Url::to(['role/admin']), ['class'=> 'btn go-back-button']) ?>
+            <?= Html::a('&laquo; Back to overview', Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
         </div>
 
         <br>
@@ -23,12 +24,13 @@ use yii\helpers\Url;
             'enableClientValidation' => true,
         ]); ?>
 
-
+        <!-- Dropdown list for displaying all employee titles and selecting any of them -->
         <div class="form-group">
             <label>Select Title</label><br>
             <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control title-dropdown', 'id' => 'title-select']) ?>
         </div>
 
+        <!-- Container for displaying all question with their input fields -->
         <div id="questions-container" style="display: none;">
             <div class="question-item">
                 <label>Question 1</label>
@@ -41,6 +43,7 @@ use yii\helpers\Url;
             </div>
         </div>
 
+        <!-- Buttons for Adding/Removing question by user -->
         <div class="form-group">
             <button type="button" id="add-question-btn" class="btn btn-secondary" style="display: none;">+ Add
                 Question</button>
@@ -48,16 +51,18 @@ use yii\helpers\Url;
                 Question</button>
         </div>
 
+        <!-- Button for Advanced settings and checkbox for selecting all users with checkbox -->
         <!-- TODO make button unchecked if not toggled -->
         <div class="form-group">
-            <button type="button" id="advanced-settings-btn" style="display:none;">Advanced settings</button> <br>
+            <button type="button" id="advanced-settings-btn" tabindex="1" style="display:none;">Advanced settings <span
+                    id="arrow-down">▼</span></button>
             <div id="assign-to-all" style="display: none;">
                 <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
                 <label for="all-users">Assign questions to all titles</label>
             </div>
         </div>
 
-
+        <!-- Button for submiting the form and sending data to endpoint -->
         <div class="form-group">
             <?= Html::button('Submit', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         </div>
@@ -210,7 +215,16 @@ $('#remove-question-btn').on('click', function() {
 $('#advanced-settings-btn').on('click', function() {
     var allUsers = $('#assign-to-all');
     allUsers.toggle();
-})
+    var arrow = $('#arrow-down');
+
+    // Toggle the rotated class for the arrow animation
+    arrow.toggleClass('rotated');
+
+    if (!allUsers.is(':visible')) {
+        $('#all-users').prop('checked', false);
+        $('#title-select').prop('disabled', false);
+    }
+});
 
 // Event handler for "Submit" button click
 $('#submit-btn').on('click', function() {
@@ -269,6 +283,12 @@ $('#submit-btn').on('click', function() {
     }
 });
 
+$('#all-users').on('change', function() {
+    console.log("Click on checkbox");
+    $('#title-select').prop('disabled', this.checked);
+    console.log('Checkbox is ' + (this.checked ? 'checked' : 'unchecked'));
+});
+
 // Function to update labels of all question items
 function updateQuestionLabels() {
     $('.question-item').each(function(index) {
@@ -286,6 +306,8 @@ $(document).ready(function() {
         $('#remove-question-btn').hide();
     }
 });
+
+
 JS;
 $this->registerJs($script);
 ?>
@@ -294,4 +316,5 @@ $this->registerJs($script);
     .title-dropdown {
         width: 190px;
     }
+    
 </style>
