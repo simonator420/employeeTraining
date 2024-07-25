@@ -21,7 +21,7 @@ class RoleController extends Controller
         $users = User::find()->all();
 
         $latestAnswers = [];
-        
+
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
@@ -244,5 +244,32 @@ class RoleController extends Controller
         }
         // Return failure if user not found or save failed
         return ['success' => false];
+    }
+
+    public function actionCreateTraining()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $request = \Yii::$app->request;
+
+        if ($request->isPost) {
+            $data = json_decode($request->getRawBody(), true);
+            $trainingId = $data['id'];
+            $trainingName = $data['name'];
+
+            $command = Yii::$app->db->createCommand()->insert('training', [
+                'id' => $trainingId,
+                'name' => $trainingName,
+                'created_at' => new \yii\db\Expression('NOW()'),
+                'assigned_users_count' => 0,
+            ]);
+
+            if ($command->execute()) {
+                return ['success' => true];
+            } else {
+                return ['success' => false];
+            }
+        }
+
+        throw new BadRequestHttpException('Only POST requests are allowed');
     }
 }

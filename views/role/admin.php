@@ -96,7 +96,13 @@ use yii\helpers\Url;
             <tbody>
                 <?php foreach ($trainings as $training): ?>
                     <tr>
-                        <td><?= Html::encode($training['id']) ?></td>
+                        <td class="training-id" data-id="<?= Html::encode($training['id']) ?>"
+                            style="cursor: pointer;">
+                            <a href="<?= Url::to(['training-questions/questions', 'id' => Html::encode($training['id'])]) ?>"
+                                style="color: blue; text-decoration: underline;">
+                                <?= Html::encode($training['id']) ?>
+                            </a>
+                        </td>
                         <td><?= Html::encode($training['name']) ?></td>
                         <td><?= Html::encode($training['created_at']) ?></td>
                         <td><?= Html::encode($training['assigned_users_count']) ?></td>
@@ -209,17 +215,17 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         var trainingId = $('#new-training-id').val();
         var trainingName = $('#new-training-name').val();
 
-        if(trainingId && trainingName) {
+        if (trainingId && trainingName) {
             $.ajax({
                 url: '$createTrainingUrl',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({id: trainingId, name: trainingName}),
+                data: JSON.stringify({ id: trainingId, name: trainingName }),
                 headers: {
                     'X-CSRF-Token': yii.getCsrfToken()
                 },
                 success: function(data) {
-                    if(data.success) {
+                    if (data.success) {
                         location.reload();
                     } else {
                         alert('Failed to create training');
@@ -229,6 +235,12 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         } else {
             alert('Please fill in both fields');
         }
+    });
+
+    $('.training-id').on('click', function() {
+        console.log('click');
+        var trainingId = $(this).data('id');
+        console.log("Training ID clicked: " + trainingId);
     });
 
     // jQuery event handler for checkbox change 

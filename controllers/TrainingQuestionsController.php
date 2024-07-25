@@ -11,7 +11,7 @@ use yii\helpers\Html;
 class TrainingQuestionsController extends Controller
 {
     // Function for displaying the questions page
-    public function actionQuestions()
+    public function actionQuestions($id)
     {
 
         // Get the current user
@@ -31,6 +31,7 @@ class TrainingQuestionsController extends Controller
         // Render the questions view for admin with the fetched titles
         return $this->render('/admin/questions', [
             'titles' => $titles,
+            'trainingId' => $id,
         ]);
     }
 

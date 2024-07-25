@@ -14,6 +14,9 @@ use yii\helpers\Url;
             <h1>
                 <?= Yii::t('employeeTraining', 'Edit Training Questions') ?>
             </h1>
+            <h2>
+                <?= Yii::t('employeeTraining', 'Training ID: ') . Html::encode($trainingId) ?>
+            </h2>
             <?= Html::a('&laquo; ' . Yii::t('employeeTraining', 'Back to overview'), Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
         </div>
 
