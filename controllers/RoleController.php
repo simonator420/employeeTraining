@@ -18,66 +18,64 @@ class RoleController extends Controller
     // TODO implement here to set assigned_training to 1 for every user that has been assigned the training with the date picker
     public function actionAdmin()
     {
-        // Retrieve all users from the database
         $users = User::find()->all();
 
         $latestAnswers = [];
+        
 
-        // For each user retrieve the assigned_training status from the profile table
         foreach ($users as $user) {
-
-            foreach ($users as $user) {
-                $latestAnswers[$user->id] = Yii::$app->db->createCommand('
-            SELECT question_text, answer 
-            FROM training_answers 
-            WHERE user_id = :user_id 
-            AND created_at = (
-                SELECT MAX(created_at) 
+            $latestAnswers[$user->id] = Yii::$app->db->createCommand('
+                SELECT question_text, answer 
                 FROM training_answers 
-                WHERE user_id = :user_id
-            )
-            ORDER BY created_at DESC
-        ')
-                    ->bindValue(':user_id', $user->id)
-                    ->queryAll();
-            }
+                WHERE user_id = :user_id 
+                AND created_at = (
+                    SELECT MAX(created_at) 
+                    FROM training_answers 
+                    WHERE user_id = :user_id
+                )
+                ORDER BY created_at DESC
+            ')
+                ->bindValue(':user_id', $user->id)
+                ->queryAll();
 
             $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-                ->bindValue(':userId', $user->id) // Replaces userID in the SQL command with the actual user ID
-                ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
+                ->bindValue(':userId', $user->id)
+                ->queryScalar();
 
-            // Sets the assigned_training property of the user's profile to the retrieved value
             $user->profile->assigned_training = $assigned_training;
+
+            $completed_trainings_count = Yii::$app->db->createCommand('SELECT completed_trainings_count FROM profile WHERE user_id=:userId')
+                ->bindValue(':userId', $user->id)
+                ->queryScalar();
+
+            $user->profile->completed_trainings_count = $completed_trainings_count;
         }
 
-        // Retrieve the current logged-in user's information
         $currentUser = Yii::$app->user;
         $title = $currentUser->identity->profile->title;
 
-        // Checks if the user isn't admin
         if (!$currentUser->isAdmin()) {
-            // Redirect the user to an access denied page if he's not admin
             return $this->redirect(['site/access-denied']);
         }
 
-        // Retrieve all unique titles from the profile table
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')
             ->queryColumn();
 
         sort($titles);
 
-        // Retrieve all unique storage locations from the profile table
         $storage_locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
             ->queryColumn();
 
         sort($storage_locations);
 
-        // Render the 'user-info' view and pass the users data to it
+        $trainings = Yii::$app->db->createCommand('SELECT * FROM training')->queryAll();
+
         return $this->render('admin', [
             'users' => $users,
             'titles' => $titles,
             'storage_locations' => $storage_locations,
             'latestAnswers' => $latestAnswers,
+            'trainings' => $trainings,
         ]);
     }
 

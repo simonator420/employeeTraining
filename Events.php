@@ -24,7 +24,7 @@ class Events
         if (Yii::$app->user->isAdmin()) {
             // Add a new menu item for the administrator
             $menu->addItem([
-                'label' => 'Training', // The label of the menu item
+                'label' => Yii::t('employeeTraining', 'Training'), // The label of the menu item
                 'url' => Url::to(['/employeeTraining/role/admin']), // The url of the menu item
                 'icon' => '<i class="fa fa-info"></i>', // The icon of the menu item
                 'sortOrder' => 100, // The order in which the menu item should appear

@@ -8,7 +8,7 @@
 
 .employee-info-card, .training-questions-form {
     width: 100%;
-    max-width: 850px;
+    max-width: 1000px;
     background-color: #fff;
     border: 1px solid #dee2e6;
     border-radius: 0.25rem;
@@ -49,7 +49,7 @@
 }
 
 
-#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button {
+#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -60,6 +60,34 @@
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover {
+    background-color: #ffffff;
+    color: rgb(85, 85, 85);
+    border-color: rgb(85, 85, 85);
+    border-radius: 4px;
+}
+
+#cancel-training-btn {
+    display: inline-block;
+    margin: 10px 5px 10px 0;
+    padding: 5px 12px;
+    font-size: 14px;
+    color: rgb(85, 85, 85);
+    background-color: #ffffff;
+    border: 2px solid transparent;
+    border-color: rgb(85, 85, 85);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#cancel-training-btn:hover {
+    background-color: rgb(85, 85, 85);
+    color: #ffffff;
+    border-color: rgb(85, 85, 85);
+    border-radius: 4px;
 }
 
 #advanced-settings-btn {
@@ -96,12 +124,7 @@
     margin-left: 7px;
 }
 
-#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover {
-    background-color: #ffffff;
-    color: rgb(85, 85, 85);
-    border-color: rgb(85, 85, 85);
-    border-radius: 4px;
-}
+
 
 #select-all-btn:disabled, #confirm-selection-btn:disabled, #toggle-user-list-btn:disabled{
     background-color: lightgray;
@@ -185,6 +208,10 @@ input[type='checkbox'] {
     border: 2px solid transparent;
     border-color: lightgray;
     border-radius: 4px;
+}
+
+td, th {
+    text-align: center;
 }
 
 

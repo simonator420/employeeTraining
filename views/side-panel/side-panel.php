@@ -5,7 +5,7 @@ use yii\helpers\Html;
 ?>
 
 <div class="side-panel">
-    <h3>Training Assignment</h3>
+    <h3> <?= Yii::t('employeeTraining', "Training Assignment") ?></h3>
     <p class="training-message">Dear <b> <?= Html::encode($firstName) ?> </b>, you have been assigned a mandatory
         training. Please complete it at your earliest convenience.</p>
     <div class="text-center">

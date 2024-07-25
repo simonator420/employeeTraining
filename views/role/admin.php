@@ -9,7 +9,7 @@ use yii\helpers\Url;
 <div class="employee-overview-container">
     <div class="employee-info-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
+            <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
 
             <?= Html::a(Yii::t('employeeTraining', 'Edit questions'), Url::to(['training-questions/questions']), ['class' => 'btn edit-question-btn']) ?>
         </div>
@@ -46,8 +46,8 @@ use yii\helpers\Url;
         <br>
 
         <!-- Button to toggle visibility of the user list for specific training assignment -->
-        <button id="toggle-user-list-btn"> 
-            <?=Yii::t('employeeTraining', 'Assign training to specific users') ?><span id="arrow-down"> ▼</span>
+        <button id="toggle-user-list-btn">
+            <?= Yii::t('employeeTraining', 'Assign training to specific users') ?><span id="arrow-down"> ▼</span>
         </button>
         <br><br>
 
@@ -78,156 +78,95 @@ use yii\helpers\Url;
         <br>
 
         <hr>
+        <!-- Search bar for filtering users -->
+        <!-- <input type="text" id="employee-search-bar"
+            placeholder="<?= Yii::t('employeeTraining', 'Search employees...') ?>"
+            style="margin-bottom:20px; width:100%; padding: 10px"> -->
+
+        <!-- Training Information Table -->
+        <table class="table table-striped table-bordered" id="training-table">
+            <thead>
+                <tr>
+                    <th><strong><?= Yii::t('employeeTraining', 'Training ID') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Name') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Created At') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Assigned Users Count') ?></strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($trainings as $training): ?>
+                    <tr>
+                        <td><?= Html::encode($training['id']) ?></td>
+                        <td><?= Html::encode($training['name']) ?></td>
+                        <td><?= Html::encode($training['created_at']) ?></td>
+                        <td><?= Html::encode($training['assigned_users_count']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <div id="submit-cancel-buttons" style="display: none;">
+            <button id="submit-training-btn">Submit</button>
+            <button id="cancel-training-btn">Cancel</button>
+        </div>
+        <button id="create-training-btn">Create Training</button>
+        <br>
         <br>
 
-        <!-- Search bar for filtering users -->
-        <input type="text" id="employee-search-bar" placeholder="<?= Yii::t('employeeTraining', 'Search employees...') ?>"
-            style="margin-bottom:20px; width:100%; padding: 10px">
-
-        <!-- Loop through each user and display their information -->
-        <?php foreach ($users as $user): ?>
-            <div class="employee-info-container" style="display: flex;">
-                <div class="employee-info" style="flex: 1; width: 50%;" data-id="<?= Html::encode($user->id) ?>"
-                    data-title="<?= Html::encode($user->profile->title) ?>"
-                    data-location="<?= Html::encode($user->profile->storage_location) ?>"
-                    data-fullname="<?= Html::encode($user->profile->firstname . ' ' . $user->profile->lastname) ?>"
-                    data-username="<?= Html::encode($user->username) ?>">
-                    <p>
-                        <!-- Display the user's username and id -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'User:') ?>
-                        </strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
-
-                        <!-- Display the user's fullname -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Full name:') ?>
-                        </strong> <?= Html::encode($user->profile->firstname) ?>
-                        <?= Html::encode($user->profile->lastname) ?> <br>
-
-                        <!-- Display the user's title -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Title:') ?>
-                        </strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
-
-                        <!-- Display the user's address by concatenating available address components -->
-                        <!-- <strong>Address:</strong>
-                         
-                    <?php
-                    // $addressComponents = [
-                    //     $user->profile->street,
-                    //     $user->profile->city,
-                    //     $user->profile->zip,
-                    //     $user->profile->country,
-                    //     $user->profile->state,
-                    // ];
-                
-                    // // Filtering out any empty values from the array
-                    // $filteredAddressComponents = array_filter($addressComponents);
-                
-                    // if (empty($filteredAddressComponents)) {
-                    //     echo 'N/A';
-                    // } else {
-                    //     echo Html::encode(implode(', ', $filteredAddressComponents)); // implode joins all elements into one string
-                    // }
-                    ?>
-                    <br> -->
-
-                        <!-- Display the user's roles by concatenating group names -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Roles:') ?>
-                        </strong>
-                        <?php
-                        // Retrieves all the groups that the user is a part of
-                        $groups = $user->getGroups()->all();
-                        // Aplying callback to each element (group) in the array (groups) and getting array (groupNames) of all the group names
-                        $groupNames = array_map(function ($group) {
-                            return $group->name;
-                        }, $groups);
-                        echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
-                        ?><br>
-
-                        <!-- Display the user's storage_location -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Storage location:') ?>
-                        </strong>
-                        <?= Html::encode($user->profile->storage_location ?: 'N/A') ?><br>
-
-                        <!-- Display the user's last login time -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Last login:') ?>
-                        </strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
-
-                        <!-- Display the time when last training was assigned for user -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Training assigned time:') ?>
-                        </strong>
-
-                        <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
-                        <span id="training-assigned-time-<?= $user->id ?>">
+        <!-- User Information Table -->
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th><strong><?= Yii::t('employeeTraining', 'ID') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Full Name') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Job') ?></strong></th>
+                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Roles') ?></strong></th> -->
+                    <th><strong><?= Yii::t('employeeTraining', 'Location') ?></strong></th>
+                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Training assigned time') ?></strong></th> -->
+                    <th><strong><?= Yii::t('employeeTraining', 'Training complete time') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'No. of open trainings') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'No. of completed trainings') ?></strong></th>
+                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Assigned training') ?></strong></th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($users as $user): ?>
+                    <tr data-id="<?= Html::encode($user->id) ?>" data-title="<?= Html::encode($user->profile->title) ?>"
+                        data-location="<?= Html::encode($user->profile->storage_location) ?>"
+                        data-fullname="<?= Html::encode($user->profile->firstname . ' ' . $user->profile->lastname) ?>"
+                        data-username="<?= Html::encode($user->username) ?>">
+                        <td><?= Html::encode($user->id) ?></td>
+                        <td><?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
+                        </td>
+                        <td><?= Html::encode($user->profile->title ?: 'N/A') ?></td>
+                        <!-- <td>
+                            <?php
+                            $groups = $user->getGroups()->all();
+                            $groupNames = array_map(function ($group) {
+                                return $group->name;
+                            }, $groups);
+                            echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
+                            ?>
+                        </td> -->
+                        <td><?= Html::encode($user->profile->storage_location ?: 'N/A') ?></td>
+                        <!-- <td id="training-assigned-time-<?= $user->id ?>">
                             <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
-                        </span><br>
-
-                        <!-- Display the time when user completed the training with dynamic class for color coding-->
-                        <!-- Assigning right CSS class (text color) based on the conditions -->
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Training complete time:') ?>
-                        </strong>
-                        <span id="training-complete-time-<?= $user->id ?>" class="<?php
-
-                          // Training has been completed by the employee
+                        </td> -->
+                        <td id="training-complete-time-<?= $user->id ?>" class="<?php
                           if ($user->profile->training_complete_time) {
                               echo 'text-green';
-                          }
-                          // Training has been scheduled for employee by admin
-                          elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
+                          } elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
                               echo 'text-orange';
-                          }
-                          // Training has been either set by the admin straight away or employee has seen the training that was scheduled but didn't complete it yet
-                          elseif ($user->profile->assigned_training) {
+                          } elseif ($user->profile->assigned_training) {
                               echo 'text-red';
-                          }
-                          // Employee doesn't have any training set either completed 
-                          else {
+                          } else {
                               echo 'text-black';
                           }
-                          ?>">
-                            <!-- If employee didn't complete the training yet display N/A -->
-                            <?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?>
-                        </span>
-
-                    </p>
-
-                    <!-- Checkbox to assign/unassign training -->
-                    <label>
-                        <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
-                        <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
-                            <?= $user->profile->assigned_training ? 'checked' : '' ?>>
-                            <?= Yii::t('employeeTraining', 'Assigned training') ?>
-                    </label>
-                    <hr>
-                </div>
-
-                <!-- Windows for displaying answers from user -->
-                <?php if (!empty($latestAnswers[$user->id])): ?>
-                    <div class="right-panel"
-                        style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto; padding: 5px">
-                        <strong>
-                            <?= Yii::t('employeeTraining', 'Answers from the latest training') ?>
-                        </strong>
-                        <hr>
-                        <?php foreach ($latestAnswers[$user->id] as $answer): ?>
-                            <strong>
-                                <?= Yii::t('employeeTraining', 'Question:') ?>
-                            </strong> <?= Html::encode($answer['question_text']) ?><br>
-                            <strong>
-                                <?= Yii::t('employeeTraining', 'Answer:') ?>
-                            </strong> <?= Html::encode($answer['answer']) ?><br><br>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-            </div>
-        <?php endforeach; ?>
+                          ?>"><?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?></td>
+                        <td>N/A</td>
+                        <td><?= Html::encode($user->profile->completed_trainings_count) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
     </div>
 </div>
 
@@ -235,6 +174,7 @@ use yii\helpers\Url;
 // URLs for the function in RoleController
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $assignTrainingUrl = Url::to(['role/assign-training']);
+$createTrainingUrl = Url::to(['role/create-training']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local timezone
@@ -244,7 +184,54 @@ var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 document.getElementById("training-time-picker").setAttribute("min", currentTime);
     
-// jQuery event handler for checkbox change 
+    // Event handler for creating a new training row
+    $('#create-training-btn').on('click', function() {
+        var table = $('#training-table tbody');
+        var newRow = $('<tr>');
+        newRow.html(`
+            <td><input type="text" id="new-training-id" placeholder="Training ID"></td>
+            <td><input type="text" id="new-training-name" placeholder="Name"></td>
+            <td><input type="text" disabled></td>
+            <td><input type="text" disabled></td>
+        `);
+        table.append(newRow);
+        $('#create-training-btn').hide();
+        $('#submit-cancel-buttons').show();
+    });
+
+    $('#cancel-training-btn').on('click', function() {
+        $('#training-table tbody tr:last').remove();
+        $('#create-training-btn').show();
+        $('#submit-cancel-buttons').hide();
+    });
+
+    $('#submit-training-btn').on('click', function() {
+        var trainingId = $('#new-training-id').val();
+        var trainingName = $('#new-training-name').val();
+
+        if(trainingId && trainingName) {
+            $.ajax({
+                url: '$createTrainingUrl',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({id: trainingId, name: trainingName}),
+                headers: {
+                    'X-CSRF-Token': yii.getCsrfToken()
+                },
+                success: function(data) {
+                    if(data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to create training');
+                    }
+                }
+            });
+        } else {
+            alert('Please fill in both fields');
+        }
+    });
+
+    // jQuery event handler for checkbox change 
     $(document).on('change', '.toggle-info-btn', function() {
 
         // Get user ID from the data attribute

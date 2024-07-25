@@ -52,26 +52,31 @@ use yii\helpers\Url;
 
         <!-- Buttons for Adding/Removing question by user -->
         <div class="form-group">
-            <button type="button" id="add-question-btn" class="btn btn-secondary" style="display: none;">+ Add
-                Question</button>
-            <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">- Remove
-                Question</button>
+            <button type="button" id="add-question-btn" class="btn btn-secondary" style="display: none;">
+                <?= Yii::t('employeeTraining', '+ Add question') ?>
+            </button>
+            <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">
+                <?= Yii::t('employeeTraining', '- Remove question') ?>
+            </button>
         </div>
 
         <!-- Button for Advanced settings and checkbox for selecting all users with checkbox -->
-        <!-- TODO make button unchecked if not toggled -->
         <div class="form-group">
-            <button type="button" id="advanced-settings-btn" tabindex="1" style="display:none;">Advanced settings <span
+            <button type="button" id="advanced-settings-btn" tabindex="1" style="display:none;">
+            <?= Yii::t('employeeTraining', 'Advanced settings ') ?>    
+            <span
                     id="arrow-down">▼</span></button>
             <div id="assign-to-all" style="display: none;">
                 <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
-                <label for="all-users">Assign question(s) to all titles</label>
+                <label for="all-users">
+                    <?= Yii::t('employeeTraining', 'Assign question(s) to all titles') ?>
+                </label>
             </div>
         </div>
 
         <!-- Button for submiting the form and sending data to endpoint -->
         <div class="form-group">
-            <?= Html::button('Submit', ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
+            <?= Html::button(Yii::t('employeeTraining', 'Submit'), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         </div>
 
         <div class="form-group">
