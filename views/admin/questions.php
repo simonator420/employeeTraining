@@ -11,8 +11,10 @@ use yii\helpers\Url;
 
         <!-- Header and button for going back to overview -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>Edit Training Questions</h1>
-            <?= Html::a('&laquo; Back to overview', Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
+            <h1>
+                <?= Yii::t('employeeTraining', 'Edit Training Questions') ?>
+            </h1>
+            <?= Html::a('&laquo; ' . Yii::t('employeeTraining', 'Back to overview'), Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
         </div>
 
         <br>
@@ -26,7 +28,9 @@ use yii\helpers\Url;
 
         <!-- Dropdown list for displaying all employee titles and selecting any of them -->
         <div class="form-group">
-            <label>Select Title</label><br>
+            <label>
+                <?= Yii::t('employeeTraining', 'Select title') ?>
+            </label><br>
             <?= Html::dropDownList('title', null, array_combine($titles, $titles), ['prompt' => 'Select Title', 'class' => 'form-control title-dropdown', 'id' => 'title-select']) ?>
         </div>
 

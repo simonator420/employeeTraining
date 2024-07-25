@@ -19,6 +19,7 @@ class Module extends \humhub\components\Module
     {
         parent::init();
         $this->registerAssets();
+        $this->registerTranslations();
     }
 
     /**
@@ -27,5 +28,20 @@ class Module extends \humhub\components\Module
     protected function registerAssets()
     {
         \Yii::$app->view->registerAssetBundle('humhub\modules\employeeTraining\assets\EmployeeTrainingAsset');
+    }
+
+    /** 
+     *  Method for registering the translations
+     */
+    
+    protected function registerTranslations()
+    {
+        Yii::$app->i18n->translations['employeeTraining*'] = [
+            'class' => 'yii\i18n\PhpMessageSource',
+            'basePath' => '@humhub/modules/employeeTraining/messages',
+            'fileMap' => [
+                'employeeTraining' => 'employeeTraining.php',
+            ],
+        ];
     }
 }

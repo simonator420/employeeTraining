@@ -9,12 +9,13 @@ use yii\helpers\Url;
 <div class="employee-overview-container">
     <div class="employee-info-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>Employee Training Overview</h1>
-            <?= Html::a('Edit Questions', Url::to(['training-questions/questions']), ['class' => 'btn edit-question-btn']) ?>
+        <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
+
+            <?= Html::a(Yii::t('employeeTraining', 'Edit questions'), Url::to(['training-questions/questions']), ['class' => 'btn edit-question-btn']) ?>
         </div>
 
         <!-- Checkboxes for each title with label "Assign to all" -->
-        <label>Assign training to all employees with title:</label>
+        <label><?= Yii::t('employeeTraining', 'Assign training to all employees with title:') ?></label>
         <div id="title-checkboxes">
             <?php foreach ($titles as $title): ?>
                 <label class="checkbox-label">
@@ -26,7 +27,7 @@ use yii\helpers\Url;
         <br>
 
         <!-- Checkboxes for each storage location with label "with storage location in:" -->
-        <label>With storage location in:</label>
+        <label><?= Yii::t('employeeTraining', 'With storage location in:') ?></label>
         <div id="storage-location-checkboxes">
             <?php foreach ($storage_locations as $location): ?>
                 <label class="checkbox-label">
@@ -38,15 +39,15 @@ use yii\helpers\Url;
         <br>
 
         <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
-        <button id="select-all-btn">Select all</button>
-        <button id="confirm-selection-btn">Assign Now</button>
+        <button id="select-all-btn"><?= Yii::t('employeeTraining', 'Select all') ?></button>
+        <button id="confirm-selection-btn"><?= Yii::t('employeeTraining', 'Assign now') ?></button>
 
         <br>
         <br>
 
         <!-- Button to toggle visibility of the user list for specific training assignment -->
-        <button id="toggle-user-list-btn">
-            Assign training to specific user <span id="arrow-down">▼</span>
+        <button id="toggle-user-list-btn"> 
+            <?=Yii::t('employeeTraining', 'Assign training to specific users') ?><span id="arrow-down"> ▼</span>
         </button>
         <br><br>
 
@@ -60,13 +61,18 @@ use yii\helpers\Url;
                 <br>
             <?php endforeach; ?>
             <div class="user-button-container">
-                <button id="select-all-users-btn">Select All</button>
-                <button id="confirm-specific-users-btn">Assign Now</button>
+                <button id="select-all-users-btn">
+                    <?= Yii::t('employeeTraining', 'Select all') ?>
+                </button>
+                <button id="confirm-specific-users-btn">
+                    <?= Yii::t('employeeTraining', 'Assign now') ?></button>
             </div>
         </div>
 
         <!-- Input for selecting date and time when the training should be assigned -->
-        <label>Or select time when the training should be assigned.</label>
+        <label>
+            <?= Yii::t('employeeTraining', 'Or select time when the training should be assigned:') ?>
+        </label>
         <input type="datetime-local" id="training-time-picker" name="training-time">
         <button id="confirm-time-btn">OK</button>
         <br>
@@ -74,11 +80,9 @@ use yii\helpers\Url;
         <hr>
         <br>
 
-
         <!-- Search bar for filtering users -->
-        <input type="text" id="employee-search-bar" placeholder="Search employees..."
+        <input type="text" id="employee-search-bar" placeholder="<?= Yii::t('employeeTraining', 'Search employees...') ?>"
             style="margin-bottom:20px; width:100%; padding: 10px">
-
 
         <!-- Loop through each user and display their information -->
         <?php foreach ($users as $user): ?>
@@ -90,14 +94,20 @@ use yii\helpers\Url;
                     data-username="<?= Html::encode($user->username) ?>">
                     <p>
                         <!-- Display the user's username and id -->
-                        <strong>User:</strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'User:') ?>
+                        </strong> <?= Html::encode($user->username ?: 'N/A') ?> (ID: <?= $user->id ?>)<br>
 
                         <!-- Display the user's fullname -->
-                        <strong>Full name:</strong> <?= Html::encode($user->profile->firstname) ?>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Full name:') ?>
+                        </strong> <?= Html::encode($user->profile->firstname) ?>
                         <?= Html::encode($user->profile->lastname) ?> <br>
 
                         <!-- Display the user's title -->
-                        <strong>Title:</strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Title:') ?>
+                        </strong> <?= Html::encode($user->profile->title ?: 'N/A') ?><br>
 
                         <!-- Display the user's address by concatenating available address components -->
                         <!-- <strong>Address:</strong>
@@ -123,7 +133,9 @@ use yii\helpers\Url;
                     <br> -->
 
                         <!-- Display the user's roles by concatenating group names -->
-                        <strong>Roles:</strong>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Roles:') ?>
+                        </strong>
                         <?php
                         // Retrieves all the groups that the user is a part of
                         $groups = $user->getGroups()->all();
@@ -135,14 +147,20 @@ use yii\helpers\Url;
                         ?><br>
 
                         <!-- Display the user's storage_location -->
-                        <strong>Storage Location:</strong>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Storage location:') ?>
+                        </strong>
                         <?= Html::encode($user->profile->storage_location ?: 'N/A') ?><br>
 
                         <!-- Display the user's last login time -->
-                        <strong>Last login:</strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Last login:') ?>
+                        </strong> <?= Html::encode($user->last_login ?: 'N/A') ?><br> <br>
 
                         <!-- Display the time when last training was assigned for user -->
-                        <strong>Training Assigned Time:</strong>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Training assigned time:') ?>
+                        </strong>
 
                         <!-- Assigning unique id to the span element e.g. 'training-assigned-time-123' -->
                         <span id="training-assigned-time-<?= $user->id ?>">
@@ -151,7 +169,9 @@ use yii\helpers\Url;
 
                         <!-- Display the time when user completed the training with dynamic class for color coding-->
                         <!-- Assigning right CSS class (text color) based on the conditions -->
-                        <strong>Training Complete Time:</strong>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Training complete time:') ?>
+                        </strong>
                         <span id="training-complete-time-<?= $user->id ?>" class="<?php
 
                           // Training has been completed by the employee
@@ -182,7 +202,7 @@ use yii\helpers\Url;
                         <!-- Adding a checkbox with custom data-id attribute for storing the user id in the checkbox -->
                         <input type="checkbox" class="toggle-info-btn" data-id="<?= $user->id ?>"
                             <?= $user->profile->assigned_training ? 'checked' : '' ?>>
-                        Assigned Training
+                            <?= Yii::t('employeeTraining', 'Assigned training') ?>
                     </label>
                     <hr>
                 </div>
@@ -191,11 +211,17 @@ use yii\helpers\Url;
                 <?php if (!empty($latestAnswers[$user->id])): ?>
                     <div class="right-panel"
                         style="width: 50%; background-color: #ffffff; height: 215px; border: 2px solid transparent;border-color: rgb(85, 85, 85); border-radius: 4px; overflow-y: auto; padding: 5px">
-                        <strong>Answers from latest training</strong>
+                        <strong>
+                            <?= Yii::t('employeeTraining', 'Answers from the latest training') ?>
+                        </strong>
                         <hr>
                         <?php foreach ($latestAnswers[$user->id] as $answer): ?>
-                            <strong>Question:</strong> <?= Html::encode($answer['question_text']) ?><br>
-                            <strong>Answer:</strong> <?= Html::encode($answer['answer']) ?><br><br>
+                            <strong>
+                                <?= Yii::t('employeeTraining', 'Question:') ?>
+                            </strong> <?= Html::encode($answer['question_text']) ?><br>
+                            <strong>
+                                <?= Yii::t('employeeTraining', 'Answer:') ?>
+                            </strong> <?= Html::encode($answer['answer']) ?><br><br>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
