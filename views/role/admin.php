@@ -8,11 +8,7 @@ use yii\helpers\Url;
 <!-- View for displaying informations about the users. -->
 <div class="employee-overview-container">
     <div class="employee-info-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
-
-            <?= Html::a(Yii::t('employeeTraining', 'Edit questions'), Url::to(['training-questions/questions']), ['class' => 'btn edit-question-btn']) ?>
-        </div>
+        <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
 
         <!-- Checkboxes for each title with label "Assign to all" -->
         <label><?= Yii::t('employeeTraining', 'Assign training to all employees with title:') ?></label>
@@ -83,6 +79,26 @@ use yii\helpers\Url;
             placeholder="<?= Yii::t('employeeTraining', 'Search employees...') ?>"
             style="margin-bottom:20px; width:100%; padding: 10px"> -->
 
+
+        <h2><?= Yii::t('employeeTraining', 'User Setup') ?></h2>
+        <div class="collapsible-container">
+            <button class="collapsible" data-role="user"><?= Yii::t('employeeTraining', 'User') ?></button>
+            <div class="content">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <button class="collapsible" data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
+            <div class="content">
+                <!-- Content will be populated dynamically -->
+            </div>
+            <button class="collapsible" data-role="admin"><?= Yii::t('employeeTraining', 'Admin') ?></button>
+            <div class="content">
+                <!-- Content will be populated dynamically -->
+            </div>
+        </div>
+        <br>
+        <br>
+
+
         <!-- Training Information Table -->
         <table class="table table-striped table-bordered" id="training-table">
             <thead>
@@ -96,8 +112,7 @@ use yii\helpers\Url;
             <tbody>
                 <?php foreach ($trainings as $training): ?>
                     <tr>
-                        <td class="training-id" data-id="<?= Html::encode($training['id']) ?>"
-                            style="cursor: pointer;">
+                        <td class="training-id" data-id="<?= Html::encode($training['id']) ?>" style="cursor: pointer;">
                             <a href="<?= Url::to(['training-questions/questions', 'id' => Html::encode($training['id'])]) ?>"
                                 style="color: blue; text-decoration: underline;">
                                 <?= Html::encode($training['id']) ?>
@@ -181,6 +196,8 @@ use yii\helpers\Url;
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $assignTrainingUrl = Url::to(['role/assign-training']);
 $createTrainingUrl = Url::to(['role/create-training']);
+$fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
+$removeRoleUrl = Url::to(['role/remove-role']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local timezone
@@ -241,6 +258,128 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         console.log('click');
         var trainingId = $(this).data('id');
         console.log("Training ID clicked: " + trainingId);
+    });
+    $('.collapsible').on('click', function() {
+        var content = $(this).next('.content');
+
+        // Close all other open contents
+        $('.collapsible').not(this).removeClass('active');
+        $('.content').not(content).slideUp();
+
+        // Toggle the clicked collapsible
+        this.classList.toggle('active');
+        content.slideToggle();
+
+        if (content.is(':visible')) {
+            var role = $(this).data('role');
+            fetchUsersByRole(role, content);
+        }
+    });
+    
+    function fetchUsersByRole(role, contentElement) {
+        $.ajax({
+            url: '$fetchUsersByRoleUrl',
+            type: 'GET',
+            data: { role: role },
+            success: function(response) {
+                console.log('AJAX Response:', response); // Log the response to check the data
+                var usersHtml = '<ul>';
+                if (response.success && response.users.length > 0) {
+                    $.each(response.users, function(index, user) {
+                        console.log('User Data:', user); // Log each user data to check the IDs
+                        usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                    });
+                    usersHtml += '</ul>';
+                    // Conditionally add the remove button if the role is not "user" and users are found
+                    if (role !== 'user') {
+                        usersHtml += '<button class="remove-role-btn" data-role="' + role + '">Remove selected</button>';
+                    }
+                } else {
+                    usersHtml += '<li>No users found.</li>';
+                    usersHtml += '</ul>';
+                }
+
+                // Add the "Add" button
+                var addButtonText = '';
+                switch (role) {
+                    case 'user':
+                        addButtonText = 'Add User';
+                        break;
+                    case 'team_leader':
+                        addButtonText = 'Add Team Leader';
+                        break;
+                    case 'admin':
+                        addButtonText = 'Add Admin';
+                        break;
+                }
+                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+
+                contentElement.html(usersHtml);
+            },
+            error: function() {
+                var usersHtml = '<ul><li>Error fetching users.</li></ul>';
+                var addButtonText = '';
+                switch (role) {
+                    case 'user':
+                        addButtonText = 'Add User';
+                        break;
+                    case 'team_leader':
+                        addButtonText = 'Add Team Leader';
+                        break;
+                    case 'admin':
+                        addButtonText = 'Add Admin';
+                        break;
+                }
+                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+                contentElement.html(usersHtml);
+            }
+        });
+    }
+
+    // Event handler for removing selected users from their current role and setting it to "User"
+    $(document).on('click', '.remove-role-btn', function() {
+        var role = $(this).data('role');
+        var selectedUsers = [];
+        $(this).closest('.content').find('.role-user-checkbox:checked').each(function() {
+            var userId = $(this).val();
+            console.log('Checkbox value:', userId); // Log the checkbox value to ensure it's correct
+            selectedUsers.push(userId);
+        });
+
+        console.log('Selected users:', selectedUsers); // Log the selected users
+
+        if (selectedUsers.length > 0) {
+            $.ajax({
+                url: '$removeRoleUrl',
+                type: 'POST',
+                data: {
+                    role: role,
+                    users: selectedUsers,
+                    _csrf: yii.getCsrfToken()
+                },
+                success: function(response) {
+                    console.log('Response:', response); // Log the response
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to remove role.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error); // Log AJAX errors
+                    alert('Error in AJAX request.');
+                }
+            });
+        } else {
+            alert('Please select at least one user to be removed.');
+        }
+    });
+
+    // Event handler for adding a user to a role
+    $(document).on('click', '.add-role-btn', function() {
+        var role = $(this).data('role');
+        // Handle the addition logic here
+        alert('Add functionality for ' + role + ' is not yet implemented.');
     });
 
     // jQuery event handler for checkbox change 
@@ -682,8 +821,59 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
     });
 });
 
-
-
 JS;
 $this->registerJs($script);
 ?>
+
+<style>
+    .collapsible-container {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+    }
+
+    .collapsible {
+        background-color: #f1f1f1;
+        color: #444;
+        cursor: pointer;
+        padding: 10px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        border-radius: 0;
+        /* Reset border radius to ensure it's inherited from container */
+    }
+
+    .active,
+    .collapsible:hover {
+        background-color: #ccc;
+    }
+
+    .content {
+        padding: 5px 10px;
+        /* Match padding to the collapsible button */
+        display: none;
+        overflow: hidden;
+        background-color: #f9f9f9;
+        border-top: 1px solid #ddd;
+    }
+
+    .content ul {
+        list-style-type: none;
+        padding: 0;
+        /* Remove default padding */
+        margin: 0;
+        /* Remove default margin */
+    }
+
+    .content li {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .content li:last-child {
+        border-bottom: none;
+    }
+</style>

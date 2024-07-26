@@ -13,7 +13,6 @@ class TrainingQuestionsController extends Controller
     // Function for displaying the questions page
     public function actionQuestions($id)
     {
-
         // Get the current user
         $currentUser = Yii::$app->user;
 

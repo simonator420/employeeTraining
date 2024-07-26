@@ -79,6 +79,62 @@ class RoleController extends Controller
         ]);
     }
 
+    public function actionFetchUsersByRole($role)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $users = User::find()
+            ->joinWith('profile')
+            ->where(['profile.role' => $role])
+            ->all();
+
+        if ($users) {
+            $userList = [];
+            foreach ($users as $user) {
+                $userList[] = [
+                    'id' => $user->id,
+                    'firstname' => $user->profile->firstname,
+                    'lastname' => $user->profile->lastname,
+                ];
+            }
+            return ['success' => true, 'users' => $userList];
+        } else {
+            return ['success' => false, 'message' => 'No users found.'];
+        }
+    }
+
+    public function actionRemoveRole()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $request = Yii::$app->request;
+    
+        if ($request->isPost) {
+            $role = $request->post('role');
+            $userIds = $request->post('users', []);
+    
+            if ($role && !empty($userIds)) {
+                foreach ($userIds as $userId) {
+                    $user = User::findOne($userId);
+                    if ($user) {
+                        // Directly update the profile role attribute
+                        $user->profile->role = 'user';
+                        if (!$user->profile->save()) {
+                            Yii::error("Failed to save user profile for ID: $userId", __METHOD__);
+                            return ['success' => false, 'message' => 'Failed to save user profile.'];
+                        }
+                    } else {
+                        Yii::error("User not found with ID: $userId", __METHOD__);
+                        return ['success' => false, 'message' => "User not found with ID: $userId"];
+                    }
+                }
+                return ['success' => true];
+            }
+        }
+    
+        return ['success' => false];
+    }
+
+
     // Function for handling the request to display Employee Training Overview page
     public function actionEmployee()
     {
