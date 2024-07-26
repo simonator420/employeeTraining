@@ -103,15 +103,39 @@ class RoleController extends Controller
         }
     }
 
+    public function actionFetchAllProfiles()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $profiles = Profile::find()
+            ->joinWith('user')
+            ->all();
+
+        if ($profiles) {
+            $profileList = [];
+            foreach ($profiles as $profile) {
+                $profileList[] = [
+                    'id' => $profile->user->id,
+                    'firstname' => $profile->firstname,
+                    'lastname' => $profile->lastname,
+                    'role' => $profile->role,
+                ];
+            }
+            return ['success' => true, 'profiles' => $profileList];
+        } else {
+            return ['success' => false, 'message' => 'No profiles found.'];
+        }
+    }
+
     public function actionRemoveRole()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;
-    
+
         if ($request->isPost) {
             $role = $request->post('role');
             $userIds = $request->post('users', []);
-    
+
             if ($role && !empty($userIds)) {
                 foreach ($userIds as $userId) {
                     $user = User::findOne($userId);
@@ -130,7 +154,7 @@ class RoleController extends Controller
                 return ['success' => true];
             }
         }
-    
+
         return ['success' => false];
     }
 

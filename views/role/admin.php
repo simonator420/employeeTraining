@@ -86,7 +86,8 @@ use yii\helpers\Url;
             <div class="content">
                 <!-- Content will be populated dynamically -->
             </div>
-            <button class="collapsible" data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
+            <button class="collapsible"
+                data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
             <div class="content">
                 <!-- Content will be populated dynamically -->
             </div>
@@ -97,6 +98,21 @@ use yii\helpers\Url;
         </div>
         <br>
         <br>
+        
+        <!-- Modal for adding roles -->
+        <div id="addRoleModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modal-title"></h2>
+                <!-- Add form elements or any other content here -->
+                <form id="add-role-form">
+                    <!-- The list of users with checkboxes will be populated here -->
+                    <div id="profile-list"></div>
+                    <br>
+                    <button type="button" id="submit-add-role">Add</button>
+                </form>
+            </div>
+        </div>
 
 
         <!-- Training Information Table -->
@@ -191,6 +207,10 @@ use yii\helpers\Url;
     </div>
 </div>
 
+
+
+
+
 <?php
 // URLs for the function in RoleController
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
@@ -198,6 +218,7 @@ $assignTrainingUrl = Url::to(['role/assign-training']);
 $createTrainingUrl = Url::to(['role/create-training']);
 $fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
 $removeRoleUrl = Url::to(['role/remove-role']);
+$fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local timezone
@@ -277,64 +298,91 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
     });
     
     function fetchUsersByRole(role, contentElement) {
-        $.ajax({
-            url: '$fetchUsersByRoleUrl',
-            type: 'GET',
-            data: { role: role },
-            success: function(response) {
-                console.log('AJAX Response:', response); // Log the response to check the data
-                var usersHtml = '<ul>';
-                if (response.success && response.users.length > 0) {
-                    $.each(response.users, function(index, user) {
-                        console.log('User Data:', user); // Log each user data to check the IDs
-                        usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
-                    });
-                    usersHtml += '</ul>';
-                    // Conditionally add the remove button if the role is not "user" and users are found
-                    if (role !== 'user') {
-                        usersHtml += '<button class="remove-role-btn" data-role="' + role + '">Remove selected</button>';
-                    }
-                } else {
-                    usersHtml += '<li>No users found.</li>';
-                    usersHtml += '</ul>';
+    $.ajax({
+        url: '$fetchUsersByRoleUrl',
+        type: 'GET',
+        data: { role: role },
+        success: function(response) {
+            console.log('AJAX Response:', response); // Log the response to check the data
+            var usersHtml = '<ul>';
+            if (response.success && response.users.length > 0) {
+                $.each(response.users, function(index, user) {
+                    console.log('User Data:', user); // Log each user data to check the IDs
+                    usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                });
+                usersHtml += '</ul>';
+                // Conditionally add the remove button if the role is not "user" and users are found
+                if (role !== 'user') {
+                    usersHtml += '<button class="remove-role-btn" data-role="' + role + '">Remove selected</button>';
                 }
-
-                // Add the "Add" button
-                var addButtonText = '';
-                switch (role) {
-                    case 'user':
-                        addButtonText = 'Add User';
-                        break;
-                    case 'team_leader':
-                        addButtonText = 'Add Team Leader';
-                        break;
-                    case 'admin':
-                        addButtonText = 'Add Admin';
-                        break;
-                }
-                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
-
-                contentElement.html(usersHtml);
-            },
-            error: function() {
-                var usersHtml = '<ul><li>Error fetching users.</li></ul>';
-                var addButtonText = '';
-                switch (role) {
-                    case 'user':
-                        addButtonText = 'Add User';
-                        break;
-                    case 'team_leader':
-                        addButtonText = 'Add Team Leader';
-                        break;
-                    case 'admin':
-                        addButtonText = 'Add Admin';
-                        break;
-                }
-                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
-                contentElement.html(usersHtml);
+            } else {
+                usersHtml += '<li>No users found.</li>';
+                usersHtml += '</ul>';
             }
-        });
-    }
+
+            // Add the "Add" button
+            // var addButtonText = '';
+            // switch (role) {
+            //     case 'user':
+            //         addButtonText = 'Add User';
+            //         break;
+            //     case 'team_leader':
+            //         addButtonText = 'Add Team Leader';
+            //         break;
+            //     case 'admin':
+            //         addButtonText = 'Add Admin';
+            //         break;
+            // }
+            // usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+
+            if (role !== 'user') {
+                var addButtonText = '';
+                switch (role) {
+                    case 'team_leader':
+                        addButtonText = 'Add Team Leader';
+                        break;
+                    case 'admin':
+                        addButtonText = 'Add Admin';
+                        break;
+                }
+                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+            }
+
+            contentElement.html(usersHtml);
+        },
+        error: function() {
+            var usersHtml = '<ul><li>Error fetching users.</li></ul>';
+            // var addButtonText = '';
+            // switch (role) {
+            //     case 'user':
+            //         addButtonText = 'Add User';
+            //         break;
+            //     case 'team_leader':
+            //         addButtonText = 'Add Team Leader';
+            //         break;
+            //     case 'admin':
+            //         addButtonText = 'Add Admin';
+            //         break;
+            // }
+            // usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+
+            if (role !== 'user') {
+                var addButtonText = '';
+                switch (role) {
+                    case 'team_leader':
+                        addButtonText = 'Add Team Leader';
+                        break;
+                    case 'admin':
+                        addButtonText = 'Add Admin';
+                        break;
+                }
+                usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
+            }
+
+            contentElement.html(usersHtml);
+        }
+    });
+}
 
     // Event handler for removing selected users from their current role and setting it to "User"
     $(document).on('click', '.remove-role-btn', function() {
@@ -376,10 +424,104 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
     });
 
     // Event handler for adding a user to a role
+    var modal = document.getElementById("addRoleModal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementsByClassName("add-role-btn");
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal 
     $(document).on('click', '.add-role-btn', function() {
         var role = $(this).data('role');
-        // Handle the addition logic here
-        alert('Add functionality for ' + role + ' is not yet implemented.');
+        var title = '';
+        switch (role) {
+            case 'team_leader':
+                title = 'Add Team Leader';
+                break;
+            case 'admin':
+                title = 'Add Admin';
+                break;
+        }
+        $('#modal-title').text(title);
+        modal.style.display = "block";
+        $('body').css('overflow', 'hidden'); // Disable scrolling
+
+        // Fetch profiles and display them in the modal
+        $.ajax({
+            url: '$fetchAllProfilesUrl', // Update to match your actual endpoint
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var profilesHtml = '<ul>';
+                    $.each(response.profiles, function(index, profile) {
+                        // Exclude profiles with the current role
+                        if (profile.role !== role) {
+                            profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</li>';
+                        }
+                    });
+                    profilesHtml += '</ul>';
+                    $('#profile-list').html(profilesHtml); // Populate the profile list
+                } else {
+                    $('#profile-list').html('<p>No profiles found.</p>');
+                }
+            },
+            error: function() {
+                $('#profile-list').html('<p>Error fetching profiles.</p>');
+            }
+        });
+    });
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+        modal.style.display = "none";
+        $('body').css('overflow', 'auto'); // Enable scrolling
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            $('body').css('overflow', 'auto'); // Enable scrolling
+        }
+    }
+
+    // Handle the form submission
+    $('#submit-add-role').click(function() {
+        var selectedProfiles = [];
+        $('#add-role-form').find('.profile-checkbox:checked').each(function() {
+            selectedProfiles.push($(this).val());
+        });
+
+        var role = $('#modal-title').text().replace('Add ', '').toLowerCase().replace(' ', '_');
+
+        // Perform the AJAX request to add the profiles to the role
+        $.ajax({
+            url: 'path_to_your_add_user_endpoint', // replace with your endpoint
+            type: 'POST',
+            data: {
+                profiles: selectedProfiles,
+                role: role,
+                _csrf: yii.getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Profiles added successfully');
+                    location.reload(); // Reload the page to see the changes
+                } else {
+                    alert('Failed to add profiles');
+                }
+                modal.style.display = "none";
+                $('body').css('overflow', 'auto'); // Enable scrolling
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error); // Log AJAX errors
+                alert('Error in AJAX request.');
+                modal.style.display = "none";
+                $('body').css('overflow', 'auto'); // Enable scrolling
+            }
+        });
     });
 
     // jQuery event handler for checkbox change 
@@ -875,5 +1017,43 @@ $this->registerJs($script);
 
     .content li:last-child {
         border-bottom: none;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        padding-top: 250px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    /* Modal Content */
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    /* The Close Button */
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
     }
 </style>
