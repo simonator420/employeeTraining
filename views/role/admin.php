@@ -97,7 +97,6 @@ use yii\helpers\Url;
             </div>
         </div>
         <br>
-        <br>
 
         <!-- Modal for adding roles -->
         <div id="addRoleModal" class="modal">
@@ -114,6 +113,7 @@ use yii\helpers\Url;
             </div>
         </div>
 
+        <h2><?= Yii::t('employeeTraining', 'Trainings') ?></h2>
         <!-- Training Information Table -->
         <table class="table table-striped table-bordered" id="training-table">
             <thead>
