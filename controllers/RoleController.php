@@ -127,6 +127,37 @@ class RoleController extends Controller
         }
     }
 
+    public function actionAddRole()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $request = Yii::$app->request;
+
+        if ($request->isPost) {
+            $role = $request->post('role');
+            $profileIds = $request->post('profiles', []);
+
+            if ($role && !empty($profileIds)) {
+                foreach ($profileIds as $profileId) {
+                    $user = User::findOne($profileId);
+                    if ($user) {
+                        // Update the profile role attribute
+                        $user->profile->role = $role;
+                        if (!$user->profile->save()) {
+                            Yii::error("Failed to save user profile for ID: $profileId", __METHOD__);
+                            return ['success' => false, 'message' => 'Failed to save user profile.'];
+                        }
+                    } else {
+                        Yii::error("User not found with ID: $profileId", __METHOD__);
+                        return ['success' => false, 'message' => "User not found with ID: $profileId"];
+                    }
+                }
+                return ['success' => true];
+            }
+        }
+
+        return ['success' => false, 'message' => 'Invalid request'];
+    }
+    // Removing the current role and setting it to 'user'
     public function actionRemoveRole()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

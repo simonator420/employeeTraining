@@ -98,7 +98,7 @@ use yii\helpers\Url;
         </div>
         <br>
         <br>
-        
+
         <!-- Modal for adding roles -->
         <div id="addRoleModal" class="modal">
             <div class="modal-content">
@@ -113,7 +113,6 @@ use yii\helpers\Url;
                 </form>
             </div>
         </div>
-
 
         <!-- Training Information Table -->
         <table class="table table-striped table-bordered" id="training-table">
@@ -219,6 +218,7 @@ $createTrainingUrl = Url::to(['role/create-training']);
 $fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
 $removeRoleUrl = Url::to(['role/remove-role']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
+$addRoleUrl = Url::to(['role/add-role']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local timezone
@@ -320,21 +320,6 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
                 usersHtml += '</ul>';
             }
 
-            // Add the "Add" button
-            // var addButtonText = '';
-            // switch (role) {
-            //     case 'user':
-            //         addButtonText = 'Add User';
-            //         break;
-            //     case 'team_leader':
-            //         addButtonText = 'Add Team Leader';
-            //         break;
-            //     case 'admin':
-            //         addButtonText = 'Add Admin';
-            //         break;
-            // }
-            // usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
-
             if (role !== 'user') {
                 var addButtonText = '';
                 switch (role) {
@@ -352,19 +337,6 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         },
         error: function() {
             var usersHtml = '<ul><li>Error fetching users.</li></ul>';
-            // var addButtonText = '';
-            // switch (role) {
-            //     case 'user':
-            //         addButtonText = 'Add User';
-            //         break;
-            //     case 'team_leader':
-            //         addButtonText = 'Add Team Leader';
-            //         break;
-            //     case 'admin':
-            //         addButtonText = 'Add Admin';
-            //         break;
-            // }
-            // usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
 
             if (role !== 'user') {
                 var addButtonText = '';
@@ -498,7 +470,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
         // Perform the AJAX request to add the profiles to the role
         $.ajax({
-            url: 'path_to_your_add_user_endpoint', // replace with your endpoint
+            url: '$addRoleUrl', // Update to match your actual endpoint
             type: 'POST',
             data: {
                 profiles: selectedProfiles,
