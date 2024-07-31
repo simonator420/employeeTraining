@@ -22,6 +22,14 @@ class TrainingQuestionsController extends Controller
             return $this->redirect(['site/access-denied']);
         }
 
+        $trainingName = Yii::$app->db->createCommand('SELECT name FROM training WHERE id=:id')
+            ->bindValue(':id', $id)
+            ->queryScalar(); // Use the prepared query
+
+        $deadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id =:id')
+            ->bindValue(':id', $id)
+            ->queryScalar();
+
         // Fetch distinct titles from the profile table
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')->queryColumn();
         // Sort the titles alphabetically
@@ -31,6 +39,8 @@ class TrainingQuestionsController extends Controller
         return $this->render('/admin/questions', [
             'titles' => $titles,
             'trainingId' => $id,
+            'trainingName' => $trainingName,
+            'deadlineForCompletion' => $deadline,
         ]);
     }
 
@@ -73,16 +83,16 @@ class TrainingQuestionsController extends Controller
     {
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         // Get posted titles and questions data
         $selectedTitles = Yii::$app->request->post('titles', []);
         $questions = Yii::$app->request->post('TrainingQuestions', []);
-    
+
         // Return failure response if no titles are provided
         if (empty($selectedTitles)) {
             return ['success' => false, 'errors' => 'At least one title is required'];
         }
-    
+
         // Start a database transaction
         $transaction = Yii::$app->db->beginTransaction();
         try {
@@ -90,12 +100,12 @@ class TrainingQuestionsController extends Controller
             foreach ($selectedTitles as $selectedTitle) {
                 // Delete existing questions for the selected title
                 Yii::$app->db->createCommand()->delete('training_questions', ['title' => $selectedTitle])->execute();
-    
+
                 // Fetch all existing IDs
                 $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
                 $nextId = 1;
                 $usedIds = [];
-    
+
                 // Iterate over each question and generate HTML for display
                 foreach ($questions as $index => $questionData) {
                     // Find the lowest available ID
@@ -103,7 +113,7 @@ class TrainingQuestionsController extends Controller
                         $nextId++;
                     }
                     $usedIds[] = $nextId;
-    
+
                     // Insert each question into the database
                     Yii::$app->db->createCommand()->insert('training_questions', [
                         'id' => $nextId,
@@ -118,7 +128,7 @@ class TrainingQuestionsController extends Controller
             $transaction->commit();
             // Return success response
             return ['success' => true];
-    
+
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error (erase all modifications made from the start of the transaction)
             $transaction->rollBack();
@@ -192,5 +202,27 @@ class TrainingQuestionsController extends Controller
             // Return failure response if no question found
             return ['success' => false];
         }
+    }
+
+    // Function for updating the deadline
+    public function actionUpdateDeadline()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (Yii::$app->request->isPost) {
+            $id = Yii::$app->request->post('id');
+            $deadline = Yii::$app->request->post('deadline');
+
+            $command = Yii::$app->db->createCommand()
+                ->update('training', ['deadline_for_completion' => $deadline], 'id = :id', [':id' => $id]);
+
+            if ($command->execute()) {
+                return ['success' => true];
+            } else {
+                return ['success' => false];
+            }
+        }
+
+        return ['success' => false];
     }
 }

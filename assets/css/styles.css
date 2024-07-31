@@ -49,7 +49,8 @@
 }
 
 
-#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn, .remove-role-btn, .add-role-btn, #submit-add-role {
+#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn, .remove-role-btn, .add-role-btn, #submit-add-role, 
+#edit-deadline-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -62,7 +63,8 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover, .remove-role-btn:hover, .add-role-btn:hover, #submit-add-role:hover {
+#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover, .remove-role-btn:hover, .add-role-btn:hover, #submit-add-role:hover, 
+#edit-deadline-btn:hover {
     background-color: #ffffff;
     color: rgb(85, 85, 85);
     border-color: rgb(85, 85, 85);

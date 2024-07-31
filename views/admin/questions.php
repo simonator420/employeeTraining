@@ -12,12 +12,27 @@ use yii\helpers\Url;
         <!-- Header and button for going back to overview -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h1>
-                <?= Yii::t('employeeTraining', 'Edit Training Questions') ?>
+                <strong> <?= Html::encode($trainingName) ?> </strong>
             </h1>
-            <h2>
-                <?= Yii::t('employeeTraining', 'Training ID: ') . Html::encode($trainingId) ?>
-            </h2>
             <?= Html::a('&laquo; ' . Yii::t('employeeTraining', 'Back to overview'), Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
+        </div>
+
+        <h3>
+            <?= Yii::t('employeeTraining', 'Training ID: ') ?><strong><?= Html::encode($trainingId) ?></strong>
+        </h3>
+
+        <h3>
+            <?= Yii::t('employeeTraining', 'Deadline for completion: ') ?>
+            <strong id="deadline-display"><?= Html::encode($deadlineForCompletion) ?></strong>
+            <button id="edit-deadline-btn" ><?= Yii::t('employeeTraining', 'Edit') ?></button>
+        </h3>
+
+        <div id="edit-deadline-form" style="display: none;">
+            <input type="number" id="deadline-input" value="<?= Html::encode($deadlineForCompletion) ?>"
+                class="form-control" style="width: 100px; display: inline;">
+            <button id="submit-deadline-btn"
+                class="btn btn-success"><?= Yii::t('employeeTraining', 'Submit') ?></button>
+            <button id="cancel-deadline-btn" class="btn btn-danger"><?= Yii::t('employeeTraining', 'Cancel') ?></button>
         </div>
 
         <br>
@@ -66,9 +81,8 @@ use yii\helpers\Url;
         <!-- Button for Advanced settings and checkbox for selecting all users with checkbox -->
         <div class="form-group">
             <button type="button" id="advanced-settings-btn" tabindex="1" style="display:none;">
-            <?= Yii::t('employeeTraining', 'Advanced settings ') ?>    
-            <span
-                    id="arrow-down">▼</span></button>
+                <?= Yii::t('employeeTraining', 'Advanced settings ') ?>
+                <span id="arrow-down">▼</span></button>
             <div id="assign-to-all" style="display: none;">
                 <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
                 <label for="all-users">
@@ -94,6 +108,8 @@ use yii\helpers\Url;
 <?php
 $createQuestionsUrl = Url::to(['training-questions/save-questions']);
 $fetchQuestionsUrl = Url::to(['training-questions/fetch-questions']);
+$updateDeadlineUrl = Url::to(['training-questions/update-deadline']);
+$trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
 // Event handler for title selection change
@@ -335,6 +351,51 @@ $(document).ready(function() {
         // Hide the "Remove Question" button if only one question item
         $('#remove-question-btn').hide();
     }
+});
+
+// Event handler for "Edit" button click
+$('#edit-deadline-btn').on('click', function() {
+    $('#deadline-display').hide();
+    $('#edit-deadline-btn').hide();
+    $('#edit-deadline-form').show();
+});
+
+// Event handler for "Submit" button click
+$('#submit-deadline-btn').on('click', function() {
+        var newDeadline = $('#deadline-input').val();
+        var trainingId = $trainingIdJson;
+
+        // AJAX request to update the deadline in the database
+        $.ajax({
+            url: '$updateDeadlineUrl', // Update this URL to match your endpoint
+            type: 'POST',
+            data: {
+                id: trainingId,
+                deadline: newDeadline,
+                _csrf: yii.getCsrfToken() // Include CSRF token
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update the display with the new deadline and hide the input form
+                    $('#deadline-display').text(newDeadline).show();
+                    $('#edit-deadline-form').hide();
+                    $('#edit-deadline-btn').show();
+                } else {
+                    alert('Failed to update deadline.');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error occurred while updating deadline.');
+                console.log(xhr.responseText);
+            }
+        });
+    });
+
+// Event handler for "Cancel" button click
+$('#cancel-deadline-btn').on('click', function() {
+    $('#edit-deadline-form').hide();
+    $('#edit-deadline-btn').show();
+    $('#deadline-display').show();
 });
 
 

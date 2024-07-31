@@ -280,6 +280,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         var trainingId = $(this).data('id');
         console.log("Training ID clicked: " + trainingId);
     });
+
     $('.collapsible').on('click', function() {
         var content = $(this).next('.content');
 
@@ -303,17 +304,21 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
         type: 'GET',
         data: { role: role },
         success: function(response) {
-            console.log('AJAX Response:', response); // Log the response to check the data
+            console.log('AJAX Response:', response);
             var usersHtml = '<ul>';
             if (response.success && response.users.length > 0) {
                 $.each(response.users, function(index, user) {
-                    console.log('User Data:', user); // Log each user data to check the IDs
-                    usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                    console.log('User Data:', user);
+                    if (role !== 'user') {
+                        usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                    } else {
+                        usersHtml += '<li>' + user.firstname + ' ' + user.lastname + '</li>';
+                    }
                 });
                 usersHtml += '</ul>';
                 // Conditionally add the remove button if the role is not "user" and users are found
                 if (role !== 'user') {
-                    usersHtml += '<button class="remove-role-btn" data-role="' + role + '">Remove selected</button>';
+                    usersHtml += '<button class="remove-role-btn" data-role="' + role + '" style="display:none;">Remove selected</button>';
                 }
             } else {
                 usersHtml += '<li>No users found.</li>';
@@ -494,6 +499,18 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
                 $('body').css('overflow', 'auto'); // Enable scrolling
             }
         });
+    });
+
+    $(document).on('change', '.role-user-checkbox', function() {
+        var role = $(this).closest('.content').prev('.collapsible').data('role');
+        if (role === 'team_leader' || role === 'admin') {
+            var anyChecked = $(this).closest('.content').find('.role-user-checkbox:checked').length > 0;
+            if (anyChecked) {
+                $(this).closest('.content').find('.remove-role-btn').show();
+            } else {
+                $(this).closest('.content').find('.remove-role-btn').hide();
+            }
+        }
     });
 
     // jQuery event handler for checkbox change 
