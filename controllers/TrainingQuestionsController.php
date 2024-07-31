@@ -69,18 +69,22 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {
-                    $html .= '<label>Current Image:</label><br>';
                     $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
+                    $html .= Html::hiddenInput("TrainingQuestions[$index][existing_image]", $question['image_url']);
+                    $html .= Html::button('Remove image', ['class' => 'btn btn-danger remove-image-btn', 'data-index' => $index, 'style' => 'display: block;']);
+                    $html .= Html::hiddenInput("TrainingQuestions[$index][remove_image]", 0, ['class' => 'remove-image-input']);
                 }
-                $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image">';
+                $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image"' . ($question['image_url'] ? ' style="display:none;"' : '') . '>';
                 $html .= '</div>';
                 $html .= '</div>';
+                $html .= '<br>';
             }
             return ['success' => true, 'html' => $html];
         } else {
             return ['success' => false];
         }
     }
+    
         
 
     // Function for saving questions into database by admin
@@ -111,8 +115,8 @@ class TrainingQuestionsController extends Controller
                 }
                 $usedIds[] = $nextId;
     
-                $imageFile = isset($files[$index]) ? $files[$index] : null;
-                $imageUrl = null;
+                $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
+                $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
     
                 if ($imageFile) {
                     $imagePath = 'uploads/' . $imageFile->baseName . '.' . $imageFile->extension;
@@ -140,6 +144,9 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
+    
+    
+    
        
 
     // Function for displaying the questions from database in the form for the USER

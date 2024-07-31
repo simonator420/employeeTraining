@@ -144,7 +144,7 @@ $('#add-question-btn').on('click', function() {
     var questionIndex = $('.question-item').length;
     var newQuestionItem = 
         '<div class="question-item">' +
-            '<label>Question ' + (questionIndex + 1) + '</label>' +
+            '<label>Question ' + (questionIndex + 1) + '</label>' + // This label remains
             '<div class="form-group">' +
                 '<select name="TrainingQuestions[' + questionIndex + '][type]" class="form-control question-type">' +
                     '<option value="text" selected>Text</option>' +
@@ -192,10 +192,18 @@ $('#advanced-settings-btn').on('click', function() {
 
 // Event handler for "Submit" button click
 // TODO make assign to all titles if 'all-users'checkbox checked
-// Event handler for "Submit" button click
 $('#submit-btn').on('click', function() {
     var form = $('#training-questions-form')[0];
     var formData = new FormData(form);
+
+    $('.question-item').each(function(index) {
+        var fileInput = $(this).find('.question-image')[0];
+        if (fileInput.files.length > 0) {
+            formData.append('TrainingQuestions[' + index + '][image]', fileInput.files[0]);
+        } else {
+            formData.append('TrainingQuestions[' + index + '][image]', null);
+        }
+    });
 
     $.ajax({
         url: '$createQuestionsUrl',
@@ -216,6 +224,16 @@ $('#submit-btn').on('click', function() {
             console.log(xhr.responseText);
         }
     });
+});
+
+$(document).on('click', '.remove-image-btn', function() {
+    var index = $(this).data('index');
+    var parentDiv = $(this).closest('.form-group');
+    parentDiv.find('img').remove();
+    $(this).remove();
+    $('input[name="TrainingQuestions[' + index + '][existing_image]"]').remove();
+    $('input[name="TrainingQuestions[' + index + '][remove_image]"]').val(1);
+    parentDiv.find('.question-image').show(); // Show the file input
 });
 
 $('#all-users').on('change', function() {
