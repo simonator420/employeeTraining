@@ -6,6 +6,9 @@ use Yii;
 use humhub\components\Controller;
 use yii\web\Response;
 use yii\helpers\Html;
+use yii\web\UploadedFile;
+use yii\helpers\Url;
+
 
 
 class TrainingQuestionsController extends Controller
@@ -45,97 +48,99 @@ class TrainingQuestionsController extends Controller
     }
 
     // Function for retrieving the questions from database and displaying them for ADMIN
-    public function actionFetchQuestions($title)
+    public function actionFetchQuestions($id)
     {
-        // Set the response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-
-        // Fetch questions for the given table, ordered by the 'order' column
-        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE title = :title ORDER BY `order`')
-            ->bindValue(':title', $title)
+    
+        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `order`')
+            ->bindValue(':id', $id)
             ->queryAll();
-
-        // Initialize HTML string
+    
         $html = '';
         if ($questions) {
-            // Iterate over each question and adding strings to the HTML variable
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
                 $html .= '<label>Question ' . ($index + 1) . '</label>';
                 $html .= '<div class="form-group">';
-                $html .= Html::dropDownList("TrainingQuestions[$index][type]", 'text', ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['class' => 'form-control question-type']);
+                $html .= Html::dropDownList("TrainingQuestions[$index][type]", $question['type'], ['text' => 'Text', 'number' => 'Number', 'range' => 'Range'], ['class' => 'form-control question-type']);
                 $html .= '</div>';
                 $html .= '<div class="form-group">';
                 $html .= Html::textInput("TrainingQuestions[$index][question]", $question['question'], ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']);
                 $html .= '</div>';
+                $html .= '<div class="form-group">';
+                if ($question['image_url']) {
+                    $html .= '<label>Current Image:</label><br>';
+                    $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
+                }
+                $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image">';
+                $html .= '</div>';
                 $html .= '</div>';
             }
-            // Return success response with generated HTML
             return ['success' => true, 'html' => $html];
         } else {
-            // Return failure response if no questions found
             return ['success' => false];
         }
     }
+        
+
     // Function for saving questions into database by admin
     // TODO adjust the size of the dropboxes
     public function actionSaveQuestions()
     {
-        // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-
-        // Get posted titles and questions data
-        $selectedTitles = Yii::$app->request->post('titles', []);
+    
+        $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
-
-        // Return failure response if no titles are provided
-        if (empty($selectedTitles)) {
-            return ['success' => false, 'errors' => 'At least one title is required'];
+        $files = UploadedFile::getInstancesByName('TrainingQuestions');
+    
+        if (empty($trainingId)) {
+            return ['success' => false, 'errors' => 'Training ID is required'];
         }
-
-        // Start a database transaction
+    
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            // Iterate over each selected title
-            foreach ($selectedTitles as $selectedTitle) {
-                // Delete existing questions for the selected title
-                Yii::$app->db->createCommand()->delete('training_questions', ['title' => $selectedTitle])->execute();
-
-                // Fetch all existing IDs
-                $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
-                $nextId = 1;
-                $usedIds = [];
-
-                // Iterate over each question and generate HTML for display
-                foreach ($questions as $index => $questionData) {
-                    // Find the lowest available ID
-                    while (in_array($nextId, $existingIds) || in_array($nextId, $usedIds)) {
-                        $nextId++;
-                    }
-                    $usedIds[] = $nextId;
-
-                    // Insert each question into the database
-                    Yii::$app->db->createCommand()->insert('training_questions', [
-                        'id' => $nextId,
-                        'title' => $selectedTitle,
-                        'type' => $questionData['type'],
-                        'question' => $questionData['question'],
-                        'order' => $index + 1,
-                    ])->execute();
+            Yii::$app->db->createCommand()->delete('training_questions', ['training_id' => $trainingId])->execute();
+    
+            $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
+            $nextId = 1;
+            $usedIds = [];
+    
+            foreach ($questions as $index => $questionData) {
+                while (in_array($nextId, $existingIds) || in_array($nextId, $usedIds)) {
+                    $nextId++;
                 }
+                $usedIds[] = $nextId;
+    
+                $imageFile = isset($files[$index]) ? $files[$index] : null;
+                $imageUrl = null;
+    
+                if ($imageFile) {
+                    $imagePath = 'uploads/' . $imageFile->baseName . '.' . $imageFile->extension;
+                    if ($imageFile->saveAs($imagePath)) {
+                        $imageUrl = $imagePath;
+                    } else {
+                        return ['success' => false, 'errors' => 'Failed to save the image file.'];
+                    }
+                }
+    
+                Yii::$app->db->createCommand()->insert('training_questions', [
+                    'id' => $nextId,
+                    'training_id' => $trainingId,
+                    'type' => $questionData['type'],
+                    'question' => $questionData['question'],
+                    'image_url' => $imageUrl,
+                    'order' => $index + 1,
+                ])->execute();
             }
-            // Commit the transaction
+    
             $transaction->commit();
-            // Return success response
             return ['success' => true];
-
         } catch (\Exception $e) {
-            // Rollback the transaction in case of an error (erase all modifications made from the start of the transaction)
             $transaction->rollBack();
-            // Return failure response with error message
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
+       
 
     // Function for displaying the questions from database in the form for the USER
     public function actionDisplayQuestions($title)
