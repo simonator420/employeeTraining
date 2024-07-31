@@ -4,6 +4,8 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\Url;
 
+// TODO Enable assigning trainings on this page
+
 ?>
 
 <div class="training-question-container">
@@ -111,6 +113,7 @@ function fetchQuestions() {
                                 '<option value="text" selected>Text</option>' +
                                 '<option value="number">Number</option>' +
                                 '<option value="range">Range</option>' +
+                                '<option value="multiple_choice">Multiple Choice</option>' +
                             '</select>' +
                         '</div>' +
                         '<div class="form-group">' +
@@ -139,17 +142,98 @@ function fetchQuestions() {
     });
 }
 
+
+
+$(document).on('change', '.question-type', function() {
+    handleQuestionTypeChange.call(this); // Call the function with the correct context
+});
+
+function handleQuestionTypeChange() {
+    var \$questionItem = $(this).closest('.question-item');
+    var type = $(this).val();
+    var questionIndex = \$questionItem.index('.question-item'); // Get the index of the current question item
+    \$questionItem.find('.multiple-choice-container').remove();
+
+    if (type === 'multiple_choice') {
+        var multipleChoiceHtml = 
+            '<div class="multiple-choice-container">' +
+                '<div class="form-group multiple-choice-options">' +
+                    '<div class="input-group" style="display:flex; align-items:center">' +
+                        '<div class="input-group-prepend">' +
+                            '<div class="input-group-text">' +
+                                '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct1]">' +
+                            '</div>' +
+                        '</div>' +
+                        '<input type="text" name="TrainingQuestions[' + questionIndex + '][option1]" class="form-control" placeholder="Option 1">' +
+                    '</div>' +
+                    '<div class="input-group" style="display:flex; align-items:center">' +
+                        '<div class="input-group-prepend">' +
+                            '<div class="input-group-text">' +
+                                '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct2]">' +
+                            '</div>' +
+                        '</div>' +
+                        '<input type="text" name="TrainingQuestions[' + questionIndex + '][option2]" class="form-control" placeholder="Option 2">' +
+                    '</div>' +
+                    '<div class="input-group" style="display:flex; align-items:center">' +
+                        '<div class="input-group-prepend">' +
+                            '<div class="input-group-text">' +
+                                '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct3]">' +
+                            '</div>' +
+                        '</div>' +
+                        '<input type="text" name="TrainingQuestions[' + questionIndex + '][option3]" class="form-control" placeholder="Option 3">' +
+                    '</div>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<button type="button" class="btn btn-secondary add-option-btn">+ Add Option</button>' +
+                    '<button type="button" class="btn btn-danger remove-option-btn">- Remove Option</button>' +
+                '</div>' +
+            '</div>';
+        \$questionItem.find('.form-group').last().before(multipleChoiceHtml); // Insert the multiple choice HTML before the last form-group (which contains the image input)
+    }
+}
+
+
+$(document).on('click', '.add-option-btn', function() {
+    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+    var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
+    var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
+
+    var newOptionHtml = 
+        '<div class="input-group" style="display:flex; align-items:center">' +
+            '<div class="input-group-prepend">' +
+                '<div class="input-group-text">' +
+                    '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
+                '</div>' +
+            '</div>' +
+            '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
+        '</div>';
+    \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
+});
+
+$(document).on('click', '.remove-option-btn', function() {
+    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+    var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+
+    if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
+        \$lastOption.remove();
+    }
+});
+
+
+
+
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {
     var questionIndex = $('.question-item').length;
     var newQuestionItem = 
         '<div class="question-item">' +
-            '<label>Question ' + (questionIndex + 1) + '</label>' + // This label remains
+            '<label>Question ' + (questionIndex + 1) + '</label>' + 
             '<div class="form-group">' +
                 '<select name="TrainingQuestions[' + questionIndex + '][type]" class="form-control question-type">' +
                     '<option value="text" selected>Text</option>' +
                     '<option value="number">Number</option>' +
                     '<option value="range">Range</option>' +
+                    '<option value="multiple_choice">Multiple Choice</option>' +
                 '</select>' +
             '</div>' +
             '<div class="form-group">' +
@@ -191,10 +275,10 @@ $('#advanced-settings-btn').on('click', function() {
 });
 
 // Event handler for "Submit" button click
-// TODO make assign to all titles if 'all-users'checkbox checked
 $('#submit-btn').on('click', function() {
     var form = $('#training-questions-form')[0];
     var formData = new FormData(form);
+    let isValid = true;
 
     $('.question-item').each(function(index) {
         var fileInput = $(this).find('.question-image')[0];
@@ -203,28 +287,54 @@ $('#submit-btn').on('click', function() {
         } else {
             formData.append('TrainingQuestions[' + index + '][image]', null);
         }
-    });
 
-    $.ajax({
-        url: '$createQuestionsUrl',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                alert('Questions saved successfully!');
-            } else {
-                alert('Failed to save questions.');
-                console.log(response.errors);
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error occurred while saving questions.');
-            console.log(xhr.responseText);
+        // Collect multiple choice options if the question type is multiple_choice
+        if ($(this).find('.question-type').val() === 'multiple_choice') {
+            $(this).find('.multiple-choice-options .input-group').each(function(optionIndex) {
+                var optionText = $(this).find('input[type="text"]').val();
+                var isCorrect = $(this).find('input[type="checkbox"]').is(':checked');
+
+                formData.append('TrainingQuestions[' + index + '][options][' + optionIndex + '][text]', optionText);
+                formData.append('TrainingQuestions[' + index + '][options][' + optionIndex + '][correct]', isCorrect ? 1 : 0);
+            });
         }
     });
+
+    $('.question-text').each(function() {
+        let inputName = $(this).attr('name');
+        let inputValue = $(this).val();
+
+        if (!inputValue) {
+            isValid = false;
+            $(this).css('border', '2px solid red');
+        } else {
+            $(this).css('border', '1px solid #dee2e6');
+        }
+    });
+
+    if (isValid) {
+        $.ajax({
+            url: '$createQuestionsUrl',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('Questions saved successfully!');
+                } else {
+                    alert('Failed to save questions.');
+                    console.log(response.errors);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error occurred while saving questions.');
+                console.log(xhr.responseText);
+            }
+        });
+    }
 });
+
 
 $(document).on('click', '.remove-image-btn', function() {
     var index = $(this).data('index');

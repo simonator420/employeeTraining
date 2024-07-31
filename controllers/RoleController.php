@@ -15,18 +15,17 @@ class RoleController extends Controller
 {
 
     // Function for handling the request to display the Employee Training Overview page
-    // TODO implement here to set assigned_training to 1 for every user that has been assigned the training with the date picker
+    // TODO Rename the header to include ILLE, Not do isAdmin() but check the role attribute in profile table
     public function actionAdmin()
     {
         $users = User::find()->all();
 
         $latestAnswers = [];
 
-
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
                 SELECT question_text, answer 
-                FROM training_answers 
+                FROM training_answers
                 WHERE user_id = :user_id 
                 AND created_at = (
                     SELECT MAX(created_at) 
