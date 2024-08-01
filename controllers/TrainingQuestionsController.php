@@ -51,11 +51,11 @@ class TrainingQuestionsController extends Controller
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-
+    
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `order`')
             ->bindValue(':id', $id)
             ->queryAll();
-
+    
         $html = '';
         if ($questions) {
             foreach ($questions as $index => $question) {
@@ -67,13 +67,14 @@ class TrainingQuestionsController extends Controller
                 $html .= '<div class="form-group">';
                 $html .= Html::textInput("TrainingQuestions[$index][question]", $question['question'], ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']);
                 $html .= '</div>';
-
+    
                 if ($question['type'] == 'multiple_choice') {
                     $html .= '<div class="form-group multiple-choice-container">';
                     $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id')
                         ->bindValue(':question_id', $question['id'])
                         ->queryAll();
-
+    
+                    $html .= '<div class="form-group multiple-choice-options">';
                     foreach ($options as $optionIndex => $option) {
                         $html .= '<div class="input-group" style="display: flex; align-items: center;">';
                         $html .= '<div class="input-group-prepend">';
@@ -84,13 +85,14 @@ class TrainingQuestionsController extends Controller
                         $html .= Html::textInput("TrainingQuestions[$index][options][$optionIndex][text]", $option['option_text'], ['class' => 'form-control', 'placeholder' => 'Option ' . ($optionIndex + 1)]);
                         $html .= '</div>';
                     }
+                    $html .= '</div>';
                     $html .= '<div class="form-group">';
                     $html .= '<button type="button" class="btn btn-secondary add-option-btn">+ Add Option</button>';
                     $html .= '<button type="button" class="btn btn-danger remove-option-btn">- Remove Option</button>';
                     $html .= '</div>';
                     $html .= '</div>';
                 }
-
+    
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {
                     $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
@@ -108,6 +110,7 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
+    
 
 
 

@@ -104,6 +104,7 @@ function fetchQuestions() {
         success: function(response) {
             if (response.success) {
                 $('#questions-container').html(response.html);
+                attachEventHandlers(); // Attach event handlers after loading content
             } else {
                 $('#questions-container').html(
                     '<div class="question-item">' +
@@ -124,6 +125,7 @@ function fetchQuestions() {
                         '</div>' +
                     '</div>'
                 );
+                attachEventHandlers(); // Attach event handlers for default content
             }
             $('#questions-container').show();
             $('#add-question-btn').show();
@@ -141,6 +143,39 @@ function fetchQuestions() {
         }
     });
 }
+
+function attachEventHandlers() {
+    $(document).on('change', '.question-type', function() {
+        handleQuestionTypeChange.call(this); // Call the function with the correct context
+    });
+
+    $(document).on('click', '.add-option-btn', function() {
+        var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+        var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
+        var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
+
+        var newOptionHtml = 
+            '<div class="input-group" style="display:flex; align-items:center">' +
+                '<div class="input-group-prepend">' +
+                    '<div class="input-group-text">' +
+                        '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
+                    '</div>' +
+                '</div>' +
+                '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
+            '</div>';
+        \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
+    });
+
+    $(document).on('click', '.remove-option-btn', function() {
+        var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+        var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+
+        if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
+            \$lastOption.remove();
+        }
+    });
+}
+
 
 
 
@@ -191,36 +226,6 @@ function handleQuestionTypeChange() {
         \$questionItem.find('.form-group').last().before(multipleChoiceHtml); // Insert the multiple choice HTML before the last form-group (which contains the image input)
     }
 }
-
-
-$(document).on('click', '.add-option-btn', function() {
-    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-    var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
-    var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
-
-    var newOptionHtml = 
-        '<div class="input-group" style="display:flex; align-items:center">' +
-            '<div class="input-group-prepend">' +
-                '<div class="input-group-text">' +
-                    '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
-                '</div>' +
-            '</div>' +
-            '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
-        '</div>';
-    \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
-});
-
-$(document).on('click', '.remove-option-btn', function() {
-    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-    var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
-
-    if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
-        \$lastOption.remove();
-    }
-});
-
-
-
 
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {
