@@ -126,6 +126,34 @@ class RoleController extends Controller
         }
     }
 
+    public function actionFetchTitles()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+    
+        $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')
+            ->queryColumn();
+        
+        if ($titles) {
+            return ['success' => true, 'titles' => $titles];
+        }
+    
+        return ['success' => false, 'titles' => []];
+    }
+    
+    public function actionFetchLocations()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+    
+        $locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
+            ->queryColumn();
+    
+        if ($locations) {
+            return ['success' => true, 'locations' => $locations];
+        }
+    
+        return ['success' => false, 'locations' => []];
+    }
+
     public function actionAddRole()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

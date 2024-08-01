@@ -23,7 +23,7 @@ use yii\helpers\Url;
             <?= Yii::t('employeeTraining', 'Training ID: ') ?><strong><?= Html::encode($trainingId) ?></strong>
         </h3>
 
-        <h3>
+        <h3 style="display:flex; align-items: center; gap: 10px;">
             <?= Yii::t('employeeTraining', 'Deadline for completion in days: ') ?>
             <strong id="deadline-display"><?= Html::encode($deadlineForCompletion) ?></strong>
             <button id="edit-deadline-btn"><?= Yii::t('employeeTraining', 'Edit') ?></button>
@@ -36,6 +36,45 @@ use yii\helpers\Url;
                 class="btn btn-success"><?= Yii::t('employeeTraining', 'Submit') ?></button>
             <button id="cancel-deadline-btn" class="btn btn-danger"><?= Yii::t('employeeTraining', 'Cancel') ?></button>
         </div>
+
+        <h3 style="display:flex; align-items:center; gap:10px">
+            <?= Yii::t('employeeTraining', 'Number of assigned users: ') ?>
+            <strong id="assigned-users-display"><?= Html::encode($assignedUsersCount) ?></strong>
+            <button id="assign-users-btn"><?= Yii::t('employeeTraining', 'Assign') ?></button>
+        </h3>
+
+        <div id="assignUsersModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modal-title">Assign Users</h2>
+                <button id="toggle-filter-btn"><?= Yii::t('employeeTraining', 'Filter') ?><span id="arrow-down">
+                        ▼</span></button>
+                <div id="filter-list" style="display:none;">
+                    <form id="filter-form">
+                        <div class="form-group">
+                            <label for="title-select"><?= Yii::t('employeeTraining', 'Select Title') ?></label>
+                            <select id="title-select" class="form-control">
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="location-select"><?= Yii::t('employeeTraining', 'Select Location') ?></label>
+                            <select id="location-select" class="form-control">
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <button type="button" id="submit-filter-btn"
+                            class="btn btn-success"><?= Yii::t('employeeTraining', 'Submit') ?></button>
+                    </form>
+                </div>
+                <form id="assign-users-form">
+                    <div id="profile-list"></div>
+                    <br>
+                    <button type="button" id="submit-assign-users">Assign</button>
+                </form>
+            </div>
+        </div>
+
 
         <br>
 
@@ -92,6 +131,9 @@ use yii\helpers\Url;
 $createQuestionsUrl = Url::to(['training-questions/save-questions']);
 $fetchQuestionsUrl = Url::to(['training-questions/fetch-questions']);
 $updateDeadlineUrl = Url::to(['training-questions/update-deadline']);
+$fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
+$fetchTitlesUrl = Url::to(['role/fetch-titles']);
+$fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
@@ -155,7 +197,7 @@ function attachEventHandlers() {
         var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
 
         var newOptionHtml = 
-            '<div class="input-group" style="display:flex; align-items:center">' +
+            '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
                 '<div class="input-group-prepend">' +
                     '<div class="input-group-text">' +
                         '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
@@ -176,9 +218,6 @@ function attachEventHandlers() {
     });
 }
 
-
-
-
 $(document).on('change', '.question-type', function() {
     handleQuestionTypeChange.call(this); // Call the function with the correct context
 });
@@ -193,7 +232,7 @@ function handleQuestionTypeChange() {
         var multipleChoiceHtml = 
             '<div class="multiple-choice-container">' +
                 '<div class="form-group multiple-choice-options">' +
-                    '<div class="input-group" style="display:flex; align-items:center">' +
+                    '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
                         '<div class="input-group-prepend">' +
                             '<div class="input-group-text">' +
                                 '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct1]">' +
@@ -201,7 +240,7 @@ function handleQuestionTypeChange() {
                         '</div>' +
                         '<input type="text" name="TrainingQuestions[' + questionIndex + '][option1]" class="form-control" placeholder="Option 1">' +
                     '</div>' +
-                    '<div class="input-group" style="display:flex; align-items:center">' +
+                    '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
                         '<div class="input-group-prepend">' +
                             '<div class="input-group-text">' +
                                 '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct2]">' +
@@ -209,7 +248,7 @@ function handleQuestionTypeChange() {
                         '</div>' +
                         '<input type="text" name="TrainingQuestions[' + questionIndex + '][option2]" class="form-control" placeholder="Option 2">' +
                     '</div>' +
-                    '<div class="input-group" style="display:flex; align-items:center">' +
+                    '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
                         '<div class="input-group-prepend">' +
                             '<div class="input-group-text">' +
                                 '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct3]">' +
@@ -226,6 +265,103 @@ function handleQuestionTypeChange() {
         \$questionItem.find('.form-group').last().before(multipleChoiceHtml); // Insert the multiple choice HTML before the last form-group (which contains the image input)
     }
 }
+
+var modal = document.getElementById("assignUsersModal");
+
+var span = document.getElementsByClassName("close")[0];
+
+$(document).on('click', '#assign-users-btn', function() {
+    var title = 'Assign Users'; // Adjust the title as needed
+    $('#modal-title').text(title);
+    modal.style.display = "block";
+    $('body').css('overflow', 'hidden'); // Disable scrolling
+
+    // Fetch profiles and display them in the modal
+    $.ajax({
+        url: '$fetchAllProfilesUrl',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                var profilesHtml = '<ul>';
+                $.each(response.profiles, function(index, profile) {
+                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</li>';
+                });
+                profilesHtml += '</ul>';
+                $('#profile-list').html(profilesHtml);
+            } else {
+                $('#profile-list').html('<p>No profiles found.</p>');
+            }
+        },
+        error: function() {
+            $('#profile-list').html('<p>Error fetching profiles.</p>');
+        }
+    });
+});
+
+span.onclick = function() {
+    modal.style.display = "none";
+    $('body').css('overflow', 'auto'); // Enable scrolling
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+        $('body').css('overflow', 'auto'); // Enable scrolling
+    }
+}
+
+$('#toggle-filter-btn').on('click', function() {
+    var arrow = $('#arrow-down');
+
+    // Toggle the rotated class for the arrow animation
+    arrow.toggleClass('rotated');
+})
+
+$(document).on('click', '#toggle-filter-btn', function() {
+    $('#filter-list').toggle(); // Toggle the visibility of the filter list
+    var arrow = $('#arrow-down');
+
+    // Toggle the rotated class for the arrow animation
+    arrow.toggleClass('rotated');
+
+    if ($('#filter-list').is(':visible')) {
+        // Fetch and populate titles and locations if filter list is now visible
+        $.ajax({
+            url: '$fetchTitlesUrl',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var titleOptions = '<option value="">Select Title</option>';
+                    $.each(response.titles, function(index, title) {
+                        titleOptions += '<option value="' + title + '">' + title + '</option>';
+                    });
+                    $('#title-select').html(titleOptions);
+                }
+            },
+            error: function() {
+                alert('Error fetching titles');
+            }
+        });
+
+        $.ajax({
+            url: '$fetchLocationsUrl',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var locationOptions = '<option value="">Select Location</option>';
+                    $.each(response.locations, function(index, location) {
+                        locationOptions += '<option value="' + location + '">' + location + '</option>';
+                    });
+                    $('#location-select').html(locationOptions);
+                }
+            },
+            error: function() {
+                alert('Error fetching locations');
+            }
+        });
+    }
+});
+
 
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {
@@ -426,5 +562,45 @@ $this->registerJs($script);
 <style>
     .title-dropdown {
         width: 190px;
+    }
+
+    /* Modal styling */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        padding-top: 100px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.5);
+        /* Updated for a more pronounced backdrop */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        z-index: 1051;
+        /* Ensure modal content is above the backdrop */
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
     }
 </style>

@@ -427,7 +427,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
         // Fetch profiles and display them in the modal
         $.ajax({
-            url: '$fetchAllProfilesUrl', // Update to match your actual endpoint
+            url: '$fetchAllProfilesUrl',
             type: 'GET',
             success: function(response) {
                 if (response.success) {

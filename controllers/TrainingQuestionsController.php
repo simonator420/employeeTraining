@@ -32,8 +32,12 @@ class TrainingQuestionsController extends Controller
         $deadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id =:id')
             ->bindValue(':id', $id)
             ->queryScalar();
-
-        // Fetch distinct titles from the profile table
+        
+        $assignedUsersCount = Yii::$app->db->createCommand('SELECT assigned_users_count FROM training WHERE id =:id')
+            ->bindValue(':id', $id)
+            ->queryScalar();
+        
+            // Fetch distinct titles from the profile table
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')->queryColumn();
         // Sort the titles alphabetically
         sort($titles);
@@ -44,6 +48,7 @@ class TrainingQuestionsController extends Controller
             'trainingId' => $id,
             'trainingName' => $trainingName,
             'deadlineForCompletion' => $deadline,
+            'assignedUsersCount' => $assignedUsersCount,
         ]);
     }
 
@@ -51,7 +56,7 @@ class TrainingQuestionsController extends Controller
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+        
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `order`')
             ->bindValue(':id', $id)
             ->queryAll();
@@ -76,7 +81,7 @@ class TrainingQuestionsController extends Controller
     
                     $html .= '<div class="form-group multiple-choice-options">';
                     foreach ($options as $optionIndex => $option) {
-                        $html .= '<div class="input-group" style="display: flex; align-items: center;">';
+                        $html .= '<div class="input-group" style="display: flex; align-items: center; padding-bottom: 10px; gap: 5px">';
                         $html .= '<div class="input-group-prepend">';
                         $html .= '<div class="input-group-text">';
                         $html .= Html::checkbox("TrainingQuestions[$index][options][$optionIndex][correct]", $option['is_correct']);
