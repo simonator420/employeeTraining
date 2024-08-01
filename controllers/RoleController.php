@@ -23,6 +23,7 @@ class RoleController extends Controller
         $latestAnswers = [];
         $openTrainingsCount = [];
         $completedTrainingsCount = [];
+        $trainingCompleteTimes = [];
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
@@ -62,6 +63,18 @@ class RoleController extends Controller
                 ->queryScalar();
 
             $openTrainingsCount[$user->id] = $open_trainings_count;
+
+            // Get the latest training_complete_time from user_training table where assigned_training is 0
+            $latest_training_complete_time = Yii::$app->db->createCommand('
+                SELECT MAX(training_assigned_time)
+                FROM user_training
+                WHERE user_id = :userId
+                AND assigned_training = 0
+            ')
+                ->bindValue(':userId', $user->id)
+                ->queryScalar();
+
+            $trainingCompleteTimes[$user->id] = $latest_training_complete_time;
         }
 
         $currentUser = Yii::$app->user;
@@ -91,8 +104,10 @@ class RoleController extends Controller
             'trainings' => $trainings,
             'openTrainingsCount' => $openTrainingsCount,
             'completedTrainingsCount' => $completedTrainingsCount,
+            'trainingCompleteTimes' => $trainingCompleteTimes,
         ]);
     }
+
 
     public function actionFetchUsersByRole($role)
     {
@@ -292,11 +307,33 @@ class RoleController extends Controller
         $assignedTraining = Yii::$app->request->post('assigned_training');
         $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
 
+        // Fetch the deadline for completion from the training table
+        $training = Yii::$app->db->createCommand('
+            SELECT deadline_for_completion 
+            FROM training 
+            WHERE id = :training_id
+        ')
+            ->bindValue(':training_id', $trainingId)
+            ->queryOne();
+
+        $deadlineForCompletion = $training ? $training['deadline_for_completion'] : null;
+
         $successCount = 0;
 
         foreach ($userIds as $userId) {
+            // Calculate the deadline
+            if ($deadlineForCompletion && $trainingAssignedTime) {
+                $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
+            } else {
+                $deadline = null;
+            }
+
             // Check if the record already exists
-            $userTrainingExists = Yii::$app->db->createCommand('SELECT COUNT(*) FROM user_training WHERE user_id=:user_id AND training_id=:training_id')
+            $userTrainingExists = Yii::$app->db->createCommand('
+                SELECT COUNT(*) 
+                FROM user_training 
+                WHERE user_id = :user_id AND training_id = :training_id
+            ')
                 ->bindValue(':user_id', $userId)
                 ->bindValue(':training_id', $trainingId)
                 ->queryScalar();
@@ -309,6 +346,7 @@ class RoleController extends Controller
                         [
                             'assigned_training' => $assignedTraining,
                             'training_assigned_time' => $trainingAssignedTime,
+                            'deadline' => $deadline,
                         ],
                         [
                             'user_id' => $userId,
@@ -326,6 +364,7 @@ class RoleController extends Controller
                             'training_id' => $trainingId,
                             'assigned_training' => $assignedTraining,
                             'training_assigned_time' => $trainingAssignedTime,
+                            'deadline' => $deadline,
                         ]
                     )
                     ->execute();

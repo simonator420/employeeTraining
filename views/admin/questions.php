@@ -47,12 +47,10 @@ use yii\helpers\Url;
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2 id="modal-title">Assign Users</h2>
-                <button id="toggle-filter-btn"><?= Yii::t('employeeTraining', 'Filter') ?><span id="arrow-down">
-                        ▼</span></button>
-                <div id="filter-list" style="display:none;">
-                    <form id="filter-form">
+                <div id="filter-list" class="flex-container">
+                    <form id="filter-form" class="flex-form">
                         <div class="form-group">
-                            <label for="title-select"><?= Yii::t('employeeTraining', 'Select Title') ?></label>
+                            <label for="title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
                             <select id="title-select" class="form-control">
                                 <!-- Options will be populated dynamically -->
                             </select>
@@ -64,7 +62,7 @@ use yii\helpers\Url;
                             </select>
                         </div>
                         <button type="button" id="submit-filter-btn"
-                            class="btn btn-success"><?= Yii::t('employeeTraining', 'Submit') ?></button>
+                            class="btn btn-success"><?= Yii::t('employeeTraining', 'Filter') ?></button>
                     </form>
                 </div>
                 <form id="assign-users-form">
@@ -74,7 +72,6 @@ use yii\helpers\Url;
                 </form>
             </div>
         </div>
-
 
 
         <br>
@@ -108,10 +105,7 @@ use yii\helpers\Url;
 
         <!-- Button for Advanced settings and checkbox for selecting all users with checkbox -->
         <div class="form-group">
-            <button type="button" id="advanced-settings-btn" tabindex="1" style="display:none;">
-                <?= Yii::t('employeeTraining', 'Advanced settings ') ?>
-                <span id="arrow-down">▼</span></button>
-            <div id="assign-to-all" style="display: none;">
+            <div id="assign-to-all">
                 <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
                 <label for="all-users">
                     <?= Yii::t('employeeTraining', 'Assign question(s) to all titles') ?>
@@ -299,24 +293,6 @@ $(document).on('click', '#assign-users-btn', function() {
             $('#profile-list').html('<p>Error fetching profiles.</p>');
         }
     });
-});
-
-span.onclick = function() {
-    modal.style.display = "none";
-    $('body').css('overflow', 'auto'); // Enable scrolling
-}
-
-window.onclick = function(event) {
-    if (event.target == modal) {
-        modal.style.display = "none";
-        $('body').css('overflow', 'auto'); // Enable scrolling
-    }
-}
-
-$(document).on('click', '#toggle-filter-btn', function() {
-    $('#filter-list').toggle(); // Toggle the visibility of the filter list
-    var arrow = $('#arrow-down');
-    arrow.toggleClass('rotated');
 
     if ($('#filter-list').is(':visible')) {
         // Fetch and populate titles and locations if filter list is now visible
@@ -355,6 +331,18 @@ $(document).on('click', '#toggle-filter-btn', function() {
         });
     }
 });
+
+span.onclick = function() {
+    modal.style.display = "none";
+    $('body').css('overflow', 'auto'); // Enable scrolling
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+        $('body').css('overflow', 'auto'); // Enable scrolling
+    }
+}
 
 $(document).on('click', '#submit-filter-btn', function() {
     var selectedTitle = $('#title-select').val();
@@ -465,20 +453,6 @@ $('#remove-question-btn').on('click', function() {
     }
 });
 
-// TODO make button unchecked if not toggled
-$('#advanced-settings-btn').on('click', function() {
-    var allUsers = $('#assign-to-all');
-    allUsers.toggle();
-    var arrow = $('#arrow-down');
-
-    // Toggle the rotated class for the arrow animation
-    arrow.toggleClass('rotated');
-
-    if (!allUsers.is(':visible')) {
-        $('#all-users').prop('checked', false);
-        $('#title-select').prop('disabled', false);
-    }
-});
 
 // Event handler for "Submit" button click
 $('#submit-btn').on('click', function() {
@@ -623,49 +597,3 @@ $('#cancel-deadline-btn').on('click', function() {
 JS;
 $this->registerJs($script);
 ?>
-
-<style>
-    .title-dropdown {
-        width: 190px;
-    }
-
-    /* Modal styling */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1050;
-        padding-top: 100px;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.5);
-        /* Updated for a more pronounced backdrop */
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        margin: auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        z-index: 1051;
-        /* Ensure modal content is above the backdrop */
-    }
-
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>

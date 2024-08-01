@@ -158,7 +158,7 @@ use yii\helpers\Url;
                     <!-- <th><strong><?= Yii::t('employeeTraining', 'Roles') ?></strong></th> -->
                     <th><strong><?= Yii::t('employeeTraining', 'Location') ?></strong></th>
                     <!-- <th><strong><?= Yii::t('employeeTraining', 'Training assigned time') ?></strong></th> -->
-                    <th><strong><?= Yii::t('employeeTraining', 'Training complete time') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Last training complete time') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'No. of open trainings') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'No. of completed trainings') ?></strong></th>
                     <!-- <th><strong><?= Yii::t('employeeTraining', 'Assigned training') ?></strong></th> -->
@@ -185,7 +185,7 @@ use yii\helpers\Url;
                           } else {
                               echo 'text-black';
                           }
-                          ?>"><?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?></td>
+                          ?>"><?= Html::encode(isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id] ? $trainingCompleteTimes[$user->id] : 'N/A') ?></td>
                         <td><?= Html::encode($openTrainingsCount[$user->id] !== null ? $openTrainingsCount[$user->id] : 0) ?>
                         </td>
                         <td><?= Html::encode($completedTrainingsCount[$user->id] !== null ? $completedTrainingsCount[$user->id] : 0) ?>
@@ -945,94 +945,3 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 JS;
 $this->registerJs($script);
 ?>
-
-<style>
-    .collapsible-container {
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid #ddd;
-    }
-
-    .collapsible {
-        background-color: #f1f1f1;
-        color: #444;
-        cursor: pointer;
-        padding: 10px;
-        width: 100%;
-        border: none;
-        text-align: left;
-        outline: none;
-        font-size: 15px;
-        border-radius: 0;
-        /* Reset border radius to ensure it's inherited from container */
-    }
-
-    .active,
-    .collapsible:hover {
-        background-color: #ccc;
-    }
-
-    .content {
-        padding: 5px 10px;
-        /* Match padding to the collapsible button */
-        display: none;
-        overflow: hidden;
-        background-color: #f9f9f9;
-        border-top: 1px solid #ddd;
-    }
-
-    .content ul {
-        list-style-type: none;
-        padding: 0;
-        /* Remove default padding */
-        margin: 0;
-        /* Remove default margin */
-    }
-
-    .content li {
-        padding: 8px;
-        border-bottom: 1px solid #eee;
-    }
-
-    .content li:last-child {
-        border-bottom: none;
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        padding-top: 250px;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.4);
-    }
-
-    /* Modal Content */
-    .modal-content {
-        background-color: #fefefe;
-        margin: auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-    }
-
-    /* The Close Button */
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
