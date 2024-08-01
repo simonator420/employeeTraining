@@ -20,8 +20,12 @@ class Events
         // Retrieve the menu object from the event
         $menu = $event->sender;
 
+        $currentUser = Yii::$app->user;
+
+        $userRole = $currentUser->identity->profile->role;
+
         // Check if the current logged-in user is an administrator
-        if (Yii::$app->user->isAdmin()) {
+        if ($userRole == 'admin' || $userRole == 'team_leader') {
             // Add a new menu item for the administrator
             $menu->addItem([
                 'label' => Yii::t('employeeTraining', 'Training'), // The label of the menu item

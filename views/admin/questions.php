@@ -609,7 +609,6 @@ $('#cancel-deadline-btn').on('click', function() {
     $('#deadline-display').show();
 });
 
-
 JS;
 $this->registerJs($script);
 ?>

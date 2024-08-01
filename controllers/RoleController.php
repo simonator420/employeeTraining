@@ -79,8 +79,11 @@ class RoleController extends Controller
 
         $currentUser = Yii::$app->user;
         $title = $currentUser->identity->profile->title;
+        $userRole = $currentUser->identity->profile->role;
+        
+        Yii::info("Userova role: " . $userRole);
 
-        if (!$currentUser->isAdmin()) {
+        if ($userRole !== 'admin' && $userRole !== 'team_leader') {
             return $this->redirect(['site/access-denied']);
         }
 

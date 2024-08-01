@@ -19,8 +19,12 @@ class TrainingQuestionsController extends Controller
         // Get the current user
         $currentUser = Yii::$app->user;
 
+        $userRole = $currentUser->identity->profile->role;
+        
+        Yii::info("Userova role: " . $userRole);
+
         // Check if the logged in user is admin
-        if (!$currentUser->isAdmin()) {
+        if ($userRole !== 'admin' && $userRole !== 'team_leader') {
             // Redirect to acces denied if the user isn't admin
             return $this->redirect(['site/access-denied']);
         }
@@ -261,21 +265,35 @@ class TrainingQuestionsController extends Controller
     public function actionUpdateDeadline()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
+    
         if (Yii::$app->request->isPost) {
             $id = Yii::$app->request->post('id');
             $deadline = Yii::$app->request->post('deadline');
-
+    
             $command = Yii::$app->db->createCommand()
                 ->update('training', ['deadline_for_completion' => $deadline], 'id = :id', [':id' => $id]);
-
-            if ($command->execute()) {
+    
+            // Execute the command and get the number of affected rows
+            $affectedRows = $command->execute();
+    
+            // Check if any rows were affected, or if the deadline value was the same
+            if ($affectedRows > 0 || $this->isDeadlineSame($id, $deadline)) {
                 return ['success' => true];
             } else {
                 return ['success' => false];
             }
         }
-
+    
         return ['success' => false];
+    }
+    
+    // Helper function to check if the deadline is the same
+    private function isDeadlineSame($id, $deadline)
+    {
+        $currentDeadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id = :id')
+            ->bindValue(':id', $id)
+            ->queryScalar();
+    
+        return $currentDeadline == $deadline;
     }
 }

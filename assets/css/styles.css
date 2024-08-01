@@ -67,7 +67,7 @@
 #edit-deadline-btn:hover, .remove-image-btn:hover, .add-option-btn:hover, #assign-users-btn:hover, #submit-deadline-bt:hover, #submit-filter-btn:hover, #submit-assign-users:hover {
     background-color: #ffffff !important;
     color: rgb(85, 85, 85) !important;
-    border-color: rgb(85, 85, 85);
+    border-color: rgb(85, 85, 85) !important;
     border-radius: 4px;
 }
 
