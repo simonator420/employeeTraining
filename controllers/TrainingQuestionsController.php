@@ -53,6 +53,7 @@ class TrainingQuestionsController extends Controller
             'trainingName' => $trainingName,
             'deadlineForCompletion' => $deadline,
             'assignedUsersCount' => $assignedUsersCount,
+            'userRole' => $userRole,
         ]);
     }
 

@@ -108,6 +108,7 @@ class RoleController extends Controller
             'openTrainingsCount' => $openTrainingsCount,
             'completedTrainingsCount' => $completedTrainingsCount,
             'trainingCompleteTimes' => $trainingCompleteTimes,
+            'userRole' => $userRole,
         ]);
     }
 

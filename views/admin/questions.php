@@ -76,39 +76,41 @@ use yii\helpers\Url;
 
         <br>
 
-        <!-- Begin the ActiveForm -->
-        <?php $form = ActiveForm::begin([
-            'id' => 'training-questions-form',
-            'options' => ['enctype' => 'multipart/form-data'],
-            'enableAjaxValidation' => false,
-            'enableClientValidation' => true,
-        ]); ?>
+        <?php if ($userRole == 'admin'): ?>
+            <!-- Begin the ActiveForm -->
+            <?php $form = ActiveForm::begin([
+                'id' => 'training-questions-form',
+                'options' => ['enctype' => 'multipart/form-data'],
+                'enableAjaxValidation' => false,
+                'enableClientValidation' => true,
+            ]); ?>
 
 
-        <!-- Hidden input to store the training ID -->
-        <?= Html::hiddenInput('trainingId', $trainingId) ?>
+            <!-- Hidden input to store the training ID -->
+            <?= Html::hiddenInput('trainingId', $trainingId) ?>
 
-        <!-- Container for displaying all question with their input fields -->
-        <div id="questions-container">
-            <!-- Questions are loaded here via JavaScript -->
-        </div>
+            <!-- Container for displaying all question with their input fields -->
+            <div id="questions-container">
+                <!-- Questions are loaded here via JavaScript -->
+            </div>
 
-        <!-- Buttons for Adding/Removing question by user -->
-        <div class="form-group">
-            <button type="button" id="add-question-btn" class="btn btn-secondary">
-                <?= Yii::t('employeeTraining', '+ Add question') ?>
-            </button>
-            <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">
-                <?= Yii::t('employeeTraining', '- Remove question') ?>
-            </button>
-        </div>
+            <!-- Buttons for Adding/Removing question by user -->
+            <div class="form-group">
+                <button type="button" id="add-question-btn" class="btn btn-secondary">
+                    <?= Yii::t('employeeTraining', '+ Add question') ?>
+                </button>
+                <button type="button" id="remove-question-btn" class="btn btn-danger" style="display: none;">
+                    <?= Yii::t('employeeTraining', '- Remove question') ?>
+                </button>
+            </div>
 
-        <!-- Button for submitting the form and sending data to the endpoint -->
-        <div class="form-group">
-            <?= Html::button(Yii::t('employeeTraining', 'Submit'), ['class' => 'btn btn-success', 'id' => 'submit-btn']) ?>
-        </div>
+            <!-- Button for submitting the form and sending data to the endpoint -->
+            <div class="form-group">
+                <?= Html::button(Yii::t('employeeTraining', 'Submit'), ['class' => 'btn btn-success', 'id' => 'submit-btn']) ?>
+            </div>
 
-        <?php ActiveForm::end(); ?>
+            <?php ActiveForm::end(); ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -428,9 +430,6 @@ $(document).on('click', '#submit-assign-users', function() {
         }
     });
 });
-
-
-
 
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {

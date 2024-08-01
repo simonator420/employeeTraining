@@ -80,38 +80,41 @@ use yii\helpers\Url;
             style="margin-bottom:20px; width:100%; padding: 10px"> -->
 
 
-        <h2><?= Yii::t('employeeTraining', 'User Setup') ?></h2>
-        <div class="collapsible-container">
-            <button class="collapsible" data-role="user"><?= Yii::t('employeeTraining', 'User') ?></button>
-            <div class="content">
-                <!-- Content will be populated dynamically -->
+        <?php if ($userRole == 'admin'): ?>
+            <h2><?= Yii::t('employeeTraining', 'User Setup') ?></h2>
+            <div class="collapsible-container">
+                <button class="collapsible" data-role="user"><?= Yii::t('employeeTraining', 'User') ?></button>
+                <div class="content">
+                    <!-- Content will be populated dynamically -->
+                </div>
+                <button class="collapsible"
+                    data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
+                <div class="content">
+                    <!-- Content will be populated dynamically -->
+                </div>
+                <button class="collapsible" data-role="admin"><?= Yii::t('employeeTraining', 'Admin') ?></button>
+                <div class="content">
+                    <!-- Content will be populated dynamically -->
+                </div>
             </div>
-            <button class="collapsible"
-                data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
-            <div class="content">
-                <!-- Content will be populated dynamically -->
-            </div>
-            <button class="collapsible" data-role="admin"><?= Yii::t('employeeTraining', 'Admin') ?></button>
-            <div class="content">
-                <!-- Content will be populated dynamically -->
-            </div>
-        </div>
-        <br>
+            <br>
 
-        <!-- Modal for adding roles -->
-        <div id="addRoleModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2 id="modal-title"></h2>
-                <!-- Add form elements or any other content here -->
-                <form id="add-role-form">
-                    <!-- The list of users with checkboxes will be populated here -->
-                    <div id="profile-list"></div>
-                    <br>
-                    <button type="button" id="submit-add-role">Add</button>
-                </form>
+            <!-- Modal for adding roles -->
+            <div id="addRoleModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2 id="modal-title"></h2>
+                    <!-- Add form elements or any other content here -->
+                    <form id="add-role-form">
+                        <!-- The list of users with checkboxes will be populated here -->
+                        <div id="profile-list"></div>
+                        <br>
+                        <button type="button" id="submit-add-role">Add</button>
+                    </form>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
+
 
         <h2><?= Yii::t('employeeTraining', 'Trainings') ?></h2>
         <!-- Training Information Table -->
@@ -144,7 +147,10 @@ use yii\helpers\Url;
             <button id="submit-training-btn">Submit</button>
             <button id="cancel-training-btn">Cancel</button>
         </div>
-        <button id="create-training-btn">Create Training</button>
+
+        <?php if ($userRole == 'admin'): ?>
+            <button id="create-training-btn">Create Training</button>
+        <?php endif; ?>
         <br>
         <br>
 
@@ -185,7 +191,9 @@ use yii\helpers\Url;
                           } else {
                               echo 'text-black';
                           }
-                          ?>"><?= Html::encode(isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id] ? $trainingCompleteTimes[$user->id] : 'N/A') ?></td>
+                          ?>">
+                            <?= Html::encode(isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id] ? $trainingCompleteTimes[$user->id] : 'N/A') ?>
+                        </td>
                         <td><?= Html::encode($openTrainingsCount[$user->id] !== null ? $openTrainingsCount[$user->id] : 0) ?>
                         </td>
                         <td><?= Html::encode($completedTrainingsCount[$user->id] !== null ? $completedTrainingsCount[$user->id] : 0) ?>
