@@ -174,19 +174,7 @@ use yii\helpers\Url;
                         <td><?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
                         </td>
                         <td><?= Html::encode($user->profile->title ?: 'N/A') ?></td>
-                        <!-- <td>
-                            <?php
-                            $groups = $user->getGroups()->all();
-                            $groupNames = array_map(function ($group) {
-                                return $group->name;
-                            }, $groups);
-                            echo Html::encode(!empty($groupNames) ? implode(', ', $groupNames) : 'N/A');
-                            ?>
-                        </td> -->
                         <td><?= Html::encode($user->profile->storage_location ?: 'N/A') ?></td>
-                        <!-- <td id="training-assigned-time-<?= $user->id ?>">
-                            <?= Html::encode($user->profile->training_assigned_time ?: 'N/A') ?>
-                        </td> -->
                         <td id="training-complete-time-<?= $user->id ?>" class="<?php
                           if ($user->profile->training_complete_time) {
                               echo 'text-green';
@@ -198,8 +186,10 @@ use yii\helpers\Url;
                               echo 'text-black';
                           }
                           ?>"><?= Html::encode($user->profile->training_complete_time ?: 'N/A') ?></td>
-                        <td>N/A</td>
-                        <td><?= Html::encode($user->profile->completed_trainings_count) ?></td>
+                        <td><?= Html::encode($openTrainingsCount[$user->id] !== null ? $openTrainingsCount[$user->id] : 0) ?>
+                        </td>
+                        <td><?= Html::encode($completedTrainingsCount[$user->id] !== null ? $completedTrainingsCount[$user->id] : 0) ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

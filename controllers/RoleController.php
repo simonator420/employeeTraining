@@ -21,6 +21,8 @@ class RoleController extends Controller
         $users = User::find()->all();
 
         $latestAnswers = [];
+        $openTrainingsCount = [];
+        $completedTrainingsCount = [];
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
@@ -37,17 +39,29 @@ class RoleController extends Controller
                 ->bindValue(':user_id', $user->id)
                 ->queryAll();
 
-            $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+            // Get completed_trainings_count from user_training table where assigned_training is 0
+            $completed_trainings_count = Yii::$app->db->createCommand('
+                SELECT COUNT(*) 
+                FROM user_training 
+                WHERE user_id = :userId 
+                AND assigned_training = 0
+            ')
                 ->bindValue(':userId', $user->id)
                 ->queryScalar();
 
-            $user->profile->assigned_training = $assigned_training;
+            $completedTrainingsCount[$user->id] = $completed_trainings_count;
 
-            $completed_trainings_count = Yii::$app->db->createCommand('SELECT completed_trainings_count FROM profile WHERE user_id=:userId')
+            // Get open trainings count from user_training table where assigned_training is 1
+            $open_trainings_count = Yii::$app->db->createCommand('
+                SELECT COUNT(*) 
+                FROM user_training 
+                WHERE user_id = :userId 
+                AND assigned_training = 1
+            ')
                 ->bindValue(':userId', $user->id)
                 ->queryScalar();
 
-            $user->profile->completed_trainings_count = $completed_trainings_count;
+            $openTrainingsCount[$user->id] = $open_trainings_count;
         }
 
         $currentUser = Yii::$app->user;
@@ -75,6 +89,8 @@ class RoleController extends Controller
             'storage_locations' => $storage_locations,
             'latestAnswers' => $latestAnswers,
             'trainings' => $trainings,
+            'openTrainingsCount' => $openTrainingsCount,
+            'completedTrainingsCount' => $completedTrainingsCount,
         ]);
     }
 
@@ -129,30 +145,56 @@ class RoleController extends Controller
     public function actionFetchTitles()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')
             ->queryColumn();
-        
+
         if ($titles) {
             return ['success' => true, 'titles' => $titles];
         }
-    
+
         return ['success' => false, 'titles' => []];
     }
-    
+
     public function actionFetchLocations()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         $locations = Yii::$app->db->createCommand('SELECT DISTINCT storage_location FROM profile')
             ->queryColumn();
-    
+
         if ($locations) {
             return ['success' => true, 'locations' => $locations];
         }
-    
+
         return ['success' => false, 'locations' => []];
     }
+
+    public function actionFetchFilteredUsers($title = null, $location = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $query = (new \yii\db\Query())
+            ->select(['user_id', 'firstname', 'lastname'])
+            ->from('profile');
+
+        if ($title) {
+            $query->andWhere(['title' => $title]);
+        }
+
+        if ($location) {
+            $query->andWhere(['storage_location' => $location]);
+        }
+
+        $users = $query->all();
+
+        if ($users) {
+            return ['success' => true, 'users' => $users];
+        }
+
+        return ['success' => false, 'users' => []];
+    }
+
 
     public function actionAddRole()
     {
@@ -243,36 +285,74 @@ class RoleController extends Controller
     // Handling the AJAX request to toggle the training assignment for a user
     public function actionToggleTraining()
     {
-        // Setting the response format to JSON
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        // Retrieving the data SENT via the POST request
-        $userId = \Yii::$app->request->post('id');
-        $assignedTraining = \Yii::$app->request->post('assigned_training');
-        $trainingAssignedTime = \Yii::$app->request->post('training_assigned_time');
+        $userIds = Yii::$app->request->post('user_ids', []); // Expect an array of user IDs
+        $trainingId = Yii::$app->request->post('training_id');
+        $assignedTraining = Yii::$app->request->post('assigned_training');
+        $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
 
-        // Finding the user in the database by the ID
-        $user = User::findOne($userId);
-        // Checking if the user exists
-        if ($user) {
-            // Setting the assigned_training status
-            $user->profile->assigned_training = $assignedTraining;
-            // Setting the time for training_assigned_time
-            $user->profile->training_assigned_time = $trainingAssignedTime;
+        $successCount = 0;
 
-            // Clear training_complete_time if assigned_training is set to 1
-            if ($assignedTraining) {
-                $user->profile->training_complete_time = null;
+        foreach ($userIds as $userId) {
+            // Check if the record already exists
+            $userTrainingExists = Yii::$app->db->createCommand('SELECT COUNT(*) FROM user_training WHERE user_id=:user_id AND training_id=:training_id')
+                ->bindValue(':user_id', $userId)
+                ->bindValue(':training_id', $trainingId)
+                ->queryScalar();
+
+            if ($userTrainingExists) {
+                // Update existing record
+                $result = Yii::$app->db->createCommand()
+                    ->update(
+                        'user_training',
+                        [
+                            'assigned_training' => $assignedTraining,
+                            'training_assigned_time' => $trainingAssignedTime,
+                        ],
+                        [
+                            'user_id' => $userId,
+                            'training_id' => $trainingId,
+                        ]
+                    )
+                    ->execute();
+            } else {
+                // Insert new record
+                $result = Yii::$app->db->createCommand()
+                    ->insert(
+                        'user_training',
+                        [
+                            'user_id' => $userId,
+                            'training_id' => $trainingId,
+                            'assigned_training' => $assignedTraining,
+                            'training_assigned_time' => $trainingAssignedTime,
+                        ]
+                    )
+                    ->execute();
             }
 
-            // Attempts to save the updated user profile
-            if ($user->profile->save()) {
-                // If the profile is successfully saved
-                return ['success' => true];
+            if ($result) {
+                $successCount++;
             }
         }
-        // If the user is not found or the profile fails
-        return ['success' => false];
+
+        // Update the training's assigned_users_count with the actual count of user_training records
+        if ($successCount > 0) {
+            Yii::$app->db->createCommand()
+                ->update(
+                    'training',
+                    ['assigned_users_count' => new \yii\db\Expression('(SELECT COUNT(*) FROM user_training WHERE training_id = :training_id)')],
+                    ['id' => $trainingId]
+                )
+                ->bindValue(':training_id', $trainingId)
+                ->execute();
+        }
+
+        if ($successCount > 0) {
+            return ['success' => true, 'message' => "$successCount users assigned to training."];
+        }
+
+        return ['success' => false, 'message' => "No users assigned to training."];
     }
 
     public function actionAssignTraining()

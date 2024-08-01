@@ -37,7 +37,7 @@ use yii\helpers\Url;
             <button id="cancel-deadline-btn" class="btn btn-danger"><?= Yii::t('employeeTraining', 'Cancel') ?></button>
         </div>
 
-        <h3 style="display:flex; align-items:center; gap:10px">
+        <h3 style="display:flex; align-items:center; gap:10px" data-training-id="<?= Html::encode($trainingId) ?>">
             <?= Yii::t('employeeTraining', 'Number of assigned users: ') ?>
             <strong id="assigned-users-display"><?= Html::encode($assignedUsersCount) ?></strong>
             <button id="assign-users-btn"><?= Yii::t('employeeTraining', 'Assign') ?></button>
@@ -74,6 +74,7 @@ use yii\helpers\Url;
                 </form>
             </div>
         </div>
+
 
 
         <br>
@@ -134,6 +135,8 @@ $updateDeadlineUrl = Url::to(['training-questions/update-deadline']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
 $fetchTitlesUrl = Url::to(['role/fetch-titles']);
 $fetchLocationsUrl = Url::to(['role/fetch-locations']);
+$fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
+$toggleTrainingUrl = Url::to(['role/toggle-training']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
@@ -310,18 +313,9 @@ window.onclick = function(event) {
     }
 }
 
-$('#toggle-filter-btn').on('click', function() {
-    var arrow = $('#arrow-down');
-
-    // Toggle the rotated class for the arrow animation
-    arrow.toggleClass('rotated');
-})
-
 $(document).on('click', '#toggle-filter-btn', function() {
     $('#filter-list').toggle(); // Toggle the visibility of the filter list
     var arrow = $('#arrow-down');
-
-    // Toggle the rotated class for the arrow animation
     arrow.toggleClass('rotated');
 
     if ($('#filter-list').is(':visible')) {
@@ -331,7 +325,7 @@ $(document).on('click', '#toggle-filter-btn', function() {
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    var titleOptions = '<option value="">Select Title</option>';
+                    var titleOptions = '<option value="">All Jobs</option>';
                     $.each(response.titles, function(index, title) {
                         titleOptions += '<option value="' + title + '">' + title + '</option>';
                     });
@@ -348,7 +342,7 @@ $(document).on('click', '#toggle-filter-btn', function() {
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    var locationOptions = '<option value="">Select Location</option>';
+                    var locationOptions = '<option value="">All Locations</option>';
                     $.each(response.locations, function(index, location) {
                         locationOptions += '<option value="' + location + '">' + location + '</option>';
                     });
@@ -361,6 +355,77 @@ $(document).on('click', '#toggle-filter-btn', function() {
         });
     }
 });
+
+$(document).on('click', '#submit-filter-btn', function() {
+    var selectedTitle = $('#title-select').val();
+    var selectedLocation = $('#location-select').val();
+
+    $.ajax({
+        url: '$fetchFilteredUsersUrl',
+        type: 'GET',
+        data: {
+            title: selectedTitle,
+            location: selectedLocation
+        },
+        success: function(response) {
+            if (response.success) {
+                var usersHtml = '<ul>';
+                $.each(response.users, function(index, user) {
+                    usersHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                });
+                usersHtml += '</ul>';
+                $('#profile-list').html(usersHtml);
+            } else {
+                $('#profile-list').html('<p>No users found.</p>');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error fetching filtered users');
+            console.log(xhr.responseText);
+        }
+    });
+});
+
+$(document).on('click', '#submit-assign-users', function() {
+    var selectedUserIds = [];
+    $('#profile-list').find('.profile-checkbox:checked').each(function() {
+        selectedUserIds.push($(this).val());
+    });
+
+    if (selectedUserIds.length === 0) {
+        alert('Please select at least one user to assign the training.');
+        return;
+    }
+
+    var trainingId = $('h3[data-training-id]').data('training-id'); // Retrieve the trainingId from the data attribute
+    var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    $.ajax({
+        url: '$toggleTrainingUrl',
+        type: 'POST',
+        data: {
+            user_ids: selectedUserIds,
+            assigned_training: 1,
+            training_assigned_time: currentTime,
+            training_id: trainingId,
+            _csrf: yii.getCsrfToken()
+        },
+        success: function(response) {
+            if (response.success) {
+                alert(response.count + ' users have been assigned the training.');
+                location.reload(); // Reload the page to see the updated assigned users count
+            } else {
+                alert('Failed to assign training to users.');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error occurred while assigning training.');
+            console.log("Error details:", xhr.responseText, status, error);
+        }
+    });
+});
+
+
 
 
 // Event handler for the "Add Question" click
