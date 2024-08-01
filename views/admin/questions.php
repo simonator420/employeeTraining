@@ -103,16 +103,6 @@ use yii\helpers\Url;
             </button>
         </div>
 
-        <!-- Button for Advanced settings and checkbox for selecting all users with checkbox -->
-        <div class="form-group">
-            <div id="assign-to-all">
-                <input type="checkbox" id="all-users" name="all-users" class="assign-to-all-checkbox">
-                <label for="all-users">
-                    <?= Yii::t('employeeTraining', 'Assign question(s) to all titles') ?>
-                </label>
-            </div>
-        </div>
-
         <!-- Button for submitting the form and sending data to the endpoint -->
         <div class="form-group">
             <?= Html::button(Yii::t('employeeTraining', 'Submit'), ['class' => 'btn btn-success', 'id' => 'submit-btn']) ?>
@@ -143,7 +133,6 @@ function fetchQuestions() {
         success: function(response) {
             if (response.success) {
                 $('#questions-container').html(response.html);
-                attachEventHandlers(); // Attach event handlers after loading content
             } else {
                 $('#questions-container').html(
                     '<div class="question-item">' +
@@ -164,7 +153,6 @@ function fetchQuestions() {
                         '</div>' +
                     '</div>'
                 );
-                attachEventHandlers(); // Attach event handlers for default content
             }
             $('#questions-container').show();
             $('#add-question-btn').show();
@@ -183,37 +171,65 @@ function fetchQuestions() {
     });
 }
 
-function attachEventHandlers() {
-    $(document).on('change', '.question-type', function() {
-        handleQuestionTypeChange.call(this); // Call the function with the correct context
-    });
-
-    $(document).on('click', '.add-option-btn', function() {
-        var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-        var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
-        var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
-
-        var newOptionHtml = 
-            '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
-                '<div class="input-group-prepend">' +
-                    '<div class="input-group-text">' +
-                        '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
-                    '</div>' +
+$(document).off('click', '.add-option-btn').on('click', '.add-option-btn', function() {
+    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+    var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
+    var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
+    console.log(\$multipleChoiceContainer)
+    console.log(questionIndex)
+    console.log(optionIndex)
+    var newOptionHtml = 
+        '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
+            '<div class="input-group-prepend">' +
+                '<div class="input-group-text">' +
+                    '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
                 '</div>' +
-                '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
-            '</div>';
-        \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
-    });
+            '</div>' +
+            '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
+        '</div>';
+    \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
+});
 
-    $(document).on('click', '.remove-option-btn', function() {
-        var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-        var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+$(document).off('click', '.remove-option-btn').on('click', '.remove-option-btn', function() {
+    var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+    var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+    if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
+        \$lastOption.remove();
 
-        if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
-            \$lastOption.remove();
-        }
-    });
-}
+    }
+});
+
+// function attachEventHandlers() {
+//     $(document).on('change', '.question-type', function() {
+//         handleQuestionTypeChange.call(this); // Call the function with the correct context
+//     });
+
+//     $(document).on('click', '.add-option-btn', function() {
+//         var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+//         var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
+//         var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
+
+//         var newOptionHtml = 
+//             '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
+//                 '<div class="input-group-prepend">' +
+//                     '<div class="input-group-text">' +
+//                         '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
+//                     '</div>' +
+//                 '</div>' +
+//                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
+//             '</div>';
+//         \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
+//     });
+
+//     $(document).on('click', '.remove-option-btn', function() {
+//         var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
+//         var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+
+//         if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
+//             \$lastOption.remove();
+//         }
+//     });
+// }
 
 $(document).on('change', '.question-type', function() {
     handleQuestionTypeChange.call(this); // Call the function with the correct context
