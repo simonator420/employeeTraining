@@ -8,7 +8,7 @@ use yii\helpers\Url;
 <div class="employee-training-container">
     <div class="employee-training-card">
 
-        <h1>Welcome to the <b> <?= Html::encode($title) ?> </b> training</h1>
+        <h1>Welcome to the <b> <?= Html::encode($trainingId) ?> </b> training</h1>
         <p class="welcome-text">Dear <b> <?= Html::encode($firstName) ?></b>, you have been assigned this training.
             Please complete it at your earliest convenience. Please note that if the page is refreshed during the
             training, your inputs will not be saved.</p><br>
@@ -28,21 +28,21 @@ $completeTrainingUrl = Url::to(['role/complete-training']);
 $script = <<<JS
 // Document ready function to initialize when the page is loaded
 $(document).ready(function() {
+    var trainingId = '{$trainingId}';
     // AJAX request to fetch questions based on the title
     $.ajax({
         url: '$displayQuestionsUrl',
         type: 'GET',
+        data: { training_id: trainingId }, // Pass the training_id dynamically
         success: function(response) {
-            // If the response is successful, display the questions in the container
             if (response.success) {
+                // Display the questions in the container
                 $('#questions-container').html(response.html);
-            }
-            // If no questions are available, display a message
-            else {
+            } else {
+                // Display a message if no questions are available
                 $('#questions-container').html('<p>No questions available.</p>');
             }
         },
-        // Error function if an error occurs while fetching questions
         error: function() {
             alert('Error occurred while fetching questions.');
         }

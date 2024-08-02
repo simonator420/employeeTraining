@@ -289,27 +289,41 @@ class RoleController extends Controller
 
 
     // Function for handling the request to display Employee Training Overview page
-    public function actionEmployee()
+    public function actionEmployee($id)
     {
         // Retrieve the current logged-in user's information
         $user = Yii::$app->user;
         $userId = $user->getId();
-        $title = $user->identity->profile->title;
-        $firstName = $user->identity->profile->firstname;
-        // Retrieve the assigned_training status from the profile table
-        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-            ->bindValue(':userId', $userId) // Replaces userID in the SQL command with the actual user ID
-            ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
-
-        // Check if the user has an assigned training
-        if ($assigned_training === 1) {
-            // Render the driver view
-            return $this->render('employee', ['title' => $title, 'firstName' => $firstName]);
+        $profile = $user->identity->profile;
+        $title = $profile->title ?? 'N/A';
+        $firstName = $profile->firstname ?? 'N/A';
+    
+        // Check if the user has an assigned training record with the provided training ID
+        $trainingRecord = Yii::$app->db->createCommand('
+            SELECT * FROM user_training
+            WHERE user_id = :userId AND training_id = :trainingId AND assigned_training = 1
+        ')
+        ->bindValue(':userId', $userId)
+        ->bindValue(':trainingId', $id)
+        ->queryOne();
+    
+        // Check if the training record exists and is valid
+        if ($trainingRecord) {
+            // Render the employee view with the training ID
+            return $this->render('employee', [
+                'title' => $title,
+                'firstName' => $firstName,
+                'trainingId' => $id
+            ]);
         }
-
+    
         // Redirect to access denied if the conditions are not met
+        Yii::warning("Unauthorized access attempt to training ID: $id by user ID: $userId");
         return $this->redirect(['site/access-denied']);
     }
+    
+    
+    
 
     // Handling the AJAX request to toggle the training assignment for a user
     public function actionToggleTraining()

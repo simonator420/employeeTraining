@@ -46,44 +46,39 @@ class Events
         $title = $user->identity->profile->title;
         $userId = $user->getId();
 
-        // Retrieve the assigned_training status from the profile table
-        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-            ->bindValue(':userId', $userId) // Replaces userID in the SQL command with the actual user ID
-            ->queryScalar(); // Executes the SQL command and returns a single scalar value (the value of the assigned_training for the current user)
-        
-        // Retrieve the training_assigned_time time from the profile table
-        $training_assigned_time = Yii::$app->db->createCommand('SELECT training_assigned_time FROM profile WHERE user_id=:userId')
+        // Fetch the latest training record for the user where assigned_training = 1
+        $trainingRecord = Yii::$app->db->createCommand('
+            SELECT * FROM user_training
+            WHERE user_id = :userId AND assigned_training = 1
+            ORDER BY training_assigned_time DESC
+            LIMIT 1
+        ')
             ->bindValue(':userId', $userId)
-            ->queryScalar();
+            ->queryOne();
 
-        Yii::info('User : ' . $username . ' with id: ' . $userId . ' and title: ' . $title . ' and his training status is: ' . $assigned_training . '. A jeho cas kdy mu byl nebo bude nebo byl prirazen trenink je: ' . $training_assigned_time);
+        // Log the user information and training status
+        Yii::info('User: ' . $username . ' with id: ' . $userId . ' and title: ' . $title);
 
-        // Retrieve the training_complete_time from the profile table
-        $training_complete_time = Yii::$app->db->createCommand('SELECT training_complete_time FROM profile WHERE user_id=:userId')
-            ->bindValue(':userId', $userId)
-            ->queryScalar();
+        if ($trainingRecord) {
+            // Extract relevant information from the training record
+            $assignedTrainingId = $trainingRecord['training_id'];
+            $trainingAssignedTime = $trainingRecord['training_assigned_time'];
+            $trainingDeadline = $trainingRecord['deadline'];
+            $assignedTrainingStatus = $trainingRecord['assigned_training'];
 
-        // Setting the assigned_training attribute to 1 when all the conditions are met
-        if ($training_assigned_time && strtotime($training_assigned_time) <= time() && !$training_complete_time) {
-            // Update the assigned_training status to 1
-            Yii::$app->db->createCommand()
-                ->update('profile', ['assigned_training' => 1], 'user_id = :userId')
-                ->bindValue(':userId', $userId)
-                ->execute();
-
-            // Refresh assigned_training status
-            $assigned_training = 1;
-        }
-
-        // Retrive the userSpaces in case I want to display the training site based on the spaces they are in
-        $userSpaces = $user->identity->getSpaces()->all();
- 
-        // Check if the user has an assigned training
-        if ($assigned_training === 1) {
-            // Redirects to the Employee Training Page
-            Yii::$app->response->redirect(Url::to(['/employeeTraining/role/employee']));
+            // Check if the training has been assigned and is valid
+            if ($assignedTrainingStatus === 1) {
+                Yii::$app->response->redirect(Url::to(['/employeeTraining/role/employee', 'id' => $assignedTrainingId]));
+                return;
+            }
+        } else {
+            // Log if no relevant training record is found
+            Yii::info('No assigned training record found for user with id: ' . $userId);
         }
     }
+
+
+
 
     // Displays the side panel on users screen if he has training assigned
     public static function onDashboardSidebarInit(Event $event)

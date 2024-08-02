@@ -340,6 +340,16 @@ td, th {
     margin-bottom: 20px;
 }
 
+.multiple-choice-options {
+    display: flex;
+    flex-wrap: wrap; /* Allows options to wrap to the next line if they overflow */
+    gap: 15px;
+}
+
+.multiple-choice-options label {
+    font-weight: normal;
+}
+
 /* .user-info-container {
     display: flex;
     justify-content: center;

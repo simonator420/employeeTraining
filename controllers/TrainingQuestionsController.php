@@ -20,7 +20,7 @@ class TrainingQuestionsController extends Controller
         $currentUser = Yii::$app->user;
 
         $userRole = $currentUser->identity->profile->role;
-        
+
         Yii::info("Userova role: " . $userRole);
 
         // Check if the logged in user is admin
@@ -36,12 +36,12 @@ class TrainingQuestionsController extends Controller
         $deadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id =:id')
             ->bindValue(':id', $id)
             ->queryScalar();
-        
+
         $assignedUsersCount = Yii::$app->db->createCommand('SELECT assigned_users_count FROM training WHERE id =:id')
             ->bindValue(':id', $id)
             ->queryScalar();
-        
-            // Fetch distinct titles from the profile table
+
+        // Fetch distinct titles from the profile table
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')->queryColumn();
         // Sort the titles alphabetically
         sort($titles);
@@ -61,11 +61,11 @@ class TrainingQuestionsController extends Controller
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        
+
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `order`')
             ->bindValue(':id', $id)
             ->queryAll();
-    
+
         $html = '';
         if ($questions) {
             foreach ($questions as $index => $question) {
@@ -77,13 +77,13 @@ class TrainingQuestionsController extends Controller
                 $html .= '<div class="form-group">';
                 $html .= Html::textInput("TrainingQuestions[$index][question]", $question['question'], ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']);
                 $html .= '</div>';
-    
+
                 if ($question['type'] == 'multiple_choice') {
                     $html .= '<div class="form-group multiple-choice-container">';
                     $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id')
                         ->bindValue(':question_id', $question['id'])
                         ->queryAll();
-    
+
                     $html .= '<div class="form-group multiple-choice-options">';
                     foreach ($options as $optionIndex => $option) {
                         $html .= '<div class="input-group" style="display: flex; align-items: center; padding-bottom: 10px; gap: 5px">';
@@ -102,7 +102,7 @@ class TrainingQuestionsController extends Controller
                     $html .= '</div>';
                     $html .= '</div>';
                 }
-    
+
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {
                     $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
@@ -120,7 +120,7 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
-    
+
 
 
 
@@ -196,38 +196,87 @@ class TrainingQuestionsController extends Controller
     }
 
     // Function for displaying the questions from database in the form for the USER
-    public function actionDisplayQuestions($title)
+    public function actionDisplayQuestions($training_id)
     {
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        // Fetch question for the given title, ordered by the 'order' column
-        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE title = :title ORDER BY `order`')
-            ->bindValue(':title', $title)
+        // Fetch questions for the given training_id, ordered by the 'order' column
+        $questions = Yii::$app->db->createCommand('
+            SELECT * FROM training_questions 
+            WHERE training_id = :training_id 
+            ORDER BY `order`
+        ')
+            ->bindValue(':training_id', $training_id)
             ->queryAll();
 
         // Initialize HTML string
         $html = '';
         if ($questions) {
-            // Iterate over each question and adding strings to the HTML variable
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
                 $html .= '<div class="form-group">';
                 $html .= '<p class="question-employee"><b>' . Html::encode($question['question']) . '</b></p>';
 
-                // Use a switch statement to handle different question types
+                // Display image if available
+                if (!empty($question['image_url'])) {
+                    $html .= '<div class="question-image">';
+                    $html .= Html::img(
+                        Yii::$app->request->baseUrl . '/' . Html::encode($question['image_url']),
+                        [
+                            'class' => 'question-image',
+                            'style' => 'max-height: 280px; width: auto; height: auto; display:block;'
+                        ]
+                    );
+                    $html .= '</div>';
+                    $html .= '<br>';
+                }
+                // Handle different question types
                 switch ($question['type']) {
                     case 'text':
-                        $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', ['class' => 'form-control question-input', 'placeholder' => 'Enter your answer here']);
+                        $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', [
+                            'class' => 'form-control question-input',
+                            'placeholder' => 'Enter your answer here'
+                        ]);
                         break;
                     case 'number':
-                        $html .= Html::input('number', "TrainingQuestions[$index][answer]", '', ['class' => 'form-control question-input number-input', 'min' => '1', 'max' => '5', 'placeholder' => '1-5', 'style' => 'width: 60px;']);
+                        $html .= Html::input('number', "TrainingQuestions[$index][answer]", '', [
+                            'class' => 'form-control question-input number-input',
+                            'min' => '1',
+                            'max' => '5',
+                            'placeholder' => '1-5',
+                            'style' => 'width: 60px;'
+                        ]);
                         break;
                     case 'range':
                         $html .= '<div class="range-container">';
                         $html .= '<span>Not much</span>';
-                        $html .= Html::input('range', "TrainingQuestions[$index][answer]", '50', ['class' => 'form-control question-input', 'min' => '1', 'max' => '100']);
+                        $html .= Html::input('range', "TrainingQuestions[$index][answer]", '50', [
+                            'class' => 'form-control question-input',
+                            'min' => '1',
+                            'max' => '100'
+                        ]);
                         $html .= '<span>Very much</span>';
+                        $html .= '</div>';
+                        break;
+                    case 'multiple_choice':
+                        // Fetch multiple choice options for the question
+                        $options = Yii::$app->db->createCommand('
+                                SELECT * FROM training_multiple_choice_answers 
+                                WHERE question_id = :question_id
+                            ')
+                            ->bindValue(':question_id', $question['id'])
+                            ->queryAll();
+
+                        // Add checkboxes for each option
+                        $html .= '<div class="multiple-choice-options">';
+                        foreach ($options as $option) {
+                            $html .= Html::checkbox("TrainingQuestions[$index][answer][]", false, [
+                                'label' => Html::encode($option['option_text']),
+                                'value' => $option['id'],
+                                'class' => 'multiple-choice-option'
+                            ]);
+                        }
                         $html .= '</div>';
                         break;
                 }
@@ -235,48 +284,30 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
             }
 
-            // Add JavaScript to handle number input constraints
-            $html .= '<script>';
-            $html .= '$(document).ready(function() {';
-            $html .= '$(".form-control[type=\"number\"]").on("input", function() {
-                var value = $(this).val();
-                if (value < 1) {
-                    $(this).val(1);
-                } else if (value > 5) {
-                    $(this).val(5);
-                }
-            });';
-            $html .= '$(".form-control[type=\"number\"]").on("keypress", function(e) {
-                if (e.which < 48 || e.which > 57) {
-                    e.preventDefault();
-                }
-            });';
-            $html .= '});';
-            $html .= '</script>';
-
             // Return success response with generated HTML
             return ['success' => true, 'html' => $html];
         } else {
-            // Return failure response if no question found
+            // Return failure response if no questions are found
             return ['success' => false];
         }
     }
+
 
     // Function for updating the deadline
     public function actionUpdateDeadline()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-    
+
         if (Yii::$app->request->isPost) {
             $id = Yii::$app->request->post('id');
             $deadline = Yii::$app->request->post('deadline');
-    
+
             $command = Yii::$app->db->createCommand()
                 ->update('training', ['deadline_for_completion' => $deadline], 'id = :id', [':id' => $id]);
-    
+
             // Execute the command and get the number of affected rows
             $affectedRows = $command->execute();
-    
+
             // Check if any rows were affected, or if the deadline value was the same
             if ($affectedRows > 0 || $this->isDeadlineSame($id, $deadline)) {
                 return ['success' => true];
@@ -284,17 +315,17 @@ class TrainingQuestionsController extends Controller
                 return ['success' => false];
             }
         }
-    
+
         return ['success' => false];
     }
-    
+
     // Helper function to check if the deadline is the same
     private function isDeadlineSame($id, $deadline)
     {
         $currentDeadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id = :id')
             ->bindValue(':id', $id)
             ->queryScalar();
-    
+
         return $currentDeadline == $deadline;
     }
 }
