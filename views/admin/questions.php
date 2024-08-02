@@ -285,6 +285,8 @@ var modal = document.getElementById("assignUsersModal");
 
 var span = document.getElementsByClassName("close")[0];
 
+var trainingId = $('h3[data-training-id]').data('training-id'); // Retrieve the trainingId from the data attribute
+
 $(document).on('click', '#assign-users-btn', function() {
     var title = 'Assign Users'; // Adjust the title as needed
     $('#modal-title').text(title);
@@ -295,11 +297,12 @@ $(document).on('click', '#assign-users-btn', function() {
     $.ajax({
         url: '$fetchAllProfilesUrl',
         type: 'GET',
+        data: { trainingId: trainingId }, // Send the training ID
         success: function(response) {
             if (response.success) {
                 var profilesHtml = '<ul>';
                 $.each(response.profiles, function(index, profile) {
-                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</li>';
+                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + (profile.isAssigned ? ' checked' : '') + '> ' + profile.firstname + ' ' + profile.lastname + '</li>';
                 });
                 profilesHtml += '</ul>';
                 $('#profile-list').html(profilesHtml);
@@ -313,7 +316,6 @@ $(document).on('click', '#assign-users-btn', function() {
     });
 
     if ($('#filter-list').is(':visible')) {
-        // Fetch and populate titles and locations if filter list is now visible
         $.ajax({
             url: '$fetchTitlesUrl',
             type: 'GET',
@@ -349,6 +351,8 @@ $(document).on('click', '#assign-users-btn', function() {
         });
     }
 });
+
+
 
 span.onclick = function() {
     modal.style.display = "none";

@@ -80,7 +80,7 @@ class RoleController extends Controller
         $currentUser = Yii::$app->user;
         $title = $currentUser->identity->profile->title;
         $userRole = $currentUser->identity->profile->role;
-        
+
         Yii::info("Userova role: " . $userRole);
 
         if ($userRole !== 'admin' && $userRole !== 'team_leader') {
@@ -137,13 +137,21 @@ class RoleController extends Controller
         }
     }
 
-    public function actionFetchAllProfiles()
+    public function actionFetchAllProfiles($trainingId)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         $profiles = Profile::find()
             ->joinWith('user')
             ->all();
+
+        $assignedUserIds = Yii::$app->db->createCommand('
+            SELECT user_id 
+            FROM user_training 
+            WHERE training_id = :trainingId AND assigned_training = 1
+        ')
+            ->bindValue(':trainingId', $trainingId)
+            ->queryColumn();
 
         if ($profiles) {
             $profileList = [];
@@ -153,6 +161,7 @@ class RoleController extends Controller
                     'firstname' => $profile->firstname,
                     'lastname' => $profile->lastname,
                     'role' => $profile->role,
+                    'isAssigned' => in_array($profile->user->id, $assignedUserIds),
                 ];
             }
             return ['success' => true, 'profiles' => $profileList];
@@ -160,6 +169,7 @@ class RoleController extends Controller
             return ['success' => false, 'message' => 'No profiles found.'];
         }
     }
+
 
     public function actionFetchTitles()
     {
