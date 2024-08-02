@@ -54,67 +54,72 @@ let trainingCompleted = false;
 
 // Event handler for the submit button click
 $('#submit-btn').on('click', function(e) {
-    // Prevent the default form submissions
     e.preventDefault();
-    
+
     if (!trainingCompleted) {
-        // Flag to check if the form inputs are valid
         let isValid = true;
-        // Data object to hold form inputs and CSRF token
-        let data = { _csrf: yii.getCsrfToken() };
+        let trainingId = '{$trainingId}'; // Get the trainingId from PHP
+        let data = { _csrf: yii.getCsrfToken(), training_id: trainingId };
 
-        // Iterate over each input field to collect data and validate
+        console.log(data);
+
+        // Collect answers for text, number, and range inputs
         $('.question-input').each(function() {
-            // Get the name attribute of the input
             let inputName = $(this).attr('name');
-            // Get the value of the input
             let inputValue = $(this).val();
-            console.log(inputName);
-            console.log(inputValue);
 
-            // If the input value is empty, mark the input as invalid and highlight it
             if (!inputValue) {
                 isValid = false;
                 $(this).css('border', '2px solid red');
-            }
-            // If input value is valid, reset the border color
-            else {
+            } else {
                 $(this).css('border', '1px solid #dee2e6');
             }
 
-            // Add the input name and value to the data object
             data[inputName] = inputValue;
+            console.log("Collected normal data: ", inputName);
+            console.log("Collected inputValue: ", inputValue);
         });
-        
+
+        // Collect multiple-choice answers
+        $('.multiple-choice-option:checked').each(function() {
+            let inputName = $(this).attr('name').replace('[]', '');
+            let inputValue = $(this).val();
+            if (!data[inputName]) {
+                data[inputName] = [];
+            }
+            data[inputName].push(inputValue);
+            console.log("Collected multiple choice data: ", inputName);
+            console.log("Collected multiple choice value: ", inputValue);
+        });
+
+        console.log(data);
+
         if (isValid) {
-            // If all inputs are valid, make an AJAX POST request to complete the training
             $.ajax({
                 url: '$completeTrainingUrl',
                 type: 'POST',
                 data: data,
                 success: function(response) {
                     if (response.success) {
-                        // If the response is successful, mark the training as completed
-                        console.log(data)
                         alert('Thank you for completing the training!');
                         trainingCompleted = true;
                         var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                        // Update the training completion time
                         $('#training-complete-time-' + response.userId).text(currentTime);
-                        // Redirect to the dashboard
                         window.location.href = $('#submit-btn').attr('href');
                     } else {
-                        // If the response is not successful, alert the user
                         alert('Failed to complete the training. Please try again or contact System Administrator.');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
                     alert('Error in AJAX request. Please try again or contact System Administrator.');
                 }
             });
         }
     }
 });
+
+
 
 
 // Event handler for number input validation

@@ -319,7 +319,7 @@ class TrainingQuestionsController extends Controller
         return ['success' => false];
     }
 
-    // Helper function to check if the deadline is the same
+    // Helper function to check if the deadline is the same, because I wasn't able to save the new date if it was the same as the previous one
     private function isDeadlineSame($id, $deadline)
     {
         $currentDeadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id = :id')

@@ -297,16 +297,16 @@ class RoleController extends Controller
         $profile = $user->identity->profile;
         $title = $profile->title ?? 'N/A';
         $firstName = $profile->firstname ?? 'N/A';
-    
+
         // Check if the user has an assigned training record with the provided training ID
         $trainingRecord = Yii::$app->db->createCommand('
             SELECT * FROM user_training
             WHERE user_id = :userId AND training_id = :trainingId AND assigned_training = 1
         ')
-        ->bindValue(':userId', $userId)
-        ->bindValue(':trainingId', $id)
-        ->queryOne();
-    
+            ->bindValue(':userId', $userId)
+            ->bindValue(':trainingId', $id)
+            ->queryOne();
+
         // Check if the training record exists and is valid
         if ($trainingRecord) {
             // Render the employee view with the training ID
@@ -316,14 +316,14 @@ class RoleController extends Controller
                 'trainingId' => $id
             ]);
         }
-    
+
         // Redirect to access denied if the conditions are not met
         Yii::warning("Unauthorized access attempt to training ID: $id by user ID: $userId");
         return $this->redirect(['site/access-denied']);
     }
-    
-    
-    
+
+
+
 
     // Handling the AJAX request to toggle the training assignment for a user
     public function actionToggleTraining()
@@ -470,66 +470,160 @@ class RoleController extends Controller
     }
 
     // Handling the AJAX request to mark the training as complete for the current user
+
     public function actionCompleteTraining()
     {
-        // Set the response format to JSON
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         // Retrieve the id of the currently logged-in user
-        $userId = \Yii::$app->user->id;
-        $title = \Yii::$app->user->identity->profile->title;
-
-        // Find the user by ID
-        $user = User::findOne($userId);
-        // $title = $user->identity->profile->title;
+        $userId = Yii::$app->user->id;
 
         // Get the request data
         $requestData = Yii::$app->request->post();
+        // Yii::warning("Request data: " . print_r($requestData, true), __METHOD__);
 
-        // Extracting answers
+        // // Find user training record
+        // $userTraining = Yii::$app->db->createCommand('
+        //     SELECT * FROM user_training 
+        //     WHERE user_id = :userId 
+        //     AND training_id = :trainingId 
+        //     AND assigned_training = 1
+        // ')
+        //     ->bindValue(':userId', $userId)
+        //     ->bindValue(':trainingId', $requestData['training_id'])
+        //     ->queryOne();
+
+        // if (!$userTraining) {
+        //     // If no record found, return failure
+        //     return ['success' => false, 'message' => 'User training record not found.'];
+        // }
+
+        // Process and log the answers
         $answers = [];
+        $allAnswers = [];
         if (isset($requestData['TrainingQuestions'])) {
-            foreach ($requestData['TrainingQuestions'] as $index => $question) {
-                if (isset($question['answer'])) {
-                    $answers[] = [
-                        'index' => $index,
-                        'answer' => $question['answer']
-                    ];
-                    $spravnyIndex = $index + 1;
-                    $questionData = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE title = :title AND `order` = :spravnyIndex')
-                        ->bindValue(':title', $title)
-                        ->bindValue(':spravnyIndex', $spravnyIndex)
-                        ->queryOne();
-
-                    if ($questionData) {
-                        Yii::info("Index: $spravnyIndex, Question: " . $questionData['question'] . ", Answer: " . $question['answer']);
-                        Yii::$app->db->createCommand()->insert('training_answers', [
-                            'user_id' => $userId,
-                            'question_text' => $questionData['question'],
-                            'answer' => $question['answer'],
-                            'created_at' => new \yii\db\Expression('NOW()'),
-                        ])->execute();
-                    } else {
-                        Yii::info("Index: $spravnyIndex, No question found, Answer: " . $question['answer']);
-                    }
+            foreach ($requestData['TrainingQuestions'] as $questionId => $answer) {
+                if (is_array($answer)) {
+                    // Multiple-choice answer
+                    $allAnswers[$questionId] = $answer;
                 }
             }
         }
 
-        // Check if the user exists
-        if ($user) {
-            // Update the user's training_complete_time attribute with current time
-            $user->profile->training_complete_time = new \yii\db\Expression('NOW()');
-            // Update the user's assigned_training attribute to 0
-            $user->profile->assigned_training = 0;
-            // Save the users profile and return success if saved
-            if ($user->profile->save()) {
-                return ['success' => true];
+        // foreach ($allAnswers as $questionId => $answers) {
+        //     foreach ($answers as $answer) {
+        //         Yii::warning("Multiple choice answer - Question ID: $questionId, And the answer: $answer", __METHOD__);
+        //     }
+        // }
+
+        Yii::warning("Multiple choice answers: ", __METHOD__);
+        foreach ($allAnswers as $questionIndex => $answerArray) {
+            $order = $questionIndex + 1;
+
+            $question = Yii::$app->db->createCommand('
+                SELECT * FROM training_questions
+                WHERE `order` = :order
+                AND training_id = :trainingId
+            ')
+                ->bindValue(':order', $order)
+                ->bindValue(':trainingId', $requestData['training_id'])
+                ->queryOne();
+
+            Yii::warning("Question data: " . print_r($question, true), __METHOD__);
+
+            foreach ($answerArray as $answer) {
+                if (is_array($answer)) {
+                    foreach ($answer as $individualAnswer) {
+                        Yii::warning("Multiple choice: $individualAnswer", __METHOD__);
+                        Yii::warning("Insert", __METHOD__);
+
+                        // Ensure to get the correct question_id
+                        $multiple_choice_question = Yii::$app->db->createCommand('
+                            SELECT * FROM training_answers
+                            WHERE question_text = :questionText
+                            AND training_id = :trainingId
+                            AND user_id = :userId
+                        ')
+                            ->bindValue(':questionText', $question['question'])
+                            ->bindValue(':trainingId', $requestData['training_id'])
+                            ->bindValue(':userId', $userId)
+                            ->queryOne();
+
+                        if (!$multiple_choice_question) {
+                            Yii::$app->db->createCommand()
+                                ->insert(
+                                    'training_answers',
+                                    [
+                                        'user_id' => $userId,
+                                        'question_text' => $question['question'],
+                                        'answer' => "multiple_choice",
+                                        'created_at' => new \yii\db\Expression('NOW()'),
+                                        'training_id' => $requestData['training_id'],
+                                    ]
+                                )
+                                ->execute();
+
+                            $multiple_choice_question_id = Yii::$app->db->getLastInsertID();
+                        } else {
+                            $multiple_choice_question_id = $multiple_choice_question['id'];
+                        }
+
+                        // Retrieve the question_id from the training_questions table
+                        $option_data = Yii::$app->db->createCommand('
+                            SELECT question_id FROM training_multiple_choice_answers
+                            WHERE id = :id
+                        ')
+                            ->bindValue(':id', $individualAnswer)
+                            ->queryOne();
+
+                        if ($option_data) {
+                            $question_id = $option_data['question_id'];
+
+                            Yii::$app->db->createCommand()
+                                ->insert(
+                                    'training_multiple_choice_user_answers',
+                                    [
+                                        'user_id' => $userId,
+                                        'question_id' => $question_id,
+                                        'answer_id' => $individualAnswer,
+                                        'created_at' => new \yii\db\Expression('NOW()'),
+                                    ]
+                                )
+                                ->execute();
+                        } else {
+                            Yii::warning("Invalid option ID: $individualAnswer", __METHOD__);
+                        }
+                    }
+                } else {
+                    Yii::warning("Text: $answer", __METHOD__);
+                    Yii::$app->db->createCommand()
+                        ->insert(
+                            'training_answers',
+                            [
+                                'user_id' => $userId,
+                                'question_text' => $question['question'],
+                                'answer' => $answer,
+                                'created_at' => new \yii\db\Expression('NOW()'),
+                                'training_id' => $requestData['training_id'],
+                            ]
+                        )
+                        ->execute();
+                }
             }
+            Yii::warning(" ", __METHOD__);
         }
-        // Return failure if user not found or save failed
-        return ['success' => false];
+
+        // Update the user's training status
+        // Yii::$app->db->createCommand()->update('user_training', ['assigned_training' => 0], [
+        //     'user_id' => $userId,
+        //     'training_id' => $requestData['training_id']
+        // ])->execute();
+
+        return ['success' => true];
     }
+
+
+
 
     public function actionCreateTraining()
     {
