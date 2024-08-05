@@ -37,8 +37,8 @@ class TrainingQuestionsController extends Controller
             ->bindValue(':id', $id)
             ->queryScalar();
 
-        $assignedUsersCount = Yii::$app->db->createCommand('SELECT assigned_users_count FROM training WHERE id =:id')
-            ->bindValue(':id', $id)
+        $assignedUsersCount = Yii::$app->db->createCommand('SELECT COUNT(*) FROM user_training WHERE assigned_training = 1 AND training_id =:training_id')
+            ->bindValue(':training_id', $id)
             ->queryScalar();
 
         // Fetch distinct titles from the profile table
@@ -62,7 +62,7 @@ class TrainingQuestionsController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `order`')
+        $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `id`')
             ->bindValue(':id', $id)
             ->queryAll();
 
@@ -121,43 +121,57 @@ class TrainingQuestionsController extends Controller
         }
     }
 
-
-
-
-
     // Function for saving questions into database by admin
-    // TODO adjust the size of the dropboxes
-// Function for saving questions into database by admin
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-
+    
         $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
-
+    
         if (empty($trainingId)) {
             return ['success' => false, 'errors' => 'Training ID is required'];
         }
-
+    
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->db->createCommand()->delete('training_questions', ['training_id' => $trainingId])->execute();
-            Yii::$app->db->createCommand()->delete('training_multiple_choice_answers', ['question_id' => $trainingId])->execute();
-
-            $existingIds = Yii::$app->db->createCommand('SELECT id FROM training_questions')->queryColumn();
-            $nextId = 1;
-            $usedIds = [];
-
+            // Fetch existing questions and answers
+            $existingQuestions = Yii::$app->db->createCommand('
+                SELECT id, question FROM training_questions WHERE training_id = :trainingId
+            ')
+                ->bindValue(':trainingId', $trainingId)
+                ->queryAll();
+    
+            $existingAnswers = Yii::$app->db->createCommand('
+                SELECT id, question_id, option_text FROM training_multiple_choice_answers WHERE question_id IN (
+                    SELECT id FROM training_questions WHERE training_id = :trainingId
+                )
+            ')
+                ->bindValue(':trainingId', $trainingId)
+                ->queryAll();
+    
+            // Create maps for quick lookup
+            $existingQuestionMap = [];
+            foreach ($existingQuestions as $question) {
+                $existingQuestionMap[$question['id']] = ['question' => $question['question']];
+            }
+    
+            $existingAnswerMap = [];
+            foreach ($existingAnswers as $answer) {
+                $existingAnswerMap[$answer['question_id']][$answer['option_text']] = $answer['id'];
+            }
+    
+            $newQuestionIds = [];
+    
+            // Process each question
             foreach ($questions as $index => $questionData) {
-                while (in_array($nextId, $existingIds) || in_array($nextId, $usedIds)) {
-                    $nextId++;
-                }
-                $usedIds[] = $nextId;
-
+                $questionText = $questionData['question'];
+                $questionId = null;
+    
+                // Handle image upload
                 $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
                 $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
-
                 if ($imageFile) {
                     $imagePath = 'uploads/' . $imageFile->baseName . '.' . $imageFile->extension;
                     if ($imageFile->saveAs($imagePath)) {
@@ -166,27 +180,72 @@ class TrainingQuestionsController extends Controller
                         return ['success' => false, 'errors' => 'Failed to save the image file.'];
                     }
                 }
-
-                Yii::$app->db->createCommand()->insert('training_questions', [
-                    'id' => $nextId,
-                    'training_id' => $trainingId,
-                    'type' => $questionData['type'],
-                    'question' => $questionData['question'],
-                    'image_url' => $imageUrl,
-                    'order' => $index + 1,
-                ])->execute();
-
+    
+                foreach ($existingQuestionMap as $id => $existingQuestion) {
+                    if ($existingQuestion['question'] === $questionText) {
+                        $questionId = $id;
+                        break;
+                    }
+                }
+    
+                if ($questionId) {
+                    // Delete existing question to avoid duplicate entry
+                    Yii::$app->db->createCommand()->delete('training_questions', [
+                        'id' => $questionId,
+                    ])->execute();
+    
+                    // Insert new question
+                    Yii::$app->db->createCommand()->insert('training_questions', [
+                        'training_id' => $trainingId,
+                        'type' => $questionData['type'],
+                        'question' => $questionText,
+                        'image_url' => $imageUrl,
+                    ])->execute();
+                    $questionId = Yii::$app->db->getLastInsertID();
+                    $newQuestionIds[] = $questionId;
+                } else {
+                    // Insert new question
+                    Yii::$app->db->createCommand()->insert('training_questions', [
+                        'training_id' => $trainingId,
+                        'type' => $questionData['type'],
+                        'question' => $questionText,
+                        'image_url' => $imageUrl,
+                    ])->execute();
+                    $questionId = Yii::$app->db->getLastInsertID();
+                    $newQuestionIds[] = $questionId;
+                }
+    
                 if ($questionData['type'] == 'multiple_choice') {
+                    $existingOptionIds = $existingAnswerMap[$questionId] ?? [];
+    
                     foreach ($questionData['options'] as $optionIndex => $optionData) {
-                        Yii::$app->db->createCommand()->insert('training_multiple_choice_answers', [
-                            'question_id' => $nextId,
-                            'option_text' => $optionData['text'],
-                            'is_correct' => isset($optionData['correct']) ? $optionData['correct'] : false,
-                        ])->execute();
+                        $optionText = $optionData['text'];
+                        $optionId = $existingOptionIds[$optionText] ?? null;
+    
+                        if ($optionId) {
+                            // Update existing option
+                            Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
+                                'is_correct' => isset($optionData['correct']) ? $optionData['correct'] : false,
+                            ], ['id' => $optionId])->execute();
+                        } else {
+                            // Insert new option
+                            Yii::$app->db->createCommand()->insert('training_multiple_choice_answers', [
+                                'question_id' => $questionId,
+                                'option_text' => $optionData['text'],
+                                'is_correct' => isset($optionData['correct']) ? $optionData['correct'] : false,
+                            ])->execute();
+                        }
                     }
                 }
             }
-
+    
+            // Delete questions that are no longer in the new set
+            $questionIdsToDelete = array_diff(array_keys($existingQuestionMap), $newQuestionIds);
+            foreach ($questionIdsToDelete as $idToDelete) {
+                Yii::$app->db->createCommand()->delete('training_questions', ['id' => $idToDelete])->execute();
+                Yii::$app->db->createCommand()->delete('training_multiple_choice_answers', ['question_id' => $idToDelete])->execute();
+            }
+    
             $transaction->commit();
             return ['success' => true];
         } catch (\Exception $e) {
@@ -194,6 +253,9 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
+    
+    
+
 
     // Function for displaying the questions from database in the form for the USER
     public function actionDisplayQuestions($training_id)
@@ -205,7 +267,7 @@ class TrainingQuestionsController extends Controller
         $questions = Yii::$app->db->createCommand('
             SELECT * FROM training_questions 
             WHERE training_id = :training_id 
-            ORDER BY `order`
+            ORDER BY `id`
         ')
             ->bindValue(':training_id', $training_id)
             ->queryAll();

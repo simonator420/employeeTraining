@@ -24,6 +24,7 @@ class RoleController extends Controller
         $openTrainingsCount = [];
         $completedTrainingsCount = [];
         $trainingCompleteTimes = [];
+        $activeAssignedTrainingsCount = []; // To store the count of active assigned trainings for each training
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
@@ -40,7 +41,6 @@ class RoleController extends Controller
                 ->bindValue(':user_id', $user->id)
                 ->queryAll();
 
-            // Get completed_trainings_count from user_training table where assigned_training is 0
             $completed_trainings_count = Yii::$app->db->createCommand('
                 SELECT COUNT(*) 
                 FROM user_training 
@@ -52,7 +52,6 @@ class RoleController extends Controller
 
             $completedTrainingsCount[$user->id] = $completed_trainings_count;
 
-            // Get open trainings count from user_training table where assigned_training is 1
             $open_trainings_count = Yii::$app->db->createCommand('
                 SELECT COUNT(*) 
                 FROM user_training 
@@ -64,7 +63,6 @@ class RoleController extends Controller
 
             $openTrainingsCount[$user->id] = $open_trainings_count;
 
-            // Get the latest training_complete_time from user_training table where assigned_training is 0
             $latest_training_complete_time = Yii::$app->db->createCommand('
                 SELECT MAX(training_assigned_time)
                 FROM user_training
@@ -77,11 +75,22 @@ class RoleController extends Controller
             $trainingCompleteTimes[$user->id] = $latest_training_complete_time;
         }
 
+        $trainings = Yii::$app->db->createCommand('SELECT * FROM training')->queryAll();
+
+        foreach ($trainings as $training) {
+            $activeAssignedTrainingsCount[$training['id']] = Yii::$app->db->createCommand('
+                SELECT COUNT(*) 
+                FROM user_training 
+                WHERE assigned_training = 1 
+                AND training_id = :training_id
+            ')
+                ->bindValue(':training_id', $training['id'])
+                ->queryScalar();
+        }
+
         $currentUser = Yii::$app->user;
         $title = $currentUser->identity->profile->title;
         $userRole = $currentUser->identity->profile->role;
-
-        Yii::info("Userova role: " . $userRole);
 
         if ($userRole !== 'admin' && $userRole !== 'team_leader') {
             return $this->redirect(['site/access-denied']);
@@ -97,8 +106,6 @@ class RoleController extends Controller
 
         sort($storage_locations);
 
-        $trainings = Yii::$app->db->createCommand('SELECT * FROM training')->queryAll();
-
         return $this->render('admin', [
             'users' => $users,
             'titles' => $titles,
@@ -109,8 +116,10 @@ class RoleController extends Controller
             'completedTrainingsCount' => $completedTrainingsCount,
             'trainingCompleteTimes' => $trainingCompleteTimes,
             'userRole' => $userRole,
+            'activeAssignedTrainingsCount' => $activeAssignedTrainingsCount, // Pass the data to the view
         ]);
     }
+
 
 
     public function actionFetchUsersByRole($role)
@@ -357,17 +366,17 @@ class RoleController extends Controller
             }
 
             // Check if the record already exists
-            $userTrainingExists = Yii::$app->db->createCommand('
-                SELECT COUNT(*) 
+            $userTrainingRecord = Yii::$app->db->createCommand('
+                SELECT * 
                 FROM user_training 
                 WHERE user_id = :user_id AND training_id = :training_id
             ')
                 ->bindValue(':user_id', $userId)
                 ->bindValue(':training_id', $trainingId)
-                ->queryScalar();
+                ->queryOne();
 
-            if ($userTrainingExists) {
-                // Update existing record
+            if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 1) {
+                // Update existing record if assigned_training is 1
                 $result = Yii::$app->db->createCommand()
                     ->update(
                         'user_training',
@@ -383,7 +392,7 @@ class RoleController extends Controller
                     )
                     ->execute();
             } else {
-                // Insert new record
+                // Insert new record if assigned_training is 0 or record doesn't exist
                 $result = Yii::$app->db->createCommand()
                     ->insert(
                         'user_training',
@@ -408,7 +417,7 @@ class RoleController extends Controller
             Yii::$app->db->createCommand()
                 ->update(
                     'training',
-                    ['assigned_users_count' => new \yii\db\Expression('(SELECT COUNT(*) FROM user_training WHERE training_id = :training_id)')],
+                    ['assigned_users_count' => new \yii\db\Expression('(SELECT COUNT(*) FROM user_training WHERE training_id = :training_id AND assigned_training = 1)')],
                     ['id' => $trainingId]
                 )
                 ->bindValue(':training_id', $trainingId)
@@ -475,6 +484,17 @@ class RoleController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        // List all question texts
+        $questions = Yii::$app->db->createCommand('
+            SELECT question FROM training_questions
+        ')
+            ->queryAll();
+
+        foreach ($questions as $question) {
+            Yii::warning("Question name " . $question['question'], __METHOD__);
+            // Yii::warning("Question ID " . $question['training_id'], __METHOD__);
+        }
+
         // Retrieve the id of the currently logged-in user
         $userId = Yii::$app->user->id;
 
@@ -495,68 +515,68 @@ class RoleController extends Controller
             }
         }
 
-        foreach ($allAnswers as $questionIndex => $answerArray) {
-            $order = $questionIndex + 1;
+        // Debugging: Log allAnswers
+        Yii::info("All Answers: " . print_r($allAnswers, true), __METHOD__);
 
+        // Fetch valid question IDs
+        $validQuestionIds = Yii::$app->db->createCommand('
+            SELECT id FROM training_questions
+        ')
+            ->queryColumn();
+
+        foreach ($allAnswers as $questionId => $answerArray) {
+            // Check if the question ID is valid
+            if (!in_array($questionId, $validQuestionIds)) {
+                Yii::warning("Question ID $questionId not found", __METHOD__);
+                continue; // Skip to the next question if not found
+            }
+
+            // Fetch the question based on its ID
             $question = Yii::$app->db->createCommand('
                 SELECT * FROM training_questions
-                WHERE `order` = :order
-                AND training_id = :trainingId
+                WHERE id = :questionId
             ')
-                ->bindValue(':order', $order)
-                ->bindValue(':trainingId', $requestData['training_id'])
+                ->bindValue(':questionId', $questionId)
                 ->queryOne();
 
-            // Insert the 'multiple_choice' marker into training_answers table if not already present
-            $multiple_choice_inserted = false;
-
+            // Insert answers into the respective tables
             foreach ($answerArray as $answer) {
                 if (is_array($answer)) {
                     foreach ($answer as $individualAnswer) {
-                        if (!$multiple_choice_inserted) {
-                            Yii::$app->db->createCommand()
-                                ->insert(
-                                    'training_answers',
-                                    [
-                                        'user_id' => $userId,
-                                        'question_text' => $question['question'],
-                                        'answer' => "multiple_choice",
-                                        'created_at' => new \yii\db\Expression('NOW()'),
-                                        'training_id' => $requestData['training_id'],
-                                    ]
-                                )
-                                ->execute();
-                            $multiple_choice_inserted = true;
-                        }
-
-                        // Retrieve the question_id from the training_questions table
-                        $option_data = Yii::$app->db->createCommand('
-                            SELECT question_id FROM training_multiple_choice_answers
-                            WHERE id = :id
+                        // Ensure the multiple-choice answer ID is valid
+                        $option = Yii::$app->db->createCommand('
+                            SELECT * FROM training_multiple_choice_answers
+                            WHERE id = :id AND question_id = :questionId
                         ')
                             ->bindValue(':id', $individualAnswer)
+                            ->bindValue(':questionId', $questionId)
                             ->queryOne();
 
-                        if ($option_data) {
-                            $question_id = $option_data['question_id'];
-
-                            Yii::$app->db->createCommand()
-                                ->insert(
-                                    'training_multiple_choice_user_answers',
-                                    [
-                                        'user_id' => $userId,
-                                        'question_id' => $question_id,
-                                        'answer_id' => $individualAnswer,
-                                        'created_at' => new \yii\db\Expression('NOW()'),
-                                    ]
-                                )
-                                ->execute();
-                        } else {
-                            Yii::warning("Invalid option ID: $individualAnswer", __METHOD__);
+                        if (!$option) {
+                            Yii::warning("Invalid option ID: $individualAnswer for question ID: $questionId", __METHOD__);
+                            continue; // Skip to the next answer if not found
                         }
+
+                        // Insert multiple-choice answer into the user-specific table
+                        $result = Yii::$app->db->createCommand()
+                            ->insert(
+                                'training_multiple_choice_user_answers',
+                                [
+                                    'user_id' => $userId,
+                                    'question_id' => $questionId,
+                                    'answer_id' => $individualAnswer,
+                                    'question_text' => $question['question'],
+                                    'created_at' => new \yii\db\Expression('NOW()'),
+                                ]
+                            )
+                            ->execute();
+
+                        // Debugging: Log insert result
+                        Yii::info("Inserted multiple_choice_user_answer: " . print_r($result, true), __METHOD__);
                     }
                 } else {
-                    Yii::$app->db->createCommand()
+                    // Insert single answer into the training_answers table
+                    $result = Yii::$app->db->createCommand()
                         ->insert(
                             'training_answers',
                             [
@@ -568,6 +588,9 @@ class RoleController extends Controller
                             ]
                         )
                         ->execute();
+
+                    // Debugging: Log insert result
+                    Yii::info("Inserted answer: " . print_r($result, true), __METHOD__);
                 }
             }
         }
@@ -584,8 +607,16 @@ class RoleController extends Controller
             )
             ->execute();
 
-        return ['success' => true];
+        // Debugging: Log update result
+        Yii::info("Updated user_training: " . print_r($result, true), __METHOD__);
+
+        return ['success' => false];
     }
+
+
+
+
+
 
 
 
@@ -623,10 +654,12 @@ class RoleController extends Controller
             throw new NotFoundHttpException("User not found");
         }
 
+        // Fetch distinct training IDs where the user has answers
         $trainingIds = Yii::$app->db->createCommand('
             SELECT DISTINCT training_id 
             FROM training_answers 
             WHERE user_id = :userId
+            AND training_id IN (SELECT id FROM training)
         ')
             ->bindValue(':userId', $id)
             ->queryAll();
@@ -635,6 +668,15 @@ class RoleController extends Controller
         $answers = [];
         foreach ($trainingIds as $trainingId) {
             $trainingIdValue = $trainingId['training_id'];
+
+            // Fetch the training name
+            $trainingName = Yii::$app->db->createCommand('
+                SELECT name 
+                FROM training 
+                WHERE id = :trainingId
+            ')
+                ->bindValue(':trainingId', $trainingIdValue)
+                ->queryScalar();
 
             // Fetch distinct created_at timestamps for the training
             $instances = Yii::$app->db->createCommand('
@@ -649,6 +691,7 @@ class RoleController extends Controller
 
             $trainings[] = [
                 'training_id' => $trainingIdValue,
+                'training_name' => $trainingName,
                 'instances' => $instances,
             ];
 
@@ -694,10 +737,27 @@ class RoleController extends Controller
             }
         }
 
+        // Sort trainings by the latest instance date (newest first)
+        usort($trainings, function ($a, $b) {
+            $a_latest = strtotime($a['instances'][0]['created_at']);
+            $b_latest = strtotime($b['instances'][0]['created_at']);
+            return $b_latest - $a_latest;
+        });
+
+        /*
+        // Sort trainings by the earliest instance date (oldest first)
+        usort($trainings, function($a, $b) {
+            $a_earliest = strtotime($a['instances'][0]['created_at']);
+            $b_earliest = strtotime($b['instances'][0]['created_at']);
+            return $a_earliest - $b_earliest;
+        });
+        */
+
         return $this->render('/admin/user-answers', [
             'user' => $user,
             'trainings' => $trainings,
             'answers' => $answers,
         ]);
     }
+
 }

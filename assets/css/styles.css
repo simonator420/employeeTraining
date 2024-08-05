@@ -1,12 +1,12 @@
 /* protected/modules/employeeTraining/assets/css/style.css */
 
-.employee-overview-container, .training-question-container {
+.employee-overview-container, .training-question-container, .user-answers-container {
     display: flex;
     justify-content: center;
     padding: 20px;
 }
 
-.employee-info-card, .training-questions-form {
+.employee-info-card, .training-questions-form, .user-answers-card {
     width: 100%;
     max-width: 1000px;
     background-color: #fff;

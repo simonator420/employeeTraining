@@ -138,8 +138,8 @@ use yii\helpers\Url;
                         </td>
                         <td><?= Html::encode($training['name']) ?></td>
                         <td><?= Html::encode($training['created_at']) ?></td>
-                        <td><?= Html::encode($training['assigned_users_count']) ?></td>
-                    </tr>
+                        <td><?= Html::encode($activeAssignedTrainingsCount[$training['id']] ?? 0) ?></td>
+                        </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>

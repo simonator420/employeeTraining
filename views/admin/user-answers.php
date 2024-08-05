@@ -8,47 +8,51 @@ use yii\helpers\Url;
 /* @var $trainings array */
 /* @var $answers array */
 
-$this->title = 'User Answers: ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
+$this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="user-answers-view">
-    <h1><?= Html::encode($this->title) ?></h1>
-
-    <div class="collapsible-container">
-        <?php foreach ($trainings as $training): ?>
-            <?php foreach ($training['instances'] as $instance): ?>
-                <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
-                    Training ID: <?= Html::encode($training['training_id']) ?> - <?= Html::encode($instance['created_at']) ?>
-                </button>
-                <div class="content" style="display:none;">
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Question</th>
-                                <th>Answer</th>
-                                <th>Created At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
-                                <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
-                                    <tr>
-                                        <td><?= Html::encode($answer['question_text']) ?></td>
-                                        <td><?= Html::encode($answer['answer']) ?></td>
-                                        <td><?= Html::encode($answer['created_at']) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
+<div class="user-answers-container">
+    <div class="user-answers-card">
+        <h1><?= Html::encode($this->title) ?></h1>
+        <br>
+        <div class="collapsible-container">
+            <?php foreach ($trainings as $training): ?>
+                <?php foreach ($training['instances'] as $instance): ?>
+                    <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
+                        <b>
+                            <?= Html::encode($training['training_name']) ?>
+                        </b>
+                        -
+                        <?= Html::encode($instance['created_at']) ?>
+                    </button>
+                    <div class="content" style="display:none;">
+                        <table class="table table-striped table-bordered">
+                            <thead>
                                 <tr>
-                                    <td colspan="3">No answers found for this training.</td>
+                                    <th>Question</th>
+                                    <th>Answer</th>
                                 </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
+                                    <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
+                                        <tr>
+                                            <td><?= Html::encode($answer['question_text']) ?></td>
+                                            <td><?= Html::encode($answer['answer']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="3">No answers found for this training.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endforeach; ?>
             <?php endforeach; ?>
-        <?php endforeach; ?>
+        </div>
     </div>
 </div>
 
