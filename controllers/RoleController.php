@@ -488,11 +488,13 @@ class RoleController extends Controller
                 if (is_array($answer)) {
                     // Multiple-choice answer
                     $allAnswers[$questionId] = $answer;
+                } else {
+                    // Single answer (text, number, range, etc.)
+                    $allAnswers[$questionId] = [$answer];
                 }
             }
         }
 
-        Yii::warning("Multiple choice answers: ", __METHOD__);
         foreach ($allAnswers as $questionIndex => $answerArray) {
             $order = $questionIndex + 1;
 
@@ -505,27 +507,13 @@ class RoleController extends Controller
                 ->bindValue(':trainingId', $requestData['training_id'])
                 ->queryOne();
 
-            Yii::warning("Question data: " . print_r($question, true), __METHOD__);
+            // Insert the 'multiple_choice' marker into training_answers table if not already present
+            $multiple_choice_inserted = false;
 
             foreach ($answerArray as $answer) {
                 if (is_array($answer)) {
                     foreach ($answer as $individualAnswer) {
-                        Yii::warning("Multiple choice: $individualAnswer", __METHOD__);
-                        Yii::warning("Insert", __METHOD__);
-
-                        // Ensure to get the correct question_id
-                        $multiple_choice_question = Yii::$app->db->createCommand('
-                            SELECT * FROM training_answers
-                            WHERE question_text = :questionText
-                            AND training_id = :trainingId
-                            AND user_id = :userId
-                        ')
-                            ->bindValue(':questionText', $question['question'])
-                            ->bindValue(':trainingId', $requestData['training_id'])
-                            ->bindValue(':userId', $userId)
-                            ->queryOne();
-
-                        if (!$multiple_choice_question) {
+                        if (!$multiple_choice_inserted) {
                             Yii::$app->db->createCommand()
                                 ->insert(
                                     'training_answers',
@@ -538,10 +526,7 @@ class RoleController extends Controller
                                     ]
                                 )
                                 ->execute();
-
-                            $multiple_choice_question_id = Yii::$app->db->getLastInsertID();
-                        } else {
-                            $multiple_choice_question_id = $multiple_choice_question['id'];
+                            $multiple_choice_inserted = true;
                         }
 
                         // Retrieve the question_id from the training_questions table
@@ -571,7 +556,6 @@ class RoleController extends Controller
                         }
                     }
                 } else {
-                    Yii::warning("Text: $answer", __METHOD__);
                     Yii::$app->db->createCommand()
                         ->insert(
                             'training_answers',
@@ -586,11 +570,24 @@ class RoleController extends Controller
                         ->execute();
                 }
             }
-            Yii::warning(" ", __METHOD__);
         }
+
+        // Update the assigned_training attribute to 0
+        $result = Yii::$app->db->createCommand()
+            ->update(
+                'user_training',
+                ['assigned_training' => 0],
+                [
+                    'user_id' => $userId,
+                    'training_id' => $requestData['training_id'],
+                ]
+            )
+            ->execute();
 
         return ['success' => true];
     }
+
+
 
     public function actionCreateTraining()
     {
@@ -626,18 +623,81 @@ class RoleController extends Controller
             throw new NotFoundHttpException("User not found");
         }
 
-        $answers = Yii::$app->db->createCommand('
-        SELECT * FROM training_answers
-        WHERE user_id = :userId
-    ')
+        $trainingIds = Yii::$app->db->createCommand('
+            SELECT DISTINCT training_id 
+            FROM training_answers 
+            WHERE user_id = :userId
+        ')
             ->bindValue(':userId', $id)
             ->queryAll();
 
+        $trainings = [];
+        $answers = [];
+        foreach ($trainingIds as $trainingId) {
+            $trainingIdValue = $trainingId['training_id'];
+
+            // Fetch distinct created_at timestamps for the training
+            $instances = Yii::$app->db->createCommand('
+                SELECT DISTINCT created_at 
+                FROM training_answers 
+                WHERE user_id = :userId AND training_id = :trainingId
+                ORDER BY created_at DESC
+            ')
+                ->bindValue(':userId', $id)
+                ->bindValue(':trainingId', $trainingIdValue)
+                ->queryAll();
+
+            $trainings[] = [
+                'training_id' => $trainingIdValue,
+                'instances' => $instances,
+            ];
+
+            foreach ($instances as $instance) {
+                $instanceCreatedAt = $instance['created_at'];
+
+                $trainingAnswers = Yii::$app->db->createCommand('
+                    SELECT * 
+                    FROM training_answers 
+                    WHERE user_id = :userId AND training_id = :trainingId AND created_at = :createdAt
+                ')
+                    ->bindValue(':userId', $id)
+                    ->bindValue(':trainingId', $trainingIdValue)
+                    ->bindValue(':createdAt', $instanceCreatedAt)
+                    ->queryAll();
+
+                foreach ($trainingAnswers as &$answer) {
+                    if ($answer['answer'] == 'multiple_choice') {
+                        $multipleChoiceAnswers = Yii::$app->db->createCommand('
+                            SELECT option_text 
+                            FROM training_multiple_choice_answers 
+                            WHERE id IN (
+                                SELECT answer_id 
+                                FROM training_multiple_choice_user_answers 
+                                WHERE user_id = :userId AND question_id = (
+                                    SELECT id 
+                                    FROM training_questions 
+                                    WHERE question = :question AND training_id = :trainingId
+                                ) AND created_at = :createdAt
+                            )
+                        ')
+                            ->bindValue(':userId', $id)
+                            ->bindValue(':question', $answer['question_text'])
+                            ->bindValue(':trainingId', $trainingIdValue)
+                            ->bindValue(':createdAt', $instanceCreatedAt)
+                            ->queryColumn();
+
+                        $answer['answer'] = implode(', ', $multipleChoiceAnswers);
+                    }
+                }
+
+                $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
+            }
+        }
+
         return $this->render('/admin/user-answers', [
             'user' => $user,
+            'trainings' => $trainings,
             'answers' => $answers,
         ]);
-
     }
-
 }
