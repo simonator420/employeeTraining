@@ -480,26 +480,8 @@ class RoleController extends Controller
 
         // Get the request data
         $requestData = Yii::$app->request->post();
-        // Yii::warning("Request data: " . print_r($requestData, true), __METHOD__);
-
-        // // Find user training record
-        // $userTraining = Yii::$app->db->createCommand('
-        //     SELECT * FROM user_training 
-        //     WHERE user_id = :userId 
-        //     AND training_id = :trainingId 
-        //     AND assigned_training = 1
-        // ')
-        //     ->bindValue(':userId', $userId)
-        //     ->bindValue(':trainingId', $requestData['training_id'])
-        //     ->queryOne();
-
-        // if (!$userTraining) {
-        //     // If no record found, return failure
-        //     return ['success' => false, 'message' => 'User training record not found.'];
-        // }
 
         // Process and log the answers
-        $answers = [];
         $allAnswers = [];
         if (isset($requestData['TrainingQuestions'])) {
             foreach ($requestData['TrainingQuestions'] as $questionId => $answer) {
@@ -509,12 +491,6 @@ class RoleController extends Controller
                 }
             }
         }
-
-        // foreach ($allAnswers as $questionId => $answers) {
-        //     foreach ($answers as $answer) {
-        //         Yii::warning("Multiple choice answer - Question ID: $questionId, And the answer: $answer", __METHOD__);
-        //     }
-        // }
 
         Yii::warning("Multiple choice answers: ", __METHOD__);
         foreach ($allAnswers as $questionIndex => $answerArray) {
@@ -613,17 +589,8 @@ class RoleController extends Controller
             Yii::warning(" ", __METHOD__);
         }
 
-        // Update the user's training status
-        // Yii::$app->db->createCommand()->update('user_training', ['assigned_training' => 0], [
-        //     'user_id' => $userId,
-        //     'training_id' => $requestData['training_id']
-        // ])->execute();
-
         return ['success' => true];
     }
-
-
-
 
     public function actionCreateTraining()
     {
@@ -651,4 +618,26 @@ class RoleController extends Controller
 
         throw new BadRequestHttpException('Only POST requests are allowed');
     }
+
+    public function actionUserAnswers($id)
+    {
+        $user = User::findOne($id);
+        if (!$user) {
+            throw new NotFoundHttpException("User not found");
+        }
+
+        $answers = Yii::$app->db->createCommand('
+        SELECT * FROM training_answers
+        WHERE user_id = :userId
+    ')
+            ->bindValue(':userId', $id)
+            ->queryAll();
+
+        return $this->render('/admin/user-answers', [
+            'user' => $user,
+            'answers' => $answers,
+        ]);
+
+    }
+
 }

@@ -177,7 +177,11 @@ use yii\helpers\Url;
                         data-fullname="<?= Html::encode($user->profile->firstname . ' ' . $user->profile->lastname) ?>"
                         data-username="<?= Html::encode($user->username) ?>">
                         <td><?= Html::encode($user->id) ?></td>
-                        <td><?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
+                        <td>
+                            <a href="<?= Url::to(['role/user-answers', 'id' => Html::encode($user->id)]) ?>"
+                                style="color: blue; text-decoration: underline;">
+                                <?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
+                            </a>
                         </td>
                         <td><?= Html::encode($user->profile->title ?: 'N/A') ?></td>
                         <td><?= Html::encode($user->profile->storage_location ?: 'N/A') ?></td>
