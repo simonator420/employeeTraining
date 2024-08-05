@@ -483,6 +483,7 @@ class RoleController extends Controller
     public function actionCompleteTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $requestData = Yii::$app->request->post();
 
         // List all question texts
         $questions = Yii::$app->db->createCommand('
@@ -492,6 +493,13 @@ class RoleController extends Controller
 
         foreach ($questions as $question) {
             Yii::warning("Question name " . $question['question'], __METHOD__);
+            Yii::warning("Question trianin " . $requestData['training_id'], __METHOD__);
+            // $question = Yii::$app->db->createCommand('
+            //     SELECT * FROM training_questions
+            //     WHERE id = :questionId
+            // ')
+            //     ->bindValue(':questionName', $question['question'])
+            //     ->queryOne();
             // Yii::warning("Question ID " . $question['training_id'], __METHOD__);
         }
 
@@ -499,7 +507,6 @@ class RoleController extends Controller
         $userId = Yii::$app->user->id;
 
         // Get the request data
-        $requestData = Yii::$app->request->post();
 
         // Process and log the answers
         $allAnswers = [];
