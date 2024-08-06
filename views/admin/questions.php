@@ -151,6 +151,9 @@ function fetchQuestions() {
                             '<input type="text" name="TrainingQuestions[0][question]" class="form-control question-text" placeholder="Enter your question here">' +
                         '</div>' +
                         '<div class="form-group">' +
+                            '<input type="text" name="TrainingQuestions[0][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
+                        '</div>' +
+                        '<div class="form-group">' +
                             '<input type="file" name="TrainingQuestions[0][image]" class="form-control question-image">' +
                         '</div>' +
                     '</div>'
@@ -278,6 +281,14 @@ function handleQuestionTypeChange() {
                 '</div>' +
             '</div>';
         \$questionItem.find('.form-group').last().before(multipleChoiceHtml); // Insert the multiple choice HTML before the last form-group (which contains the image input)
+    }
+
+
+    // Hide/show the correct answer field based on the question type
+    if (type === 'text') {
+        \$questionItem.find('.correct-answer').closest('.form-group').show();
+    } else {
+        \$questionItem.find('.correct-answer').closest('.form-group').hide();
     }
 }
 
@@ -453,6 +464,9 @@ $('#add-question-btn').on('click', function() {
                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][question]" class="form-control question-text" placeholder="Enter your question here">' +
             '</div>' +
             '<div class="form-group">' +
+                '<input type="text" name="TrainingQuestions[' + questionIndex + '][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
+            '</div>' +
+            '<div class="form-group">' +
                 '<input type="file" name="TrainingQuestions[' + questionIndex + '][image]" class="form-control question-image">' +
             '</div>' +
         '</div>';
@@ -495,7 +509,17 @@ $('#submit-btn').on('click', function() {
 
                 formData.append('TrainingQuestions[' + index + '][options][' + optionIndex + '][text]', optionText);
                 formData.append('TrainingQuestions[' + index + '][options][' + optionIndex + '][correct]', isCorrect ? 1 : 0);
+
+                if (isCorrect) {
+                    console.log('Correct answer for question ' + (index + 1) + ': ' + optionText);
+                }
             });
+        }
+        
+        if ($(this).find('.question-type').val() === 'text') {
+            var correctAnswer = $(this).find('.correct-answer').val();
+            console.log('Correct answer for question ' + (index + 1) + ': ' + correctAnswer);
+            formData.append('TrainingQuestions[' + index + '][correct_answer]', correctAnswer);
         }
     });
 

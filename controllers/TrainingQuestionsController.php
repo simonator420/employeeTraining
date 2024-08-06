@@ -61,11 +61,11 @@ class TrainingQuestionsController extends Controller
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-
+    
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id ORDER BY `id`')
             ->bindValue(':id', $id)
             ->queryAll();
-
+    
         $html = '';
         if ($questions) {
             foreach ($questions as $index => $question) {
@@ -77,13 +77,13 @@ class TrainingQuestionsController extends Controller
                 $html .= '<div class="form-group">';
                 $html .= Html::textInput("TrainingQuestions[$index][question]", $question['question'], ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']);
                 $html .= '</div>';
-
+    
                 if ($question['type'] == 'multiple_choice') {
                     $html .= '<div class="form-group multiple-choice-container">';
                     $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id')
                         ->bindValue(':question_id', $question['id'])
                         ->queryAll();
-
+    
                     $html .= '<div class="form-group multiple-choice-options">';
                     foreach ($options as $optionIndex => $option) {
                         $html .= '<div class="input-group" style="display: flex; align-items: center; padding-bottom: 10px; gap: 5px">';
@@ -101,8 +101,14 @@ class TrainingQuestionsController extends Controller
                     $html .= '<button type="button" class="btn btn-danger remove-option-btn">- Remove Option</button>';
                     $html .= '</div>';
                     $html .= '</div>';
+                } 
+                
+                if ($question['type'] == 'text') {
+                    $html .= '<div class="form-group">';
+                    $html .= Html::textInput("TrainingQuestions[$index][correct_answer]", $question['correct_answer'], ['class' => 'form-control correct-answer', 'placeholder' => 'Enter the correct answer here']);
+                    $html .= '</div>';
                 }
-
+    
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {
                     $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
@@ -120,20 +126,23 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
+    
+    
+
 
     // Function for saving questions into database by admin
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
-    
+
         if (empty($trainingId)) {
             return ['success' => false, 'errors' => 'Training ID is required'];
         }
-    
+
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // Fetch existing questions and answers
@@ -142,7 +151,7 @@ class TrainingQuestionsController extends Controller
             ')
                 ->bindValue(':trainingId', $trainingId)
                 ->queryAll();
-    
+
             $existingAnswers = Yii::$app->db->createCommand('
                 SELECT id, question_id, option_text FROM training_multiple_choice_answers WHERE question_id IN (
                     SELECT id FROM training_questions WHERE training_id = :trainingId
@@ -150,25 +159,26 @@ class TrainingQuestionsController extends Controller
             ')
                 ->bindValue(':trainingId', $trainingId)
                 ->queryAll();
-    
+
             // Create maps for quick lookup
             $existingQuestionMap = [];
             foreach ($existingQuestions as $question) {
                 $existingQuestionMap[$question['id']] = ['question' => $question['question']];
             }
-    
+
             $existingAnswerMap = [];
             foreach ($existingAnswers as $answer) {
                 $existingAnswerMap[$answer['question_id']][$answer['option_text']] = $answer['id'];
             }
-    
+
             $newQuestionIds = [];
-    
+
             // Process each question
             foreach ($questions as $index => $questionData) {
                 $questionText = $questionData['question'];
                 $questionId = null;
-    
+                $correctAnswer = isset($questionData['correct_answer']) ? $questionData['correct_answer'] : null;
+
                 // Handle image upload
                 $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
                 $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
@@ -180,26 +190,27 @@ class TrainingQuestionsController extends Controller
                         return ['success' => false, 'errors' => 'Failed to save the image file.'];
                     }
                 }
-    
+
                 foreach ($existingQuestionMap as $id => $existingQuestion) {
                     if ($existingQuestion['question'] === $questionText) {
                         $questionId = $id;
                         break;
                     }
                 }
-    
+
                 if ($questionId) {
                     // Delete existing question to avoid duplicate entry
                     Yii::$app->db->createCommand()->delete('training_questions', [
                         'id' => $questionId,
                     ])->execute();
-    
+
                     // Insert new question
                     Yii::$app->db->createCommand()->insert('training_questions', [
                         'training_id' => $trainingId,
                         'type' => $questionData['type'],
                         'question' => $questionText,
                         'image_url' => $imageUrl,
+                        'correct_answer' => $correctAnswer,
                     ])->execute();
                     $questionId = Yii::$app->db->getLastInsertID();
                     $newQuestionIds[] = $questionId;
@@ -210,18 +221,19 @@ class TrainingQuestionsController extends Controller
                         'type' => $questionData['type'],
                         'question' => $questionText,
                         'image_url' => $imageUrl,
+                        'correct_answer' => $correctAnswer,
                     ])->execute();
                     $questionId = Yii::$app->db->getLastInsertID();
                     $newQuestionIds[] = $questionId;
                 }
-    
+
                 if ($questionData['type'] == 'multiple_choice') {
                     $existingOptionIds = $existingAnswerMap[$questionId] ?? [];
-    
+
                     foreach ($questionData['options'] as $optionIndex => $optionData) {
                         $optionText = $optionData['text'];
                         $optionId = $existingOptionIds[$optionText] ?? null;
-    
+
                         if ($optionId) {
                             // Update existing option
                             Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
@@ -238,14 +250,14 @@ class TrainingQuestionsController extends Controller
                     }
                 }
             }
-    
+
             // Delete questions that are no longer in the new set
             $questionIdsToDelete = array_diff(array_keys($existingQuestionMap), $newQuestionIds);
             foreach ($questionIdsToDelete as $idToDelete) {
                 Yii::$app->db->createCommand()->delete('training_questions', ['id' => $idToDelete])->execute();
                 Yii::$app->db->createCommand()->delete('training_multiple_choice_answers', ['question_id' => $idToDelete])->execute();
             }
-    
+
             $transaction->commit();
             return ['success' => true];
         } catch (\Exception $e) {
@@ -253,8 +265,8 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
-    
-    
+
+
 
 
     // Function for displaying the questions from database in the form for the USER
@@ -262,7 +274,7 @@ class TrainingQuestionsController extends Controller
     {
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         // Fetch questions for the given training_id, ordered by the 'order' column
         $questions = Yii::$app->db->createCommand('
             SELECT * FROM training_questions 
@@ -271,7 +283,7 @@ class TrainingQuestionsController extends Controller
         ')
             ->bindValue(':training_id', $training_id)
             ->queryAll();
-    
+
         // Initialize HTML string
         $html = '';
         if ($questions) {
@@ -279,7 +291,7 @@ class TrainingQuestionsController extends Controller
                 $html .= '<div class="question-item">';
                 $html .= '<div class="form-group">';
                 $html .= '<p class="question-employee"><b>' . Html::encode($question['question']) . '</b></p>';
-    
+
                 // Display image if available
                 if (!empty($question['image_url'])) {
                     $html .= '<div class="question-image">';
@@ -338,7 +350,7 @@ class TrainingQuestionsController extends Controller
                             ')
                             ->bindValue(':question_id', $question['id'])
                             ->queryAll();
-    
+
                         // Add checkboxes for each option
                         $html .= '<div class="multiple-choice-options">';
                         foreach ($options as $option) {
@@ -357,7 +369,7 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
                 $html .= '</div>';
             }
-    
+
             // Return success response with generated HTML
             return ['success' => true, 'html' => $html];
         } else {
@@ -365,7 +377,7 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
-    
+
 
 
     // Function for updating the deadline
