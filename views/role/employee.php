@@ -59,13 +59,15 @@ $('#submit-btn').on('click', function(e) {
     if (!trainingCompleted) {
         let isValid = true;
         let trainingId = '{$trainingId}'; // Get the trainingId from PHP
-        let data = { _csrf: yii.getCsrfToken(), training_id: trainingId };
+        let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
 
         console.log(data);
 
         // Collect answers for text, number, and range inputs
         $('.question-input').each(function() {
-            let inputName = $(this).attr('name');
+            let questionId = $(this).data('question-id');
+            let questionText = $(this).data('question-text');
+            let questionType = $(this).data('question-type');
             let inputValue = $(this).val();
 
             if (!inputValue) {
@@ -75,21 +77,34 @@ $('#submit-btn').on('click', function(e) {
                 $(this).css('border', '1px solid #dee2e6');
             }
 
-            data[inputName] = inputValue;
-            console.log("Collected normal data: ", inputName);
-            console.log("Collected inputValue: ", inputValue);
+            data.TrainingQuestions[questionId] = {
+                question: questionText,
+                answer: inputValue,
+                question_type: questionType
+            };
+
+            console.log("Collected normal data: ", questionId, questionText, questionType, inputValue);
         });
 
         // Collect multiple-choice answers
         $('.multiple-choice-option:checked').each(function() {
-            let inputName = $(this).attr('name').replace('[]', '');
+            let questionId = $(this).data('question-id');
+            let questionText = $(this).data('question-text');
+            let questionType = $(this).data('question-type');
             let inputValue = $(this).val();
-            if (!data[inputName]) {
-                data[inputName] = [];
+            console.log("QuestionId: ", questionId);
+            console.log("QuestionText: ", questionText);
+
+            if (!data.TrainingQuestions[questionId]) {
+                data.TrainingQuestions[questionId] = {
+                    question: questionText,
+                    answer: [],
+                    question_type: questionType
+                };
             }
-            data[inputName].push(inputValue);
-            console.log("Collected multiple choice data: ", inputName);
-            console.log("Collected multiple choice value: ", inputValue);
+            data.TrainingQuestions[questionId].answer.push(inputValue);
+            
+            console.log("Collected multiple choice data: ", questionId, questionText, questionType, inputValue);
         });
 
         console.log(data);
@@ -119,20 +134,6 @@ $('#submit-btn').on('click', function(e) {
     }
 });
 
-
-
-
-// Event handler for number input validation
-$('.form-control[type="number"]').on('input', function() {
-    var value = $(this).val();
-    if (value < 1) {
-        // Set minimum value to 1
-        $(this).val(1);
-    } else if (value > 5) {
-        // Set maximum value to 5
-        $(this).val(5);
-    }
-});
 
 JS;
 $this->registerJs($script);
@@ -201,7 +202,7 @@ $this->registerJs($script);
         border: 1px solid #dee2e6;
         border-radius: 5px;
     }
-    
+
     .question-employee {
         text-align: left;
     }

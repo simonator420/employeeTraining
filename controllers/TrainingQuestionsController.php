@@ -262,7 +262,7 @@ class TrainingQuestionsController extends Controller
     {
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
-
+    
         // Fetch questions for the given training_id, ordered by the 'order' column
         $questions = Yii::$app->db->createCommand('
             SELECT * FROM training_questions 
@@ -271,7 +271,7 @@ class TrainingQuestionsController extends Controller
         ')
             ->bindValue(':training_id', $training_id)
             ->queryAll();
-
+    
         // Initialize HTML string
         $html = '';
         if ($questions) {
@@ -279,7 +279,7 @@ class TrainingQuestionsController extends Controller
                 $html .= '<div class="question-item">';
                 $html .= '<div class="form-group">';
                 $html .= '<p class="question-employee"><b>' . Html::encode($question['question']) . '</b></p>';
-
+    
                 // Display image if available
                 if (!empty($question['image_url'])) {
                     $html .= '<div class="question-image">';
@@ -298,7 +298,10 @@ class TrainingQuestionsController extends Controller
                     case 'text':
                         $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', [
                             'class' => 'form-control question-input',
-                            'placeholder' => 'Enter your answer here'
+                            'placeholder' => 'Enter your answer here',
+                            'data-question-id' => $question['id'],
+                            'data-question-text' => $question['question'],
+                            'data-question-type' => $question['type']
                         ]);
                         break;
                     case 'number':
@@ -307,7 +310,10 @@ class TrainingQuestionsController extends Controller
                             'min' => '1',
                             'max' => '5',
                             'placeholder' => '1-5',
-                            'style' => 'width: 60px;'
+                            'style' => 'width: 60px;',
+                            'data-question-id' => $question['id'],
+                            'data-question-text' => $question['question'],
+                            'data-question-type' => $question['type']
                         ]);
                         break;
                     case 'range':
@@ -316,7 +322,10 @@ class TrainingQuestionsController extends Controller
                         $html .= Html::input('range', "TrainingQuestions[$index][answer]", '50', [
                             'class' => 'form-control question-input',
                             'min' => '1',
-                            'max' => '100'
+                            'max' => '100',
+                            'data-question-id' => $question['id'],
+                            'data-question-text' => $question['question'],
+                            'data-question-type' => $question['type']
                         ]);
                         $html .= '<span>Very much</span>';
                         $html .= '</div>';
@@ -329,14 +338,17 @@ class TrainingQuestionsController extends Controller
                             ')
                             ->bindValue(':question_id', $question['id'])
                             ->queryAll();
-
+    
                         // Add checkboxes for each option
                         $html .= '<div class="multiple-choice-options">';
                         foreach ($options as $option) {
                             $html .= Html::checkbox("TrainingQuestions[$index][answer][]", false, [
                                 'label' => Html::encode($option['option_text']),
                                 'value' => $option['id'],
-                                'class' => 'multiple-choice-option'
+                                'class' => 'multiple-choice-option',
+                                'data-question-id' => $question['id'],
+                                'data-question-text' => $question['question'],
+                                'data-question-type' => $question['type']
                             ]);
                         }
                         $html .= '</div>';
@@ -345,7 +357,7 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
                 $html .= '</div>';
             }
-
+    
             // Return success response with generated HTML
             return ['success' => true, 'html' => $html];
         } else {
@@ -353,6 +365,7 @@ class TrainingQuestionsController extends Controller
             return ['success' => false];
         }
     }
+    
 
 
     // Function for updating the deadline
