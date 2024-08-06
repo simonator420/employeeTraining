@@ -28,15 +28,16 @@ class RoleController extends Controller
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
-                SELECT question_text, answer 
-                FROM training_answers
-                WHERE user_id = :user_id 
-                AND created_at = (
+                SELECT tq.question, ta.answer
+                FROM training_answers ta
+                JOIN training_questions tq ON ta.question_id = tq.id
+                WHERE ta.user_id = :user_id 
+                AND ta.created_at = (
                     SELECT MAX(created_at) 
                     FROM training_answers 
                     WHERE user_id = :user_id
                 )
-                ORDER BY created_at DESC
+                ORDER BY ta.created_at DESC
             ')
                 ->bindValue(':user_id', $user->id)
                 ->queryAll();
@@ -488,8 +489,9 @@ class RoleController extends Controller
         $trainingId = $requestData['training_id'];
 
         if (isset($requestData['TrainingQuestions'])) {
-            foreach ($requestData['TrainingQuestions'] as $questionId => $questionData) {
+            foreach ($requestData['TrainingQuestions'] as $questionKey => $questionData) {
                 // Extract question text, type, and answer(s)
+                $questionId = $questionData['question_id'];
                 $questionText = $questionData['question'];
                 $questionType = $questionData['question_type'];
                 $answer = $questionData['answer'];
@@ -505,6 +507,7 @@ class RoleController extends Controller
                             'training_answers',
                             [
                                 'user_id' => $userId,
+                                'question_id' => $questionId,
                                 'question_text' => $questionText,
                                 'answer' => "multiple_choice",
                                 'created_at' => new \yii\db\Expression('NOW()'),
@@ -527,7 +530,7 @@ class RoleController extends Controller
                         ')
                             ->bindValue(':answer_id', $individualAnswer)
                             ->queryScalar();
-                        
+
                         Yii::$app->db->createCommand()
                             ->insert(
                                 'training_multiple_choice_user_answers',
@@ -554,6 +557,7 @@ class RoleController extends Controller
                             'training_answers',
                             [
                                 'user_id' => $userId,
+                                'question_id' => $questionId,
                                 'question_text' => $questionText,
                                 'answer' => $answer,
                                 'created_at' => new \yii\db\Expression('NOW()'),
@@ -623,10 +627,11 @@ class RoleController extends Controller
 
         // Get all training IDs where the user has submitted answers
         $trainingIds = Yii::$app->db->createCommand('
-            SELECT DISTINCT training_id 
-            FROM training_answers 
-            WHERE user_id = :userId
-            AND training_id IN (SELECT id FROM training)
+            SELECT DISTINCT tq.training_id
+            FROM training_answers ta
+            JOIN training_questions tq ON ta.question_id = tq.id
+            WHERE ta.user_id = :userId
+            AND tq.training_id IN (SELECT id FROM training)
         ')
             ->bindValue(':userId', $id)
             ->queryAll();
@@ -647,10 +652,11 @@ class RoleController extends Controller
 
             // Fetch distinct created_at timestamps for the training
             $instances = Yii::$app->db->createCommand('
-                SELECT DISTINCT created_at 
-                FROM training_answers 
-                WHERE user_id = :userId AND training_id = :trainingId
-                ORDER BY created_at DESC
+                SELECT DISTINCT ta.created_at
+                FROM training_answers ta
+                JOIN training_questions tq ON ta.question_id = tq.id
+                WHERE ta.user_id = :userId AND tq.training_id = :trainingId
+                ORDER BY ta.created_at DESC
             ')
                 ->bindValue(':userId', $id)
                 ->bindValue(':trainingId', $trainingIdValue)
@@ -664,33 +670,35 @@ class RoleController extends Controller
 
             foreach ($instances as $instance) {
                 $instanceCreatedAt = $instance['created_at'];
-
                 $trainingAnswers = Yii::$app->db->createCommand('
-                    SELECT * 
-                    FROM training_answers 
-                    WHERE user_id = :userId AND training_id = :trainingId AND created_at = :createdAt
+                    SELECT ta.*, tq.question AS question_text
+                    FROM training_answers ta
+                    JOIN training_questions tq ON ta.question_id = tq.id
+                    WHERE ta.user_id = :userId 
+                    AND tq.training_id = :trainingId 
+                    AND ta.created_at = :createdAt
                 ')
                     ->bindValue(':userId', $id)
                     ->bindValue(':trainingId', $trainingIdValue)
                     ->bindValue(':createdAt', $instanceCreatedAt)
                     ->queryAll();
-
+    
                 foreach ($trainingAnswers as &$answer) {
                     if ($answer['answer'] == 'multiple_choice') {
                         $multipleChoiceAnswers = Yii::$app->db->createCommand('
                             SELECT answer_text 
                             FROM training_multiple_choice_user_answers 
-                            WHERE created_at = :createdAt AND question_text = :question AND user_id = :userId
+                            WHERE created_at = :createdAt AND question_id = :questionId AND user_id = :userId
                         ')
                             ->bindValue(':createdAt', $instanceCreatedAt)
-                            ->bindValue(':question', $answer['question_text'])
+                            ->bindValue(':questionId', $answer['question_id'])
                             ->bindValue(':userId', $id)
                             ->queryColumn();
-
+    
                         $answer['answer'] = implode(', ', $multipleChoiceAnswers);
                     }
                 }
-
+    
                 $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
             }
         }

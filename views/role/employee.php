@@ -78,6 +78,7 @@ $('#submit-btn').on('click', function(e) {
             }
 
             data.TrainingQuestions[questionId] = {
+                question_id: questionId,
                 question: questionText,
                 answer: inputValue,
                 question_type: questionType
@@ -97,6 +98,7 @@ $('#submit-btn').on('click', function(e) {
 
             if (!data.TrainingQuestions[questionId]) {
                 data.TrainingQuestions[questionId] = {
+                    question_id: questionId,
                     question: questionText,
                     answer: [],
                     question_type: questionType

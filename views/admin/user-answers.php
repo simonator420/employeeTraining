@@ -29,20 +29,38 @@ $this->params['breadcrumbs'][] = $this->title;
                             <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
                                 <div class="question-answer-pair">
                                     <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
-                                    <?php if (strpos($answer['answer'], ',') !== false): ?>
+                                    <?php Yii::warning("Tohle je questionId: " . $answer['question_id'] . " a tohle je question_text: " . $answer['question_text'], __METHOD__); ?>
+
+                                    <?php
+                                    $questionType = Yii::$app->db->createCommand('
+                                        SELECT type 
+                                        FROM training_questions 
+                                        WHERE id = :question_id
+                                        ')
+                                        ->bindValue(':question_id', $answer['question_id'])
+                                        ->queryScalar();
+                                    ?>
+
+
+                                    <!-- TODO spravne is correct podle atributu a to stejne u ne multiple choice -->
+                                    <!-- <?php Yii::warning("Tohle je id: " . $answer['id'] . " a tohle je question_id " . $answer['question_id']) ?> -->
+                                    <?php if ($questionType === 'multiple_choice'): ?>
                                         <?php
+                                        Yii::warning("Tohle je id: " . $answer['id'] . " a tohle je question_id " . $answer['question_id']);
                                         $multipleAnswers = explode(', ', $answer['answer']);
                                         foreach ($multipleAnswers as $index => $singleAnswer):
                                             // Fetch is_correct for each answer
                                             $isCorrect = Yii::$app->db->createCommand('
                                                 SELECT is_correct 
-                                                FROM training_multiple_choice_user_answers 
-                                                WHERE user_id = :user_id AND answer_text = :answer_id
+                                                FROM training_multiple_choice_answers 
+                                                WHERE question_id = :question_id AND id = :answer_id
                                             ')
-                                                ->bindValue(':user_id', $user->id)
-                                                ->bindValue(':answer_id', $singleAnswer)
+                                                ->bindValue(':question_id', $answer['question_id'])
+                                                ->bindValue(':answer_id', $answer['id'])
                                                 ->queryScalar();
                                             ?>
+                                            <?php Yii::warning("Tohle je question_id: " . $answer['question_id']) ?>
+                                            <?php Yii::warning("Tohle je id: " . $singleAnswer) ?>
                                             <p><b>Answer <?= $index + 1 ?>:</b> <?= Html::encode($singleAnswer) ?></p>
                                             <div class="evaluation">
                                                 <label style="color: green;">
@@ -59,6 +77,10 @@ $this->params['breadcrumbs'][] = $this->title;
                                                 </label>
                                             </div>
                                         <?php endforeach; ?>
+
+
+
+
                                     <?php else: ?>
                                         <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
                                         <?php Yii::warning("Tohle je answer: " . $answer['answer'] . " a tohle je zda je correct: ", __METHOD__); ?>
@@ -85,6 +107,9 @@ $this->params['breadcrumbs'][] = $this->title;
                                             </label>
                                         </div>
                                     <?php endif; ?>
+
+
+
                                     <hr>
                                 </div>
                             <?php endforeach; ?>

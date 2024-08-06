@@ -150,7 +150,8 @@ function fetchQuestions() {
                         '<div class="form-group">' +
                             '<input type="text" name="TrainingQuestions[0][question]" class="form-control question-text" placeholder="Enter your question here">' +
                         '</div>' +
-                        '<div class="form-group">' +
+                        '<div class="form-group" style="display: flex; align-items: center;">' +
+                            '<p style="margin-right: 7px; padding-top:10px; font-weight:bold; white-space: nowrap;">Correct answer:</p>' +
                             '<input type="text" name="TrainingQuestions[0][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
                         '</div>' +
                         '<div class="form-group">' +
@@ -463,7 +464,8 @@ $('#add-question-btn').on('click', function() {
             '<div class="form-group">' +
                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][question]" class="form-control question-text" placeholder="Enter your question here">' +
             '</div>' +
-            '<div class="form-group">' +
+            '<div class="form-group" style="display: flex; align-items: center;">' +
+                '<p style="margin-right: 7px; padding-top:10px; font-weight:bold; white-space: nowrap;">Correct answer:</p>' +
                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
             '</div>' +
             '<div class="form-group">' +
