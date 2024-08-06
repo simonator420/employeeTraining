@@ -508,10 +508,10 @@ class RoleController extends Controller
                             [
                                 'user_id' => $userId,
                                 'question_id' => $questionId,
-                                'question_text' => $questionText,
+                                // 'question_text' => $questionText,
                                 'answer' => "multiple_choice",
                                 'created_at' => new \yii\db\Expression('NOW()'),
-                                'training_id' => $trainingId,
+                                // 'training_id' => $trainingId,
                             ]
                         )
                         ->execute();
@@ -558,10 +558,10 @@ class RoleController extends Controller
                             [
                                 'user_id' => $userId,
                                 'question_id' => $questionId,
-                                'question_text' => $questionText,
+                                // 'question_text' => $questionText,
                                 'answer' => $answer,
                                 'created_at' => new \yii\db\Expression('NOW()'),
-                                'training_id' => $trainingId,
+                                // 'training_id' => $trainingId,
                             ]
                         )
                         ->execute();
