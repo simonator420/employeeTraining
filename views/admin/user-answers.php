@@ -50,13 +50,24 @@ $this->params['breadcrumbs'][] = $this->title;
                                         $multipleAnswers = explode(', ', $answer['answer']);
                                         foreach ($multipleAnswers as $index => $singleAnswer):
                                             // Fetch is_correct for each answer
+
+                                            $multipleChoiceAnswerId = Yii::$app->db->createCommand('
+                                                SELECT answer_id 
+                                                FROM training_multiple_choice_user_answers 
+                                                WHERE question_id = :question_id
+                                            ')
+                                                ->bindValue(':question_id', $answer['question_id'])
+                                                ->queryScalar();
+
+                                                Yii::warning("Tohle je rrrrrreeeeeeeeee to idddddid: " . $multipleChoiceAnswerId);
+
                                             $isCorrect = Yii::$app->db->createCommand('
                                                 SELECT is_correct 
                                                 FROM training_multiple_choice_answers 
                                                 WHERE question_id = :question_id AND id = :answer_id
                                             ')
                                                 ->bindValue(':question_id', $answer['question_id'])
-                                                ->bindValue(':answer_id', $answer['id'])
+                                                ->bindValue(':answer_id', $multipleChoiceAnswerId)
                                                 ->queryScalar();
                                             ?>
                                             <?php Yii::warning("Tohle je question_id: " . $answer['question_id']) ?>
