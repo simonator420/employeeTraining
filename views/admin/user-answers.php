@@ -12,6 +12,8 @@ $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . 
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+
+<!-- TODO Display the items in collapsibles better and not like table -->
 <div class="user-answers-container">
     <div class="user-answers-card">
         <h1><?= Html::encode($this->title) ?></h1>
@@ -20,35 +22,75 @@ $this->params['breadcrumbs'][] = $this->title;
             <?php foreach ($trainings as $training): ?>
                 <?php foreach ($training['instances'] as $instance): ?>
                     <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
-                        <b>
-                            <?= Html::encode($training['training_name']) ?>
-                        </b>
-                        -
-                        <?= Html::encode($instance['created_at']) ?>
+                        <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode($instance['created_at']) ?>
                     </button>
                     <div class="content" style="display:none;">
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Question</th>
-                                    <th>Answer</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
-                                    <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
-                                        <tr>
-                                            <td><?= Html::encode($answer['question_text']) ?></td>
-                                            <td><?= Html::encode($answer['answer']) ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="3">No answers found for this training.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                        <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
+                            <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
+                                <div class="question-answer-pair">
+                                    <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
+                                    <?php if (strpos($answer['answer'], ',') !== false): ?>
+                                        <?php
+                                        $multipleAnswers = explode(', ', $answer['answer']);
+                                        foreach ($multipleAnswers as $index => $singleAnswer):
+                                            // Fetch is_correct for each answer
+                                            $isCorrect = Yii::$app->db->createCommand('
+                                                SELECT is_correct 
+                                                FROM training_multiple_choice_user_answers 
+                                                WHERE user_id = :user_id AND answer_text = :answer_id
+                                            ')
+                                                ->bindValue(':user_id', $user->id)
+                                                ->bindValue(':answer_id', $singleAnswer)
+                                                ->queryScalar();
+                                            ?>
+                                            <p><b>Answer <?= $index + 1 ?>:</b> <?= Html::encode($singleAnswer) ?></p>
+                                            <div class="evaluation">
+                                                <label style="color: green;">
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][correct]', $isCorrect == 1) ?>
+                                                    Correct
+                                                </label>
+                                                <label style="color: red;">
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][wrong]', $isCorrect == 0) ?>
+                                                    Wrong
+                                                </label>
+                                                <label style="color: gray;">
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][not_scored]', false) ?>
+                                                    Not Scored
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
+                                        <?php Yii::warning("Tohle je answer: " . $answer['answer'] . " a tohle je zda je correct: ", __METHOD__); ?>
+                                        <?php
+                                        // Fetch is_correct for the answer
+                                        $isCorrect = Yii::$app->db->createCommand('
+                                            SELECT is_correct 
+                                            FROM training_multiple_choice_user_answers 
+                                            WHERE user_id = :user_id AND answer_text = :answer_id
+                                        ')
+                                            ->bindValue(':user_id', $user->id)
+                                            ->bindValue(':answer_id', $answer['answer'])
+                                            ->queryScalar();
+                                        ?>
+                                        <div class="evaluation">
+                                            <label style="color: green;">
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', $isCorrect == 1) ?> Correct
+                                            </label>
+                                            <label style="color: red;">
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', $isCorrect == 0) ?> Wrong
+                                            </label>
+                                            <label style="color: gray;">
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][not_scored]', false) ?> Not Scored
+                                            </label>
+                                        </div>
+                                    <?php endif; ?>
+                                    <hr>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p>No answers found for this training.</p>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             <?php endforeach; ?>

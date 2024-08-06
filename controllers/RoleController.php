@@ -521,6 +521,13 @@ class RoleController extends Controller
                         ')
                             ->bindValue(':answer_id', $individualAnswer)
                             ->queryScalar();
+
+                        $isCorrect = Yii::$app->db->createCommand('
+                            SELECT is_correct FROM training_multiple_choice_answers WHERE id = :answer_id
+                        ')
+                            ->bindValue(':answer_id', $individualAnswer)
+                            ->queryScalar();
+                        
                         Yii::$app->db->createCommand()
                             ->insert(
                                 'training_multiple_choice_user_answers',
@@ -531,6 +538,7 @@ class RoleController extends Controller
                                     'question_text' => $questionText,
                                     'answer_text' => $answerText,
                                     'created_at' => new \yii\db\Expression('NOW()'),
+                                    'is_correct' => $isCorrect,
                                 ]
                             )
                             ->execute();
