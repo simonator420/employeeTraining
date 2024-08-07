@@ -80,7 +80,7 @@ class TrainingQuestionsController extends Controller
 
                 if ($question['type'] == 'multiple_choice') {
                     $html .= '<div class="form-group multiple-choice-container">';
-                    $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id')
+                    $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id AND is_active = 1')
                         ->bindValue(':question_id', $question['id'])
                         ->queryAll();
 
@@ -370,7 +370,7 @@ class TrainingQuestionsController extends Controller
                         // Fetch multiple choice options for the question
                         $options = Yii::$app->db->createCommand('
                                 SELECT * FROM training_multiple_choice_answers 
-                                WHERE question_id = :question_id
+                                WHERE question_id = :question_id AND is_active = 1
                             ')
                             ->bindValue(':question_id', $question['id'])
                             ->queryAll();

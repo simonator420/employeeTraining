@@ -493,6 +493,17 @@ class RoleController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $userId = Yii::$app->user->id;
         $requestData = Yii::$app->request->post();
+        $trainingId = $requestData['training_id'];
+
+        // Fetch the user_training_id
+        $userTrainingId = Yii::$app->db->createCommand('
+            SELECT id 
+            FROM user_training 
+            WHERE user_id = :user_id AND training_id = :training_id AND assigned_training = 1
+        ')
+            ->bindValue(':user_id', $userId)
+            ->bindValue(':training_id', $trainingId)
+            ->queryScalar();
 
         if (isset($requestData['TrainingQuestions'])) {
             foreach ($requestData['TrainingQuestions'] as $questionKey => $questionData) {
@@ -500,27 +511,27 @@ class RoleController extends Controller
                 $questionId = $questionData['question_id'];
                 $questionText = $questionData['question'];
                 $questionType = $questionData['question_type'];
-                $answer = $questionData['answer'];
+                $answer = $questionData['answer'] ?? [];
 
-                // Log the question and its answer(s) based on the type
-                if ($questionType === 'multiple_choice') {
-                    Yii::warning("Inserting Multiple Choice Question: " . $questionText, __METHOD__);
+                // Always insert into the training_answers table
+                Yii::warning("Inserting Question: " . $questionText, __METHOD__);
+                Yii::$app->db->createCommand()
+                    ->insert(
+                        'training_answers',
+                        [
+                            'user_id' => $userId,
+                            'question_id' => $questionId,
+                            'answer' => $questionType === 'multiple_choice' ? "multiple_choice" : $answer,
+                            'created_at' => new \yii\db\Expression('NOW()'),
+                            'user_training_id' => $userTrainingId, // Save user_training_id
+                        ]
+                    )
+                    ->execute();
 
-                    Yii::$app->db->createCommand()
-                        ->insert(
-                            'training_answers',
-                            [
-                                'user_id' => $userId,
-                                'question_id' => $questionId,
-                                'answer' => "multiple_choice",
-                                'created_at' => new \yii\db\Expression('NOW()'),
-                            ]
-                        )
-                        ->execute();
-
+                // Conditionally insert into the training_multiple_choice_user_answers table
+                if ($questionType === 'multiple_choice' && !empty($answer)) {
                     foreach ($answer as $individualAnswer) {
                         Yii::warning("Inserting Multiple Choice Option: " . $individualAnswer, __METHOD__);
-
                         Yii::$app->db->createCommand()
                             ->insert(
                                 'training_multiple_choice_user_answers',
@@ -528,25 +539,10 @@ class RoleController extends Controller
                                     'user_id' => $userId,
                                     'question_id' => $questionId,
                                     'answer_id' => $individualAnswer,
-                                    // 'created_at' => new \yii\db\Expression('NOW()'),
                                 ]
                             )
                             ->execute();
                     }
-                } else {
-                    Yii::warning("Inserting Text Question: " . $questionText, __METHOD__);
-
-                    $result = Yii::$app->db->createCommand()
-                        ->insert(
-                            'training_answers',
-                            [
-                                'user_id' => $userId,
-                                'question_id' => $questionId,
-                                'answer' => $answer,
-                                'created_at' => new \yii\db\Expression('NOW()'),
-                            ]
-                        )
-                        ->execute();
                 }
             }
         } else {
@@ -560,7 +556,7 @@ class RoleController extends Controller
                 ['assigned_training' => 0],
                 [
                     'user_id' => $userId,
-                    'training_id' => $requestData['training_id'],
+                    'training_id' => $trainingId,
                 ]
             )
             ->execute();
@@ -570,6 +566,7 @@ class RoleController extends Controller
 
         return ['success' => true];
     }
+
 
     public function actionCreateTraining()
     {

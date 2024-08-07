@@ -47,7 +47,16 @@ $(document).ready(function() {
             alert('Error occurred while fetching questions.');
         }
     });
+
+    checkMultipleChoiceSelection();
 });
+
+function checkMultipleChoiceSelection() {
+    if ($('.multiple-choice-option:checked').length === 0) {
+        // Handle the case when no options are checked
+        console.log("No multiple choice options are selected.");
+    }
+}
 
 // Flag to check if training is completed
 let trainingCompleted = false;
@@ -88,14 +97,12 @@ $('#submit-btn').on('click', function(e) {
         });
 
         // Collect multiple-choice answers
-        $('.multiple-choice-option:checked').each(function() {
+        $('.multiple-choice-option').each(function() {
             let questionId = $(this).data('question-id');
             let questionText = $(this).data('question-text');
             let questionType = $(this).data('question-type');
-            let inputValue = $(this).val();
-            console.log("QuestionId: ", questionId);
-            console.log("QuestionText: ", questionText);
-
+            
+            // Initialize the question if it hasn't been added yet
             if (!data.TrainingQuestions[questionId]) {
                 data.TrainingQuestions[questionId] = {
                     question_id: questionId,
@@ -104,9 +111,19 @@ $('#submit-btn').on('click', function(e) {
                     question_type: questionType
                 };
             }
-            data.TrainingQuestions[questionId].answer.push(inputValue);
-            
-            console.log("Collected multiple choice data: ", questionId, questionText, questionType, inputValue);
+
+            // Add the value if the option is checked
+            if ($(this).is(':checked')) {
+                data.TrainingQuestions[questionId].answer.push($(this).val());
+            }
+        });
+
+        // Check if any multiple-choice options are selected
+        $('.multiple-choice-option').each(function() {
+            let questionId = $(this).data('question-id');
+            if (!data.TrainingQuestions[questionId].answer.length) {
+                console.log("No multiple choice options are selected for questionId: ", questionId);
+            }
         });
 
         console.log(data);
