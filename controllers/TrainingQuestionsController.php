@@ -136,53 +136,44 @@ class TrainingQuestionsController extends Controller
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-
+    
         $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
-
+    
         if (empty($trainingId)) {
             return ['success' => false, 'errors' => 'Training ID is required'];
         }
-
+    
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            // Fetch existing questions and answers
-            $existingQuestions = Yii::$app->db->createCommand('
-                SELECT * FROM training_questions WHERE training_id = :trainingId AND is_active = TRUE
+            // Mark existing questions as inactive
+            Yii::$app->db->createCommand()->update('training_questions', [
+                'is_active' => false
+            ], ['training_id' => $trainingId])->execute();
+    
+            // Fetch the question IDs for the given training
+            $questionIds = Yii::$app->db->createCommand('
+                SELECT id FROM training_questions WHERE training_id = :trainingId
             ')
-                    ->bindValue(':trainingId', $trainingId)
-                    ->queryAll();
-
-            $existingAnswers = Yii::$app->db->createCommand('
-                SELECT * FROM training_multiple_choice_answers WHERE question_id IN (
-                    SELECT id FROM training_questions WHERE training_id = :trainingId AND is_active = TRUE
-                )
-            ')
-                ->bindValue(':trainingId', $trainingId)
-                ->queryAll();
-
-            // Create maps for quick lookup
-            $existingQuestionMap = [];
-            foreach ($existingQuestions as $question) {
-                $existingQuestionMap[$question['id']] = $question;
+            ->bindValue(':trainingId', $trainingId)
+            ->queryColumn();
+    
+            // Mark existing multiple choice answers as inactive
+            if (!empty($questionIds)) {
+                Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
+                    'is_active' => false
+                ], ['question_id' => $questionIds])->execute();
             }
     
-            $existingAnswerMap = [];
-            foreach ($existingAnswers as $answer) {
-                $existingAnswerMap[$answer['question_id']][$answer['option_text']] = $answer;
-            }
-
             $newQuestionIds = [];
-            $activeOptionIds = [];
-
+    
             // Process each question
             foreach ($questions as $index => $questionData) {
                 $questionText = $questionData['question'];
-                $questionId = null;
                 $correctAnswer = isset($questionData['correct_answer']) ? $questionData['correct_answer'] : null;
                 $questionType = $questionData['type'];
-
+    
                 // Handle image upload
                 $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
                 $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
@@ -194,61 +185,23 @@ class TrainingQuestionsController extends Controller
                         return ['success' => false, 'errors' => 'Failed to save the image file.'];
                     }
                 }
-
-                foreach ($existingQuestionMap as $id => $existingQuestion) {
-                    if ($existingQuestion['question'] === $questionText &&
-                        $existingQuestion['type'] === $questionType &&
-                        $existingQuestion['correct_answer'] === $correctAnswer &&
-                        $existingQuestion['image_url'] === $imageUrl) {
-                        $questionId = $id;
-                        break;
-                    }
-                }
-
-                if ($questionId) {
-                    // Question hasn't changed, keep it active
-                    $newQuestionIds[] = $questionId;
-                } else {
-                    // Insert new question and mark existing one as inactive
-                    if ($questionId) {
-                        Yii::$app->db->createCommand()->update('training_questions', [
-                            'is_active' => false
-                        ], ['id' => $questionId])->execute();
-                    }
     
-                    Yii::$app->db->createCommand()->insert('training_questions', [
-                        'training_id' => $trainingId,
-                        'type' => $questionType,
-                        'question' => $questionText,
-                        'image_url' => $imageUrl,
-                        'correct_answer' => $correctAnswer,
-                        'is_active' => true
-                    ])->execute();
-                    $questionId = Yii::$app->db->getLastInsertID();
-                    $newQuestionIds[] = $questionId;
-                }
-
+                // Insert new question
+                Yii::$app->db->createCommand()->insert('training_questions', [
+                    'training_id' => $trainingId,
+                    'type' => $questionType,
+                    'question' => $questionText,
+                    'image_url' => $imageUrl,
+                    'correct_answer' => $correctAnswer,
+                    'is_active' => true
+                ])->execute();
+                $questionId = Yii::$app->db->getLastInsertID();
+                $newQuestionIds[] = $questionId;
+    
                 if ($questionType == 'multiple_choice') {
-                    $existingOptionIds = $existingAnswerMap[$questionId] ?? [];
-                    
                     foreach ($questionData['options'] as $optionIndex => $optionData) {
                         $optionText = $optionData['text'];
                         $isCorrect = isset($optionData['correct']) ? $optionData['correct'] : false;
-                        $optionId = $existingOptionIds[$optionText]['id'] ?? null;
-    
-                        if ($optionId) {
-                            // Option hasn't changed, keep it active
-                            if ($existingOptionIds[$optionText]['is_correct'] == $isCorrect &&
-                                $existingOptionIds[$optionText]['is_active']) {
-                                $activeOptionIds[] = $optionId;
-                                continue;
-                            }
-    
-                            // Mark existing option as inactive
-                            Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
-                                'is_active' => false
-                            ], ['id' => $optionId])->execute();
-                        }
     
                         // Insert new option
                         Yii::$app->db->createCommand()->insert('training_multiple_choice_answers', [
@@ -257,26 +210,6 @@ class TrainingQuestionsController extends Controller
                             'is_correct' => $isCorrect,
                             'is_active' => true
                         ])->execute();
-                        $newOptionId = Yii::$app->db->getLastInsertID();
-                        $activeOptionIds[] = $newOptionId;
-                    }
-                }
-            }
-    
-            // Mark questions that are not in the new set as inactive
-            $questionIdsToMarkInactive = array_diff(array_keys($existingQuestionMap), $newQuestionIds);
-            foreach ($questionIdsToMarkInactive as $idToMarkInactive) {
-                Yii::$app->db->createCommand()->update('training_questions', [
-                    'is_active' => false
-                ], ['id' => $idToMarkInactive])->execute();
-            }
-
-            foreach ($existingAnswerMap as $questionId => $options) {
-                foreach ($options as $optionText => $option) {
-                    if (!in_array($option['id'], $activeOptionIds)) {
-                        Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
-                            'is_active' => false
-                        ], ['id' => $option['id']])->execute();
                     }
                 }
             }
@@ -288,6 +221,8 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
+    
+    
 
 
 

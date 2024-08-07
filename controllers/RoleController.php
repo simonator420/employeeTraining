@@ -528,6 +528,7 @@ class RoleController extends Controller
                     )
                     ->execute();
 
+                $answerId = Yii::$app->db->getLastInsertID();
                 // Conditionally insert into the training_multiple_choice_user_answers table
                 if ($questionType === 'multiple_choice' && !empty($answer)) {
                     foreach ($answer as $individualAnswer) {
@@ -538,7 +539,8 @@ class RoleController extends Controller
                                 [
                                     'user_id' => $userId,
                                     'question_id' => $questionId,
-                                    'answer_id' => $individualAnswer,
+                                    'multiple_choice_answer_id' => $individualAnswer,
+                                    'answer_id' => $answerId, // Save the answer_id
                                 ]
                             )
                             ->execute();
@@ -664,13 +666,13 @@ class RoleController extends Controller
                     if ($answer['answer'] == 'multiple_choice') {
                         // Fetch the multiple choice answers with their is_correct status
                         $multipleChoiceAnswers = Yii::$app->db->createCommand('
-                                SELECT tma.option_text, tma.is_correct 
-                                FROM training_multiple_choice_user_answers tmua
-                                JOIN training_multiple_choice_answers tma ON tmua.answer_id = tma.id
-                                WHERE tmua.question_id = :questionId 
-                                AND tmua.user_id = :userId
-                            ')
-                            ->bindValue(':questionId', $answer['question_id'])
+                            SELECT tma.option_text, tma.is_correct 
+                            FROM training_multiple_choice_user_answers tmua
+                            JOIN training_multiple_choice_answers tma ON tmua.multiple_choice_answer_id = tma.id
+                            WHERE tmua.answer_id = :answerId 
+                            AND tmua.user_id = :userId
+                        ')
+                            ->bindValue(':answerId', $answer['id'])
                             ->bindValue(':userId', $id)
                             ->queryAll();
 

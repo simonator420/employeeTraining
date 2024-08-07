@@ -48,11 +48,20 @@ $this->params['breadcrumbs'][] = $this->title;
                                         if (empty($multipleAnswers)) {
                                             echo '<p style="padding-top:5px;">User selected no options</p>';
                                         }
-                                        $correctOptions = [];
+
+                                        // Fetch correct options directly from the database
+                                        $correctOptions = Yii::$app->db->createCommand('
+                                                SELECT option_text 
+                                                FROM training_multiple_choice_answers 
+                                                WHERE question_id = :question_id AND is_correct = 1
+                                            ')
+                                            ->bindValue(':question_id', $answer['question_id'])
+                                            ->queryColumn();
+
                                         foreach ($multipleAnswers as $idx => $singleAnswer):
-                                            if ($singleAnswer['is_correct']) {
-                                                $correctOptions[] = $singleAnswer['option_text'];
-                                            }
+                                            // if ($singleAnswer['is_correct']) {
+                                            //     $correctOptions[] = $singleAnswer['option_text'];
+                                            // }
                                             ?>
                                             <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
                                             <div class="evaluation">
@@ -77,11 +86,14 @@ $this->params['breadcrumbs'][] = $this->title;
                                         <!-- TODO Add to training_answers foreign_key user_training ID -->
                                         <?php
                                         $allOptions = Yii::$app->db->createCommand('
-                                                SELECT option_text 
-                                                FROM training_multiple_choice_answers 
-                                                WHERE question_id = :question_id
-                                            ')
+                                            SELECT tma.option_text 
+                                            FROM training_multiple_choice_answers tma
+                                            JOIN training_questions tq ON tma.question_id = tq.id
+                                            JOIN training_answers ta ON tq.id = ta.question_id
+                                            WHERE tq.id = :question_id AND ta.user_training_id = :user_training_id
+                                        ')
                                             ->bindValue(':question_id', $answer['question_id'])
+                                            ->bindValue(':user_training_id', $answer['user_training_id'])
                                             ->queryAll();
 
                                         // Extract option_text values
@@ -97,11 +109,11 @@ $this->params['breadcrumbs'][] = $this->title;
                                         <?php
                                         // Fetch correct_answer for the question
                                         $correctAnswer = Yii::$app->db->createCommand('
-                                        SELECT correct_answer 
-                                        FROM training_questions 
-                                        WHERE id = :question_id
-                                        AND training_id = :training_id
-                                    ')
+                                            SELECT correct_answer 
+                                            FROM training_questions 
+                                            WHERE id = :question_id
+                                            AND training_id = :training_id
+                                        ')
                                             ->bindValue(':training_id', $training['training_id'])
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
@@ -151,41 +163,50 @@ $(document).ready(function() {
         var totalCount = 0;
 
         content.find('.question-answer-pair').each(function() {
+            var questionText = $(this).find('p:contains("Question:")').text();
+            var correctAnswerLabel = $(this).find('p:contains("Correct answer:")');
+
+            if (correctAnswerLabel.length > 0) {
+                var correctOptions = correctAnswerLabel.text().replace('Correct answer:', '').split(',').map(function(option) {
+                    return option.trim();
+                });
+
+                console.log('Correct options for question:', questionText);
+                correctOptions.forEach(function(option) {
+                    console.log(option);
+                });
+            }
+
             var evaluations = $(this).find('.evaluation');
             var notScoredChecked = evaluations.find('input[type="checkbox"][name*="[not_scored]"]:checked').length > 0;
             var correctAnswers = evaluations.find('input[type="checkbox"][name*="[correct]"]');
-            var totalCorrect = correctAnswers.length;
+            console.log('Tohle jsou correct answers:');
+            correctAnswers.each(function() {
+                console.log($(this).closest('label').text().trim());
+            });
+            
+            var totalCorrect = correctOptions.length; // Use correctOptions length
             var correctChecked = correctAnswers.filter(':checked').length;
+            var wrongChecked = evaluations.find('input[type="checkbox"][name*="[wrong]"]:checked').length;
 
             // Handle special case: no correct answers and no selections
             var selectedOptions = evaluations.find('input[type="checkbox"]:checked').length > 0;
             if (totalCorrect === 0 && !selectedOptions) {
                 totalCount++;
                 correctCount++;
+                console.log(correctChecked, ' / ', totalCorrect);
+                console.log('Score ', 1);
             } else if (!notScoredChecked) {
                 totalCount++;
-                correctCount += (correctChecked / totalCorrect);
-            } else {
-                var partialCorrect = 0;
-                var partialTotal = 0;
-                evaluations.each(function() {
-                    if (!$(this).find('input[type="checkbox"][name*="[not_scored]"]:checked').length) {
-                        partialTotal++;
-                        if ($(this).find('input[type="checkbox"][name*="[correct]"]:checked').length) {
-                            partialCorrect++;
-                        }
-                    }
-                });
-
-                if (partialTotal > 0) {
-                    totalCount++;
-                    correctCount += (partialCorrect / partialTotal);
-                }
+                var score = correctChecked / totalCorrect;
+                console.log(correctChecked, ' / ', totalCorrect);
+                console.log('Score ! ', score);
+                correctCount += score;
             }
         });
 
         var scoreLabel = content.find('.score-label').find('.score-value');
-        scoreLabel.text(correctCount.toFixed(2) + "/" + totalCount);
+        scoreLabel.text(correctCount.toFixed(2) + "/" + totalCount.toFixed(2));
     }
 
     $('.collapsible').on('click', function() {
@@ -239,6 +260,10 @@ $(document).ready(function() {
         }
     });
 });
+
+
+
+
 
 JS;
 $this->registerJs($script);
