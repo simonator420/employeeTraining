@@ -28,15 +28,22 @@ class RoleController extends Controller
 
         foreach ($users as $user) {
             $latestAnswers[$user->id] = Yii::$app->db->createCommand('
-                SELECT tq.question, ta.answer
+                SELECT tq.question, 
+                       CASE 
+                           WHEN ta.answer = "multiple_choice" THEN GROUP_CONCAT(tma.option_text SEPARATOR ", ") 
+                           ELSE ta.answer 
+                       END as answer
                 FROM training_answers ta
                 JOIN training_questions tq ON ta.question_id = tq.id
+                LEFT JOIN training_multiple_choice_user_answers tmua ON ta.question_id = tmua.question_id AND ta.user_id = tmua.user_id
+                LEFT JOIN training_multiple_choice_answers tma ON tmua.answer_id = tma.id
                 WHERE ta.user_id = :user_id 
                 AND ta.created_at = (
                     SELECT MAX(created_at) 
                     FROM training_answers 
                     WHERE user_id = :user_id
                 )
+                GROUP BY tq.question, ta.answer
                 ORDER BY ta.created_at DESC
             ')
                 ->bindValue(':user_id', $user->id)
@@ -486,7 +493,6 @@ class RoleController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $userId = Yii::$app->user->id;
         $requestData = Yii::$app->request->post();
-        $trainingId = $requestData['training_id'];
 
         if (isset($requestData['TrainingQuestions'])) {
             foreach ($requestData['TrainingQuestions'] as $questionKey => $questionData) {
@@ -499,37 +505,21 @@ class RoleController extends Controller
                 // Log the question and its answer(s) based on the type
                 if ($questionType === 'multiple_choice') {
                     Yii::warning("Inserting Multiple Choice Question: " . $questionText, __METHOD__);
-                    // Yii::warning("Answers: " . json_encode($answer), __METHOD__);
 
-                    // Insert the multiple choice marker into the training_answers table
                     Yii::$app->db->createCommand()
                         ->insert(
                             'training_answers',
                             [
                                 'user_id' => $userId,
                                 'question_id' => $questionId,
-                                // 'question_text' => $questionText,
                                 'answer' => "multiple_choice",
                                 'created_at' => new \yii\db\Expression('NOW()'),
-                                // 'training_id' => $trainingId,
                             ]
                         )
                         ->execute();
 
-                    // Insert each selected multiple choice option into the training_multiple_choice_user_answers table
                     foreach ($answer as $individualAnswer) {
                         Yii::warning("Inserting Multiple Choice Option: " . $individualAnswer, __METHOD__);
-                        $answerText = Yii::$app->db->createCommand('
-                            SELECT option_text FROM training_multiple_choice_answers WHERE id = :answer_id
-                        ')
-                            ->bindValue(':answer_id', $individualAnswer)
-                            ->queryScalar();
-
-                        $isCorrect = Yii::$app->db->createCommand('
-                            SELECT is_correct FROM training_multiple_choice_answers WHERE id = :answer_id
-                        ')
-                            ->bindValue(':answer_id', $individualAnswer)
-                            ->queryScalar();
 
                         Yii::$app->db->createCommand()
                             ->insert(
@@ -538,35 +528,25 @@ class RoleController extends Controller
                                     'user_id' => $userId,
                                     'question_id' => $questionId,
                                     'answer_id' => $individualAnswer,
-                                    'question_text' => $questionText,
-                                    'answer_text' => $answerText,
-                                    'created_at' => new \yii\db\Expression('NOW()'),
-                                    'is_correct' => $isCorrect,
+                                    // 'created_at' => new \yii\db\Expression('NOW()'),
                                 ]
                             )
                             ->execute();
-
                     }
                 } else {
-                    // Yii::warning("Question: " . $questionText, __METHOD__);
-                    // Yii::warning("Answer: " . $answer, __METHOD__);
                     Yii::warning("Inserting Text Question: " . $questionText, __METHOD__);
-                    // Insert the non-multiple-choice answer into the database
+
                     $result = Yii::$app->db->createCommand()
                         ->insert(
                             'training_answers',
                             [
                                 'user_id' => $userId,
                                 'question_id' => $questionId,
-                                // 'question_text' => $questionText,
                                 'answer' => $answer,
                                 'created_at' => new \yii\db\Expression('NOW()'),
-                                // 'training_id' => $trainingId,
                             ]
                         )
                         ->execute();
-
-                    // Yii::warning("Inserted non-multiple-choice answer: " . $result, __METHOD__);
                 }
             }
         } else {
@@ -682,23 +662,25 @@ class RoleController extends Controller
                     ->bindValue(':trainingId', $trainingIdValue)
                     ->bindValue(':createdAt', $instanceCreatedAt)
                     ->queryAll();
-    
+
                 foreach ($trainingAnswers as &$answer) {
                     if ($answer['answer'] == 'multiple_choice') {
+                        // Fetch the multiple choice answers with their is_correct status
                         $multipleChoiceAnswers = Yii::$app->db->createCommand('
-                            SELECT answer_text 
-                            FROM training_multiple_choice_user_answers 
-                            WHERE created_at = :createdAt AND question_id = :questionId AND user_id = :userId
-                        ')
-                            ->bindValue(':createdAt', $instanceCreatedAt)
+                                SELECT tma.option_text, tma.is_correct 
+                                FROM training_multiple_choice_user_answers tmua
+                                JOIN training_multiple_choice_answers tma ON tmua.answer_id = tma.id
+                                WHERE tmua.question_id = :questionId 
+                                AND tmua.user_id = :userId
+                            ')
                             ->bindValue(':questionId', $answer['question_id'])
                             ->bindValue(':userId', $id)
-                            ->queryColumn();
-    
-                        $answer['answer'] = implode(', ', $multipleChoiceAnswers);
+                            ->queryAll();
+
+                        $answer['multiple_choice_answers'] = $multipleChoiceAnswers;
                     }
                 }
-    
+
                 $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
             }
         }
@@ -725,5 +707,4 @@ class RoleController extends Controller
             'answers' => $answers,
         ]);
     }
-
 }

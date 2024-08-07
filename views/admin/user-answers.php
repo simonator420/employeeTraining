@@ -26,7 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     </button>
                     <div class="content" style="display:none;">
                         <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
-                            <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $answer): ?>
+                            <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $index => $answer): ?>
                                 <div class="question-answer-pair">
                                     <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
                                     <?php Yii::warning("Tohle je questionId: " . $answer['question_id'] . " a tohle je question_text: " . $answer['question_text'], __METHOD__); ?>
@@ -41,88 +41,65 @@ $this->params['breadcrumbs'][] = $this->title;
                                         ->queryScalar();
                                     ?>
 
-
-                                    <!-- TODO spravne is correct podle atributu a to stejne u ne multiple choice -->
-                                    <!-- <?php Yii::warning("Tohle je id: " . $answer['id'] . " a tohle je question_id " . $answer['question_id']) ?> -->
+                                    <?php Yii::warning("Tohle je type: " . $questionType) ?>
                                     <?php if ($questionType === 'multiple_choice'): ?>
                                         <?php
-                                        Yii::warning("Tohle je id: " . $answer['id'] . " a tohle je question_id " . $answer['question_id']);
-                                        $multipleAnswers = explode(', ', $answer['answer']);
-                                        foreach ($multipleAnswers as $index => $singleAnswer):
-                                            // Fetch is_correct for each answer
-
-                                            $multipleChoiceAnswerId = Yii::$app->db->createCommand('
-                                                SELECT answer_id 
-                                                FROM training_multiple_choice_user_answers 
-                                                WHERE question_id = :question_id
-                                            ')
-                                                ->bindValue(':question_id', $answer['question_id'])
-                                                ->queryScalar();
-
-                                                Yii::warning("Tohle je rrrrrreeeeeeeeee to idddddid: " . $multipleChoiceAnswerId);
-
-                                            $isCorrect = Yii::$app->db->createCommand('
-                                                SELECT is_correct 
-                                                FROM training_multiple_choice_answers 
-                                                WHERE question_id = :question_id AND id = :answer_id
-                                            ')
-                                                ->bindValue(':question_id', $answer['question_id'])
-                                                ->bindValue(':answer_id', $multipleChoiceAnswerId)
-                                                ->queryScalar();
+                                        $multipleAnswers = $answer['multiple_choice_answers'];
+                                        foreach ($multipleAnswers as $idx => $singleAnswer):
                                             ?>
-                                            <?php Yii::warning("Tohle je question_id: " . $answer['question_id']) ?>
-                                            <?php Yii::warning("Tohle je id: " . $singleAnswer) ?>
-                                            <p><b>Answer <?= $index + 1 ?>:</b> <?= Html::encode($singleAnswer) ?></p>
+                                            <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
                                             <div class="evaluation">
                                                 <label style="color: green;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][correct]', $isCorrect == 1) ?>
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', $singleAnswer['is_correct'] == 1) ?>
                                                     Correct
                                                 </label>
                                                 <label style="color: red;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][wrong]', $isCorrect == 0) ?>
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', $singleAnswer['is_correct'] == 0) ?>
                                                     Wrong
                                                 </label>
                                                 <label style="color: gray;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $index . '][not_scored]', false) ?>
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][not_scored]', false) ?>
                                                     Not Scored
                                                 </label>
                                             </div>
                                         <?php endforeach; ?>
-
-
-
-
                                     <?php else: ?>
                                         <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
-                                        <?php Yii::warning("Tohle je answer: " . $answer['answer'] . " a tohle je zda je correct: ", __METHOD__); ?>
                                         <?php
-                                        // Fetch is_correct for the answer
-                                        $isCorrect = Yii::$app->db->createCommand('
-                                            SELECT is_correct 
-                                            FROM training_multiple_choice_user_answers 
-                                            WHERE user_id = :user_id AND answer_text = :answer_id
+                                        // Fetch correct_answer for the question
+                                        $correctAnswer = Yii::$app->db->createCommand('
+                                            SELECT correct_answer 
+                                            FROM training_questions 
+                                            WHERE id = :question_id
+                                            AND training_id = :training_id
                                         ')
-                                            ->bindValue(':user_id', $user->id)
-                                            ->bindValue(':answer_id', $answer['answer'])
+                                            ->bindValue(':training_id', $training['training_id'])
+                                            ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
+                                        $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
+                                        <?php Yii::warning("Tohle je answer: " . $answer['answer'] . " a tohle je jeji correct: " . $correctAnswer, __METHOD__); ?>
                                         <div class="evaluation">
                                             <label style="color: green;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', $isCorrect == 1) ?> Correct
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', $isCorrect) ?>
+                                                Correct
                                             </label>
                                             <label style="color: red;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', $isCorrect == 0) ?> Wrong
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', !$isCorrect) ?>
+                                                Wrong
                                             </label>
                                             <label style="color: gray;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][not_scored]', false) ?> Not Scored
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][not_scored]', false) ?>
+                                                Not Scored
                                             </label>
                                         </div>
                                     <?php endif; ?>
-
-
-
                                     <hr>
                                 </div>
+                                <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1): ?>
+                                    <button class="submit-score-btn">Submit Score</button>
+                                    <label class="score-label">Score: <span class="score-value">0/0</span></label>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <p>No answers found for this training.</p>
@@ -137,6 +114,26 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $script = <<<JS
 $(document).ready(function() {
+    function updateScore(content) {
+        var correctCount = 0;
+        var totalCount = 0;
+
+        content.find('.question-answer-pair').each(function() {
+            var correctChecked = $(this).find('input[type="checkbox"][name*="[correct]"]:checked').length > 0;
+            var notScoredChecked = $(this).find('input[type="checkbox"][name*="[not_scored]"]:checked').length > 0;
+
+            if (!notScoredChecked) {
+                totalCount++;
+                if (correctChecked) {
+                    correctCount++;
+                }
+            }
+        });
+
+        var scoreLabel = content.find('.score-label').find('.score-value');
+        scoreLabel.text(correctCount + "/" + totalCount);
+    }
+
     $('.collapsible').on('click', function() {
         var content = $(this).next('.content');
 
@@ -147,6 +144,37 @@ $(document).ready(function() {
         // Toggle the clicked collapsible
         $(this).toggleClass('active');
         content.slideToggle();
+
+        // Update the score when the collapsible is expanded
+        if (content.is(':visible')) {
+            updateScore(content);
+        }
+    });
+
+    $(document).on('change', 'input[type="checkbox"]', function() {
+        var content = $(this).closest('.content');
+        var group = $(this).closest('.evaluation');
+
+        // Ensure only one checkbox is checked in the group
+        if (this.checked) {
+            group.find('input[type="checkbox"]').not(this).prop('checked', false);
+        }
+
+        // Ensure at least one checkbox is checked
+        var correctChecked = group.find('input[type="checkbox"][name*="[correct]"]:checked').length > 0;
+        var wrongChecked = group.find('input[type="checkbox"][name*="[wrong]"]:checked').length > 0;
+        var notScoredChecked = group.find('input[type="checkbox"][name*="[not_scored]"]:checked').length > 0;
+
+        if (!correctChecked && !wrongChecked && !notScoredChecked) {
+            this.checked = true; // Revert the change if no checkbox is checked
+        }
+
+        updateScore(content);
+    });
+
+    $(document).on('click', '.submit-score-btn', function() {
+        var content = $(this).closest('.content');
+        updateScore(content);
     });
 });
 JS;
