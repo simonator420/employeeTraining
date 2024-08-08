@@ -34,11 +34,11 @@ use yii\helpers\Url;
                 <button id="end-video-btn" class="btn btn-secondary">End Video</button>
             </div>
             <div id="questions-container" style="display: none;"></div>
+            <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         <?php else: ?>
             <div id="questions-container"></div>
+            <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn']) ?>
         <?php endif; ?>
-
-        <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
     </div>
 </div>
 

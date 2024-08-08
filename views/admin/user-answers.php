@@ -49,11 +49,19 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ')
                                     ->bindValue(':question_id', $answer['question_id'])
                                     ->queryScalar();
-                                ?>
 
+                                $correctOptions = Yii::$app->db->createCommand('
+                                            SELECT option_text 
+                                            FROM training_multiple_choice_answers 
+                                            WHERE question_id = :question_id AND is_correct = 1
+                                        ')
+                                    ->bindValue(':question_id', $answer['question_id'])
+                                    ->queryColumn();
+                                ?>
                                 <div class="question-answer-pair" data-question-id="<?= Html::encode($answer['question_id']) ?>"
                                     data-question-type="<?= Html::encode($questionType) ?>"
-                                    data-user-training-id="<?= Html::encode($answer['user_training_id']) ?>">
+                                    data-user-training-id="<?= Html::encode($answer['user_training_id']) ?>"
+                                    data-correct-options="<?= Html::encode(json_encode($correctOptions)) ?>">
                                     <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
 
 
@@ -63,14 +71,6 @@ $this->params['breadcrumbs'][] = $this->title;
                                         if (empty($multipleAnswers)) {
                                             echo '<p style="padding-top:5px;">User selected no options</p>';
                                         }
-
-                                        $correctOptions = Yii::$app->db->createCommand('
-                                            SELECT option_text 
-                                            FROM training_multiple_choice_answers 
-                                            WHERE question_id = :question_id AND is_correct = 1
-                                        ')
-                                            ->bindValue(':question_id', $answer['question_id'])
-                                            ->queryColumn();
 
                                         foreach ($multipleAnswers as $idx => $singleAnswer):
 
@@ -140,7 +140,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                             ->queryScalar();
 
                                         // Score null but right_answer set
-
+                    
 
                                         $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
@@ -184,7 +184,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 
 <?php
-$completeTrainingUrl = Url::to(['role/save-scores']);
+$saveScoresUrl = Url::to(['role/save-scores']);
 $script = <<<JS
 $(document).ready(function() {
     function updateScore(content) {
@@ -283,12 +283,15 @@ $(document).ready(function() {
             var userTrainingId = $(this).data('user-training-id'); // Ensure the user_training_id data attribute is set in the HTML
             console.log(userTrainingId)
             var evaluation = $(this).find('.evaluation');
-
+            var correctOptions = $(this).data('correct-options');
+            
             if (questionType == 'multiple_choice') {
-                var totalCorrectOptions = $(this).find('input[type="checkbox"][name*="[correct]"]').length;
+                var totalCorrectOptions = correctOptions.length;
+                // TODO replace this with count options that are really true, cause this counts only the checkboxes.
                 var correctCheckedOptions = $(this).find('input[type="checkbox"][name*="[correct]"]:checked').length;
                 var score = correctCheckedOptions / totalCorrectOptions;
                 var finalScore = 0;
+                console.log('Tady je skore jeste v poradku? ' + score + " " + totalCorrectOptions);
 
                 $(this).find('.evaluation').each(function() {
                     var optionId = $(this).data('option-id'); // Get the option ID
@@ -335,7 +338,7 @@ $(document).ready(function() {
 
         // Submit the score data to the server via AJAX
         $.ajax({
-            url: '$completeTrainingUrl',
+            url: '$saveScoresUrl',
             type: 'POST',
             data: JSON.stringify(scoreData),
             contentType: 'application/json; charset=utf-8',
@@ -347,11 +350,6 @@ $(document).ready(function() {
             }
         });
     });
-
-
-
-
-
 
     $('.collapsible').on('click', function() {
         var content = $(this).next('.content');

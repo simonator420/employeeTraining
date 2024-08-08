@@ -692,6 +692,7 @@ class RoleController extends Controller
                                 $totalScore += $answer['score'];
                                 $scoreAdded = true;
                                 $allNull = false;
+                                Yii::warning('Tohle je iterace mca', __METHOD__);
                             }
                         }
                     } else {
