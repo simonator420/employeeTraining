@@ -62,11 +62,28 @@ class TrainingQuestionsController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        $training = Yii::$app->db->createCommand('SELECT * FROM training WHERE id = :id')
+            ->bindValue(':id', $id)
+            ->queryOne();
+
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id AND is_active = 1 ORDER BY `id`')
             ->bindValue(':id', $id)
             ->queryAll();
 
         $html = '';
+
+
+        // Display video upload field
+        if (!empty($training['video_url'])) {
+            $html .= '<div class="form-group">';
+            $html .= '<label for="existing-video">' . Yii::t('employeeTraining', 'Existing Training Video') . '</label>';
+            $html .= '<video width="320" height="240" controls>';
+            $html .= '<source src="' . Url::to('@web/' . $training['video_url']) . '" type="video/mp4">';
+            $html .= 'Your browser does not support the video tag.';
+            $html .= '</video>';
+            $html .= '</div>';
+        }
+
         if ($questions) {
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
@@ -129,51 +146,64 @@ class TrainingQuestionsController extends Controller
         }
     }
 
-
-
-
     // Function for saving questions into database by admin
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-    
+
         $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
-    
+        $videoFile = UploadedFile::getInstanceByName('trainingVideo');
+
         if (empty($trainingId)) {
             return ['success' => false, 'errors' => 'Training ID is required'];
         }
-    
+
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // Mark existing questions as inactive
             Yii::$app->db->createCommand()->update('training_questions', [
                 'is_active' => false
             ], ['training_id' => $trainingId])->execute();
-    
+
             // Fetch the question IDs for the given training
             $questionIds = Yii::$app->db->createCommand('
                 SELECT id FROM training_questions WHERE training_id = :trainingId
             ')
-            ->bindValue(':trainingId', $trainingId)
-            ->queryColumn();
-    
+                ->bindValue(':trainingId', $trainingId)
+                ->queryColumn();
+
             // Mark existing multiple choice answers as inactive
             if (!empty($questionIds)) {
                 Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
                     'is_active' => false
                 ], ['question_id' => $questionIds])->execute();
             }
-    
+
             $newQuestionIds = [];
-    
+
+            $videoUrl = null;
+            if ($videoFile) {
+                $videoPath = 'uploads/' . $videoFile->baseName . '.' . $videoFile->extension;
+                if ($videoFile->saveAs($videoPath)) {
+                    $videoUrl = $videoPath;
+                    // Save the video URL to the database
+                    Yii::$app->db->createCommand()->update('training', [
+                        'video_url' => $videoUrl
+                    ], ['id' => $trainingId])->execute();
+                } else {
+                    return ['success' => false, 'errors' => 'Failed to save the video file.'];
+                }
+            }
+
+
             // Process each question
             foreach ($questions as $index => $questionData) {
                 $questionText = $questionData['question'];
                 $correctAnswer = isset($questionData['correct_answer']) ? $questionData['correct_answer'] : null;
                 $questionType = $questionData['type'];
-    
+
                 // Handle image upload
                 $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
                 $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
@@ -185,7 +215,7 @@ class TrainingQuestionsController extends Controller
                         return ['success' => false, 'errors' => 'Failed to save the image file.'];
                     }
                 }
-    
+
                 // Insert new question
                 Yii::$app->db->createCommand()->insert('training_questions', [
                     'training_id' => $trainingId,
@@ -197,12 +227,12 @@ class TrainingQuestionsController extends Controller
                 ])->execute();
                 $questionId = Yii::$app->db->getLastInsertID();
                 $newQuestionIds[] = $questionId;
-    
+
                 if ($questionType == 'multiple_choice') {
                     foreach ($questionData['options'] as $optionIndex => $optionData) {
                         $optionText = $optionData['text'];
                         $isCorrect = isset($optionData['correct']) ? $optionData['correct'] : false;
-    
+
                         // Insert new option
                         Yii::$app->db->createCommand()->insert('training_multiple_choice_answers', [
                             'question_id' => $questionId,
@@ -213,7 +243,14 @@ class TrainingQuestionsController extends Controller
                     }
                 }
             }
-    
+
+            if ($videoUrl) {
+                Yii::warning('Je tady videooooo');
+                Yii::$app->db->createCommand()->update('training', [
+                    'video_url' => $videoUrl
+                ], ['id' => $trainingId])->execute();
+            }
+
             $transaction->commit();
             return ['success' => true];
         } catch (\Exception $e) {
@@ -221,11 +258,6 @@ class TrainingQuestionsController extends Controller
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
-    
-    
-
-
-
 
     // Function for displaying the questions from database in the form for the USER
     public function actionDisplayQuestions($training_id)
@@ -233,18 +265,23 @@ class TrainingQuestionsController extends Controller
         // Set response format to JSON
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        $training = Yii::$app->db->createCommand('SELECT * FROM training WHERE id = :id')
+            ->bindValue(':id', $training_id)
+            ->queryOne();
+
         // Fetch questions for the given training_id, ordered by the 'order' column
         $questions = Yii::$app->db->createCommand('
-            SELECT * FROM training_questions 
-            WHERE training_id = :training_id
-            AND is_active = 1
-            ORDER BY `id`
-        ')
+                SELECT * FROM training_questions 
+                WHERE training_id = :training_id
+                AND is_active = 1
+                ORDER BY `id`
+            ')
             ->bindValue(':training_id', $training_id)
             ->queryAll();
 
         // Initialize HTML string
         $html = '';
+
         if ($questions) {
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
@@ -328,13 +365,12 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
                 $html .= '</div>';
             }
-
-            // Return success response with generated HTML
-            return ['success' => true, 'html' => $html];
-        } else {
-            // Return failure response if no questions are found
-            return ['success' => false];
         }
+
+        $html .= '</div>';
+
+        // Return success response with generated HTML
+        return ['success' => true, 'html' => $html];
     }
 
 

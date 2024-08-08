@@ -667,6 +667,9 @@ class RoleController extends Controller
                     ->bindValue(':createdAt', $instanceCreatedAt)
                     ->queryAll();
 
+                // TODO make here to set isScored to false only if all are null
+                $allNull = true;
+
                 foreach ($trainingAnswers as &$answer) {
                     if ($answer['answer'] == 'multiple_choice') {
                         // Fetch the multiple choice answers with their is_correct status
@@ -685,20 +688,21 @@ class RoleController extends Controller
                         $answer['multiple_choice_answers'] = $multipleChoiceAnswers;
 
                         foreach ($multipleChoiceAnswers as $mca) {
-                            if (!isset($mca['score'])) {
-                                $isScored = false;
-                            } elseif ($scoreAdded == false) {
+                            if ($scoreAdded == false && isset($mca['score'])) {
                                 $totalScore += $answer['score'];
                                 $scoreAdded = true;
+                                $allNull = false;
                             }
                         }
                     } else {
-                        if (!isset($answer['score'])) {
-                            $isScored = false;
-                        } else {
+                        if (isset($answer['score'])) {
                             $totalScore += $answer['score'];
                         }
                     }
+                }
+
+                if ($allNull == true) {
+                    $isScored = false;
                 }
 
                 $instance['is_scored'] = $isScored;
@@ -726,7 +730,7 @@ class RoleController extends Controller
             'answers' => $answers,
         ]);
     }
-    
+
     public function actionSaveScores()
     {
         $data = json_decode(file_get_contents('php://input'), true);

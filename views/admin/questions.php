@@ -88,6 +88,12 @@ use yii\helpers\Url;
             <!-- Hidden input to store the training ID -->
             <?= Html::hiddenInput('trainingId', $trainingId) ?>
 
+            <!-- Video upload field -->
+            <div class="form-group">
+                <label for="training-video"><?= Yii::t('employeeTraining', 'Upload Training Video') ?></label>
+                <input type="file" name="trainingVideo" id="training-video" class="form-control">
+            </div>
+
             <!-- Container for displaying all question with their input fields -->
             <div id="questions-container">
                 <!-- Questions are loaded here via JavaScript -->

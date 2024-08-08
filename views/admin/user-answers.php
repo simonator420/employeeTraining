@@ -22,12 +22,12 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="collapsible-container">
             <?php foreach ($trainings as $training): ?>
                 <?php foreach ($training['instances'] as $instance): ?>
-                    <?php 
-                        $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
-                        $formattedScore = number_format($instance['total_score'], 2);
+                    <?php
+                    $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
+                    $formattedScore = number_format($instance['total_score'], 2);
 
 
-                        Yii::warning("Tohle je instance length: " . $length) ?>
+                    Yii::warning("Tohle je instance length: " . $length) ?>
                     <?php
                     $scoreStatus = $instance['is_scored']
                         ? "<span style='color: green; font-weight: bold; padding-left:5px;'>Score: {$formattedScore}/{$length}</span>"
@@ -95,10 +95,10 @@ $this->params['breadcrumbs'][] = $this->title;
                                                     <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
                                                     Wrong
                                                 </label>
-                                                <label style="color: gray;">
+                                                <!-- <label style="color: gray;">
                                                     <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][not_scored]', false) ?>
                                                     Not Scored
-                                                </label>
+                                                </label> -->
                                             </div>
                                         <?php endforeach; ?>
                                         <p style="padding-top:10px; padding-bottom:2px;"><b>Correct answer:</b>
@@ -126,17 +126,22 @@ $this->params['breadcrumbs'][] = $this->title;
                                         </p>
 
                                     <?php else: ?>
+
                                         <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
                                         <?php
                                         $correctAnswer = Yii::$app->db->createCommand('
-                                        SELECT correct_answer 
-                                        FROM training_questions 
-                                        WHERE id = :question_id
-                                        AND training_id = :training_id
-                                    ')
+                                            SELECT correct_answer 
+                                            FROM training_questions 
+                                            WHERE id = :question_id
+                                            AND training_id = :training_id
+                                        ')
                                             ->bindValue(':training_id', $training['training_id'])
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
+
+                                        // Score null but right_answer set
+
+
                                         $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
                                         <div class="evaluation">
@@ -148,10 +153,10 @@ $this->params['breadcrumbs'][] = $this->title;
                                                 <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
                                                 Wrong
                                             </label>
-                                            <label style="color: gray;">
+                                            <!-- <label style="color: gray;">
                                                 <?= Html::checkbox('evaluation[' . $answer['id'] . '][not_scored]', false) ?>
                                                 Not Scored
-                                            </label>
+                                            </label> -->
                                         </div>
                                         <p style="padding-top:10px; padding-bottom:10px;"><b>Correct answer:</b>
                                             <?= !$correctAnswer ? 'N/A' : Html::encode($correctAnswer) ?>
@@ -288,17 +293,20 @@ $(document).ready(function() {
                 $(this).find('.evaluation').each(function() {
                     var optionId = $(this).data('option-id'); // Get the option ID
                     var tmcuaId = $(this).data('tmcua-id'); // Get the training_multiple_choice_user_answers ID
-                    var optionScore = $(this).find('input[name*="[correct]"]').prop('checked') ? score : 0;
+                    var notScoredChecked = $(this).find('input[name*="[not_scored]"]').prop('checked');
+                    var optionScore = notScoredChecked ? null : ($(this).find('input[name*="[correct]"]').prop('checked') ? score : 0);
 
-                    finalScore += optionScore;
+                    if (optionScore !== null) {
+                        finalScore += optionScore;
 
-                    if (finalScore > 1) {
-                        finalScore = 1;
+                        if (finalScore > 1) {
+                            finalScore = 1;
+                        }
                     }
 
                     console.log('Final score: ' + finalScore + 'Score of current element: ' + score);
 
-                    console.log('Option ID: ' + optionId + ', TMCUA ID: ' + tmcuaId + ', Score: ' + score);
+                    console.log('Option ID: ' + optionId + ', TMCUA ID: ' + tmcuaId + ', Score: ' + optionScore);
 
                     scoreData.push({
                         question_id: questionId,
@@ -311,7 +319,8 @@ $(document).ready(function() {
                     });
                 });
             } else {
-                var score = $(this).find('input[name*="[correct]"]').prop('checked') ? 1 : 0;
+                var notScoredChecked = $(this).find('input[name*="[not_scored]"]').prop('checked');
+                var score = notScoredChecked ? null : $(this).find('input[name*="[correct]"]').prop('checked') ? 1 : 0;
 
                 console.log('Question ID: ' + questionId + ', Score: ' + score);
 
@@ -338,6 +347,7 @@ $(document).ready(function() {
             }
         });
     });
+
 
 
 
