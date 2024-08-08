@@ -8,7 +8,8 @@ use yii\helpers\Url;
 /* @var $trainings array */
 /* @var $answers array */
 
-$this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
+// $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
+$this->title = 'Training Answers - ';
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -21,27 +22,41 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="collapsible-container">
             <?php foreach ($trainings as $training): ?>
                 <?php foreach ($training['instances'] as $instance): ?>
+                    <?php 
+                        $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
+                        $formattedScore = number_format($instance['total_score'], 2);
+
+
+                        Yii::warning("Tohle je instance length: " . $length) ?>
+                    <?php
+                    $scoreStatus = $instance['is_scored']
+                        ? "<span style='color: green; font-weight: bold; padding-left:5px;'>Score: {$formattedScore}/{$length}</span>"
+                        : "<span style='color: red; font-weight: bold; padding-left:5px;'>Training not scored</span>";
+                    ?>
                     <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
                         <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode($instance['created_at']) ?>
+                        <?= $scoreStatus ?>
                     </button>
                     <div class="content" style="display:none;">
                         <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
                             <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $index => $answer): ?>
-                                <div class="question-answer-pair">
+
+                                <?php
+                                $questionType = Yii::$app->db->createCommand('
+                                    SELECT type 
+                                    FROM training_questions 
+                                    WHERE id = :question_id
+                                    ')
+                                    ->bindValue(':question_id', $answer['question_id'])
+                                    ->queryScalar();
+                                ?>
+
+                                <div class="question-answer-pair" data-question-id="<?= Html::encode($answer['question_id']) ?>"
+                                    data-question-type="<?= Html::encode($questionType) ?>"
+                                    data-user-training-id="<?= Html::encode($answer['user_training_id']) ?>">
                                     <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
-                                    <?php Yii::warning("Tohle je questionId: " . $answer['question_id'] . " a tohle je question_text: " . $answer['question_text'], __METHOD__); ?>
 
-                                    <?php
-                                    $questionType = Yii::$app->db->createCommand('
-                                        SELECT type 
-                                        FROM training_questions 
-                                        WHERE id = :question_id
-                                        ')
-                                        ->bindValue(':question_id', $answer['question_id'])
-                                        ->queryScalar();
-                                    ?>
 
-                                    <?php Yii::warning("Tohle je type: " . $questionType) ?>
                                     <?php if ($questionType === 'multiple_choice'): ?>
                                         <?php
                                         $multipleAnswers = $answer['multiple_choice_answers'];
@@ -49,28 +64,35 @@ $this->params['breadcrumbs'][] = $this->title;
                                             echo '<p style="padding-top:5px;">User selected no options</p>';
                                         }
 
-                                        // Fetch correct options directly from the database
                                         $correctOptions = Yii::$app->db->createCommand('
-                                                SELECT option_text 
-                                                FROM training_multiple_choice_answers 
-                                                WHERE question_id = :question_id AND is_correct = 1
-                                            ')
+                                            SELECT option_text 
+                                            FROM training_multiple_choice_answers 
+                                            WHERE question_id = :question_id AND is_correct = 1
+                                        ')
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryColumn();
 
                                         foreach ($multipleAnswers as $idx => $singleAnswer):
-                                            // if ($singleAnswer['is_correct']) {
-                                            //     $correctOptions[] = $singleAnswer['option_text'];
-                                            // }
+
+                                            $tmcuaId = Yii::$app->db->createCommand('
+                                                SELECT id 
+                                                FROM training_multiple_choice_user_answers 
+                                                WHERE question_id = :question_id AND multiple_choice_answer_id = :option_id
+                                            ')
+                                                ->bindValue(':question_id', $answer['question_id'])
+                                                ->bindValue(':option_id', $singleAnswer['id'])
+                                                ->queryScalar();
                                             ?>
+
                                             <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
-                                            <div class="evaluation">
+                                            <div class="evaluation" data-option-id="<?= Html::encode($singleAnswer['id']) ?>"
+                                                data-tmcua-id="<?= Html::encode($tmcuaId) ?>">
                                                 <label style="color: green;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', $singleAnswer['is_correct'] == 1) ?>
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', isset($singleAnswer['score']) ? $singleAnswer['score'] > 0 : $singleAnswer['is_correct'] == 1) ?>
                                                     Correct
                                                 </label>
                                                 <label style="color: red;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', $singleAnswer['is_correct'] == 0) ?>
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
                                                     Wrong
                                                 </label>
                                                 <label style="color: gray;">
@@ -83,7 +105,6 @@ $this->params['breadcrumbs'][] = $this->title;
                                             <?= empty($correctOptions) ? 'N/A' : Html::encode(implode(', ', $correctOptions)) ?>
                                         </p>
 
-                                        <!-- TODO Add to training_answers foreign_key user_training ID -->
                                         <?php
                                         $allOptions = Yii::$app->db->createCommand('
                                             SELECT tma.option_text 
@@ -107,26 +128,24 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php else: ?>
                                         <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
                                         <?php
-                                        // Fetch correct_answer for the question
                                         $correctAnswer = Yii::$app->db->createCommand('
-                                            SELECT correct_answer 
-                                            FROM training_questions 
-                                            WHERE id = :question_id
-                                            AND training_id = :training_id
-                                        ')
+                                        SELECT correct_answer 
+                                        FROM training_questions 
+                                        WHERE id = :question_id
+                                        AND training_id = :training_id
+                                    ')
                                             ->bindValue(':training_id', $training['training_id'])
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
                                         $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
-                                        <?php Yii::warning("Tohle je answer: " . $answer['answer'] . " a tohle je jeji correct: " . $correctAnswer, __METHOD__); ?>
                                         <div class="evaluation">
                                             <label style="color: green;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', $isCorrect) ?>
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', isset($answer['score']) ? $answer['score'] > 0 : $isCorrect) ?>
                                                 Correct
                                             </label>
                                             <label style="color: red;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', !$isCorrect) ?>
+                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
                                                 Wrong
                                             </label>
                                             <label style="color: gray;">
@@ -140,6 +159,8 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php endif; ?>
                                     <hr>
                                 </div>
+
+
                                 <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1): ?>
                                     <button class="submit-score-btn">Submit Score</button>
                                     <label class="score-label">Score: <span class="score-value">0/0</span></label>
@@ -155,7 +176,10 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 </div>
 
+
+
 <?php
+$completeTrainingUrl = Url::to(['role/save-scores']);
 $script = <<<JS
 $(document).ready(function() {
     function updateScore(content) {
@@ -165,83 +189,73 @@ $(document).ready(function() {
         content.find('.question-answer-pair').each(function() {
             var questionText = $(this).find('p:contains("Question:")').text();
             var correctAnswerLabel = $(this).find('p:contains("Correct answer:")');
+            var correctOptions = [];
 
             if (correctAnswerLabel.length > 0) {
-                var correctOptions = correctAnswerLabel.text().replace('Correct answer:', '').split(',').map(function(option) {
+                correctOptions = correctAnswerLabel.text().replace('Correct answer:', '').split(',').map(function(option) {
                     return option.trim();
                 });
 
-                console.log('Correct options for question:', questionText);
-                correctOptions.forEach(function(option) {
-                    console.log(option);
-                });
+                // console.log('Correct options for question:', questionText);
+                // correctOptions.forEach(function(option) {
+                //     console.log(option);
+                // });
             }
 
             var evaluations = $(this).find('.evaluation');
-            var notScoredChecked = evaluations.find('input[type="checkbox"][name*="[not_scored]"]:checked').length > 0;
             var correctAnswers = evaluations.find('input[type="checkbox"][name*="[correct]"]');
-            console.log('Tohle jsou correct answers:');
-            correctAnswers.each(function() {
-                console.log($(this).closest('label').text().trim());
-            });
-            
-            var totalCorrect = correctOptions.length; // Use correctOptions length
+            // console.log('Correct answers:');
+            // correctAnswers.each(function() {
+            //     console.log($(this).closest('label').text().trim());
+            // });
+
+            var totalCorrect = correctOptions.length;
             var correctChecked = correctAnswers.filter(':checked').length;
             var wrongChecked = evaluations.find('input[type="checkbox"][name*="[wrong]"]:checked').length;
+
+            // Adjust totalCorrect based on not scored options
+            evaluations.find('input[type="checkbox"][name*="[not_scored]"]:checked').each(function() {
+                var optionText = $(this).closest('label').text().trim();
+                if (correctOptions.includes(optionText)) {
+                    totalCorrect--;
+                }
+            });
 
             // Handle special case: no correct answers and no selections
             var selectedOptions = evaluations.find('input[type="checkbox"]:checked').length > 0;
             if (totalCorrect === 0 && !selectedOptions) {
                 totalCount++;
                 correctCount++;
-                console.log(correctChecked, ' / ', totalCorrect);
-                console.log('Score ', 1);
-            } else if (!notScoredChecked) {
+            } else {
                 totalCount++;
                 var score = correctChecked / totalCorrect;
-                console.log(correctChecked, ' / ', totalCorrect);
-                console.log('Score ! ', score);
                 correctCount += score;
             }
         });
 
         var scoreLabel = content.find('.score-label').find('.score-value');
         scoreLabel.text(correctCount.toFixed(2) + "/" + totalCount.toFixed(2));
+
+        return {
+            correctCount: correctCount.toFixed(2),
+            totalCount: totalCount.toFixed(2)
+        };
     }
-
-    $('.collapsible').on('click', function() {
-        var content = $(this).next('.content');
-
-        // Close all other open contents
-        $('.collapsible').not(this).removeClass('active');
-        $('.content').not(content).slideUp();
-
-        // Toggle the clicked collapsible
-        $(this).toggleClass('active');
-        content.slideToggle();
-
-        // Update the score when the collapsible is expanded
-        if (content.is(':visible')) {
-            updateScore(content);
-        }
-    });
 
     $(document).on('change', 'input[type="checkbox"]', function() {
         var content = $(this).closest('.content');
         var group = $(this).closest('.evaluation');
 
-        // Ensure only one checkbox is checked in the group
         if (this.checked) {
             group.find('input[type="checkbox"]').not(this).prop('checked', false);
         }
 
-        // Ensure at least one checkbox is checked
         var correctChecked = group.find('input[type="checkbox"][name*="[correct]"]:checked').length > 0;
         var wrongChecked = group.find('input[type="checkbox"][name*="[wrong]"]:checked').length > 0;
         var notScoredChecked = group.find('input[type="checkbox"][name*="[not_scored]"]:checked').length > 0;
 
         if (!correctChecked && !wrongChecked && !notScoredChecked) {
-            this.checked = true; // Revert the change if no checkbox is checked
+            this.checked = true;
         }
 
         updateScore(content);
@@ -249,10 +263,100 @@ $(document).ready(function() {
 
     $(document).on('click', '.submit-score-btn', function() {
         var content = $(this).closest('.content');
-        updateScore(content);
+        var scores = updateScore(content);
+
+        // Update the corresponding button text with the new score
+        var button = content.prev('.collapsible');
+        button.find('span').remove(); // Remove the old score or "Training not scored" text
+        button.append(' <span style="color: green; font-weight: bold;">Score: ' + scores.correctCount + '/' + scores.totalCount + '</span>');
+
+        // Collect the score data and submit to the server
+        var scoreData = [];
+        content.find('.question-answer-pair').each(function() {
+            var questionId = $(this).data('question-id'); // Ensure the question-id data attribute is set in the HTML
+            var questionType = $(this).data('question-type'); // Ensure the question-type data attribute is set in the HTML
+            var userTrainingId = $(this).data('user-training-id'); // Ensure the user_training_id data attribute is set in the HTML
+            console.log(userTrainingId)
+            var evaluation = $(this).find('.evaluation');
+
+            if (questionType == 'multiple_choice') {
+                var totalCorrectOptions = $(this).find('input[type="checkbox"][name*="[correct]"]').length;
+                var correctCheckedOptions = $(this).find('input[type="checkbox"][name*="[correct]"]:checked').length;
+                var score = correctCheckedOptions / totalCorrectOptions;
+                var finalScore = 0;
+
+                $(this).find('.evaluation').each(function() {
+                    var optionId = $(this).data('option-id'); // Get the option ID
+                    var tmcuaId = $(this).data('tmcua-id'); // Get the training_multiple_choice_user_answers ID
+                    var optionScore = $(this).find('input[name*="[correct]"]').prop('checked') ? score : 0;
+
+                    finalScore += optionScore;
+
+                    if (finalScore > 1) {
+                        finalScore = 1;
+                    }
+
+                    console.log('Final score: ' + finalScore + 'Score of current element: ' + score);
+
+                    console.log('Option ID: ' + optionId + ', TMCUA ID: ' + tmcuaId + ', Score: ' + score);
+
+                    scoreData.push({
+                        question_id: questionId,
+                        option_id: optionId,
+                        tmcua_id: tmcuaId,
+                        score: optionScore,
+                        final_score: finalScore,
+                        type: questionType,
+                        user_training_id: userTrainingId
+                    });
+                });
+            } else {
+                var score = $(this).find('input[name*="[correct]"]').prop('checked') ? 1 : 0;
+
+                console.log('Question ID: ' + questionId + ', Score: ' + score);
+
+                scoreData.push({
+                    question_id: questionId,
+                    score: score,
+                    type: questionType,
+                    user_training_id: userTrainingId
+                });
+            }
+        });
+
+        // Submit the score data to the server via AJAX
+        $.ajax({
+            url: '$completeTrainingUrl',
+            type: 'POST',
+            data: JSON.stringify(scoreData),
+            contentType: 'application/json; charset=utf-8',
+            success: function(response) {
+                console.log('Scores successfully saved:', response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error saving scores:', error);
+            }
+        });
     });
 
-    // Initial score calculation for all expanded contents
+
+
+
+
+    $('.collapsible').on('click', function() {
+        var content = $(this).next('.content');
+
+        $('.collapsible').not(this).removeClass('active');
+        $('.content').not(content).slideUp();
+
+        $(this).toggleClass('active');
+        content.slideToggle();
+
+        if (content.is(':visible')) {
+            updateScore(content);
+        }
+    });
+
     $('.collapsible').each(function() {
         var content = $(this).next('.content');
         if (content.is(':visible')) {

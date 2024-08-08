@@ -629,6 +629,14 @@ class RoleController extends Controller
                 ->bindValue(':trainingId', $trainingIdValue)
                 ->queryScalar();
 
+            $userTrainingId = Yii::$app->db->createCommand('
+                SELECT id 
+                FROM user_training 
+                WHERE id = :trainingId
+            ')
+                ->bindValue(':trainingId', $trainingIdValue)
+                ->queryScalar();
+
             // Fetch distinct created_at timestamps for the training
             $instances = Yii::$app->db->createCommand('
                 SELECT DISTINCT ta.created_at
@@ -641,16 +649,13 @@ class RoleController extends Controller
                 ->bindValue(':trainingId', $trainingIdValue)
                 ->queryAll();
 
-            $trainings[] = [
-                'training_id' => $trainingIdValue,
-                'training_name' => $trainingName,
-                'instances' => $instances,
-            ];
-
-            foreach ($instances as $instance) {
+            foreach ($instances as &$instance) {
                 $instanceCreatedAt = $instance['created_at'];
+                $totalScore = 0;
+                $isScored = true;
+
                 $trainingAnswers = Yii::$app->db->createCommand('
-                    SELECT ta.*, tq.question AS question_text
+                    SELECT ta.*, tq.question AS question_text, ta.score
                     FROM training_answers ta
                     JOIN training_questions tq ON ta.question_id = tq.id
                     WHERE ta.user_id = :userId 
@@ -665,8 +670,9 @@ class RoleController extends Controller
                 foreach ($trainingAnswers as &$answer) {
                     if ($answer['answer'] == 'multiple_choice') {
                         // Fetch the multiple choice answers with their is_correct status
+                        $scoreAdded = false;
                         $multipleChoiceAnswers = Yii::$app->db->createCommand('
-                            SELECT tma.option_text, tma.is_correct 
+                            SELECT tma.option_text, tma.is_correct, tmua.score, tma.id 
                             FROM training_multiple_choice_user_answers tmua
                             JOIN training_multiple_choice_answers tma ON tmua.multiple_choice_answer_id = tma.id
                             WHERE tmua.answer_id = :answerId 
@@ -677,11 +683,34 @@ class RoleController extends Controller
                             ->queryAll();
 
                         $answer['multiple_choice_answers'] = $multipleChoiceAnswers;
+
+                        foreach ($multipleChoiceAnswers as $mca) {
+                            if (!isset($mca['score'])) {
+                                $isScored = false;
+                            } elseif ($scoreAdded == false) {
+                                $totalScore += $answer['score'];
+                                $scoreAdded = true;
+                            }
+                        }
+                    } else {
+                        if (!isset($answer['score'])) {
+                            $isScored = false;
+                        } else {
+                            $totalScore += $answer['score'];
+                        }
                     }
                 }
 
+                $instance['is_scored'] = $isScored;
+                $instance['total_score'] = $totalScore;
                 $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
             }
+
+            $trainings[] = [
+                'training_id' => $trainingIdValue,
+                'training_name' => $trainingName,
+                'instances' => $instances,
+            ];
         }
 
         // Sort trainings by the latest instance date (newest first)
@@ -691,19 +720,51 @@ class RoleController extends Controller
             return $b_latest - $a_latest;
         });
 
-        /*
-        // Sort trainings by the earliest instance date (oldest first)
-        usort($trainings, function($a, $b) {
-            $a_earliest = strtotime($a['instances'][0]['created_at']);
-            $b_earliest = strtotime($b['instances'][0]['created_at']);
-            return $a_earliest - $b_earliest;
-        });
-        */
-
         return $this->render('/admin/user-answers', [
             'user' => $user,
             'trainings' => $trainings,
             'answers' => $answers,
         ]);
+    }
+    
+    public function actionSaveScores()
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (empty($data)) {
+            return $this->asJson(['status' => 'error', 'message' => 'No data received']);
+        }
+
+        foreach ($data as $item) {
+            if ($item['type'] === 'multiple_choice') {
+                // Update training_multiple_choice_user_answers
+                Yii::$app->db->createCommand()
+                    ->update(
+                        'training_multiple_choice_user_answers',
+                        ['score' => $item['score']],
+                        ['id' => $item['tmcua_id']]
+                    )
+                    ->execute();
+
+                Yii::$app->db->createCommand()
+                    ->update(
+                        'training_answers',
+                        ['score' => $item['final_score']],
+                        ['question_id' => $item['question_id'], 'user_training_id' => $item['user_training_id']]
+                    )
+                    ->execute();
+            } else {
+                // Update training_answers
+                Yii::$app->db->createCommand()
+                    ->update(
+                        'training_answers',
+                        ['score' => $item['score']],
+                        ['question_id' => $item['question_id'], 'user_training_id' => $item['user_training_id']]
+                    )
+                    ->execute();
+            }
+        }
+
+        return $this->asJson(['status' => 'success', 'message' => 'Scores successfully saved']);
     }
 }
