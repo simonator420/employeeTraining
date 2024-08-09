@@ -211,6 +211,7 @@ class RoleController extends Controller
         }
     }
 
+    // adjusted actionFetchAllProfiles only for adding roles to users
     public function actionFetchProfiles()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -234,7 +235,6 @@ class RoleController extends Controller
             return ['success' => false, 'message' => 'No profiles found.'];
         }
     }
-
 
     public function actionFetchTitles()
     {

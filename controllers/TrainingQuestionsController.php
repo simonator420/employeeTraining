@@ -76,7 +76,7 @@ class TrainingQuestionsController extends Controller
         // Display video upload field
         if (!empty($training['video_url'])) {
             $html .= '<div class="form-group">';
-            $html .= '<label for="existing-video">' . Yii::t('employeeTraining', 'Existing Training Video') . '</label>';
+            // $html .= '<label for="existing-video">' . Yii::t('employeeTraining', 'Existing Training Video') . '</label>';
             $html .= '<video width="320" height="240" controls>';
             $html .= '<source src="' . Url::to('@web/' . $training['video_url']) . '" type="video/mp4">';
             $html .= 'Your browser does not support the video tag.';
