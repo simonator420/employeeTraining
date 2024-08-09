@@ -3,8 +3,7 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-// $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
-$this->title = 'Training Answers - ';
+$this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -20,9 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php
                     $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
                     $formattedScore = number_format($instance['total_score'], 2);
-
-
-                    Yii::warning("Tohle je instance length: " . $length) ?>
+                    ?>
                     <?php
                     $scoreStatus = $instance['is_scored']
                         ? "<span style='color: green; font-weight: bold; padding-left:5px;'>Score: {$formattedScore}/{$length}</span>"
@@ -163,7 +160,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                                 <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1): ?>
                                     <button class="submit-score-btn">Submit Score</button>
-                                    <label class="score-label">Score: <span class="score-value">0/0</span></label>
+                                    <label class="score-label"> Score: <span class="score-value">0/0</span></label>
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -268,7 +265,7 @@ $(document).ready(function() {
         // Update the corresponding button text with the new score
         var button = content.prev('.collapsible');
         button.find('span').remove(); // Remove the old score or "Training not scored" text
-        button.append(' <span style="color: green; font-weight: bold;">Score: ' + scores.correctCount + '/' + scores.totalCount + '</span>');
+        button.append(' <span style="color: green; font-weight: bold;">  Score: ' + scores.correctCount + '/' + scores.totalCount + '</span>');
 
         // Collect the score data and submit to the server
         var scoreData = [];

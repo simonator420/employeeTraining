@@ -211,6 +211,30 @@ class RoleController extends Controller
         }
     }
 
+    public function actionFetchProfiles()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $profiles = Profile::find()
+            ->joinWith('user')
+            ->all();
+
+        if ($profiles) {
+            $profileList = [];
+            foreach ($profiles as $profile) {
+                $profileList[] = [
+                    'id' => $profile->user->id,
+                    'firstname' => $profile->firstname,
+                    'lastname' => $profile->lastname,
+                    'role' => $profile->role,
+                ];
+            }
+            return ['success' => true, 'profiles' => $profileList];
+        } else {
+            return ['success' => false, 'message' => 'No profiles found.'];
+        }
+    }
+
 
     public function actionFetchTitles()
     {

@@ -10,76 +10,6 @@ use yii\helpers\Url;
     <div class="employee-info-card">
         <h1><?= Yii::t('employeeTraining', 'ILLE Employee Trainings') ?></h1>
 
-        <!-- Checkboxes for each title with label "Assign to all" -->
-        <!-- <label><?= Yii::t('employeeTraining', 'Assign training to all employees with title:') ?></label>
-        <div id="title-checkboxes">
-            <?php foreach ($titles as $title): ?>
-                <label class="checkbox-label">
-                    <input type="checkbox" class="title-checkbox" value="<?= Html::encode($title) ?>">
-                    <?= Html::encode($title) ?>
-                </label>
-            <?php endforeach; ?>
-        </div>
-        <br> -->
-
-        <!-- Checkboxes for each storage location with label "with storage location in:" -->
-        <!-- <label><?= Yii::t('employeeTraining', 'With storage location in:') ?></label>
-        <div id="storage-location-checkboxes">
-            <?php foreach ($storage_locations as $location): ?>
-                <label class="checkbox-label">
-                    <input type="checkbox" class="location-checkbox" value="<?= Html::encode($location) ?>">
-                    <?= Html::encode($location) ?>
-                </label>
-            <?php endforeach; ?>
-        </div>
-        <br> -->
-
-        <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
-        <!-- <button id="select-all-btn"><?= Yii::t('employeeTraining', 'Select all') ?></button>
-        <button id="confirm-selection-btn"><?= Yii::t('employeeTraining', 'Assign now') ?></button>
-
-        <br>
-        <br> -->
-
-        <!-- Button to toggle visibility of the user list for specific training assignment -->
-        <!-- <button id="toggle-user-list-btn">
-            <?= Yii::t('employeeTraining', 'Assign training to specific users') ?><span id="arrow-down"> ▼</span>
-        </button>
-        <br><br> -->
-
-        <!-- User list for specific training assignment, hidden by default -->
-        <!-- <div id="user-list" style="display: none;">
-            <?php foreach ($users as $user): ?>
-                <label class="checkbox-label">
-                    <input type="checkbox" class="user-checkbox" value="<?= Html::encode($user->id) ?>">
-                    <?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
-                </label>
-                <br>
-            <?php endforeach; ?>
-            <div class="user-button-container">
-                <button id="select-all-users-btn">
-                    <?= Yii::t('employeeTraining', 'Select all') ?>
-                </button>
-                <button id="confirm-specific-users-btn">
-                    <?= Yii::t('employeeTraining', 'Assign now') ?></button>
-            </div>
-        </div> -->
-
-        <!-- Input for selecting date and time when the training should be assigned -->
-        <!-- <label>
-            <?= Yii::t('employeeTraining', 'Or select time when the training should be assigned:') ?>
-        </label>
-        <input type="datetime-local" id="training-time-picker" name="training-time">
-        <button id="confirm-time-btn">OK</button>
-        <br> -->
-
-        <hr>
-        <!-- Search bar for filtering users -->
-        <!-- <input type="text" id="employee-search-bar"
-            placeholder="<?= Yii::t('employeeTraining', 'Search employees...') ?>"
-            style="margin-bottom:20px; width:100%; padding: 10px"> -->
-
-
         <?php if ($userRole == 'admin'): ?>
             <h2><?= Yii::t('employeeTraining', 'User Setup') ?></h2>
             <div class="collapsible-container">
@@ -87,8 +17,6 @@ use yii\helpers\Url;
                 <div class="content">
                     <!-- Content will be populated dynamically -->
                 </div>
-
-
 
                 <button class="collapsible"
                     data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
@@ -245,6 +173,7 @@ $createTrainingUrl = Url::to(['role/create-training']);
 $fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
 $removeRoleUrl = Url::to(['role/remove-role']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
+$fetchProfilesUrl = Url::to(['role/fetch-profiles']);
 $fetchTitlesUrl = Url::to(['role/fetch-titles']);
 $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
@@ -457,7 +386,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
         // Fetch profiles and display them in the modal
         $.ajax({
-            url: '$fetchAllProfilesUrl',
+            url: '$fetchProfilesUrl',
             type: 'GET',
             success: function(response) {
                 if (response.success) {
@@ -474,8 +403,9 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                     $('#profile-list').html('<p>No profiles found.</p>');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 $('#profile-list').html('<p>Error fetching profiles.</p>');
+                console.error('Error saving scores:', error);
             }
         });
     });
