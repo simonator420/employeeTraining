@@ -24,6 +24,8 @@ class Events
 
         $userRole = $currentUser->identity->profile->role;
 
+        $userId = $currentUser->getId();
+
         // Check if the current logged-in user is an administrator
         if ($userRole == 'admin' || $userRole == 'team_leader') {
             // Add a new menu item for the administrator
@@ -32,6 +34,25 @@ class Events
                 'url' => Url::to(['/employeeTraining/role/admin']), // The url of the menu item
                 'icon' => '<i class="fa fa-info"></i>', // The icon of the menu item
                 'sortOrder' => 100, // The order in which the menu item should appear
+                'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
+            ]);
+        }
+
+        $trainingRecord = Yii::$app->db->createCommand('
+            SELECT * FROM user_training
+            WHERE user_id = :userId AND assigned_training = 1
+            ORDER BY training_assigned_time DESC
+        ')
+            ->bindValue(':userId', $userId)
+            ->queryOne();
+            
+        if ($trainingRecord) {
+            $assignedTrainingId = $trainingRecord['training_id'];
+            $menu->addItem([
+                'label' => Yii::t('employeeTraining', 'Training'), // The label of the menu item
+                'url' => Url::to(['/employeeTraining/role/employee', 'id' => $assignedTrainingId]), // The url of the menu item
+                'icon' => '<i class="fa fa-arrow-circle-o-up"></i>', // The icon of the menu item
+                // 'sortOrder' => 100, // The order in which the menu item should appear
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
             ]);
         }

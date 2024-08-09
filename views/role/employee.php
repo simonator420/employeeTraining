@@ -51,139 +51,137 @@ $script = <<<JS
 // Document ready function to initialize when the page is loaded
 $(document).ready(function() {
     var trainingId = '{$trainingId}';
-    // AJAX request to fetch questions based on the title
-    $.ajax({
-        url: '$displayQuestionsUrl',
-        type: 'GET',
-        data: { training_id: trainingId }, // Pass the training_id dynamically
-        success: function(response) {
-            if (response.success) {
-                // Display the questions in the container
-                $('#questions-container').html(response.html);
-            } else {
-                // Display a message if no questions are available
-                $('#questions-container').html('<p>No questions available.</p>');
+
+    function loadQuestions() {
+        $.ajax({
+            url: '$displayQuestionsUrl',
+            type: 'GET',
+            cache: false, // Disable caching for this request
+            data: { training_id: trainingId }, // Pass the training_id dynamically
+            success: function(response) {
+                if (response.success) {
+                    // Display the questions in the container
+                    $('#questions-container').html(response.html);
+                } else {
+                    // Display a message if no questions are available
+                    $('#questions-container').html('<p>No questions available.</p>');
+                }
+            },
+            error: function() {
+                alert('Error occurred while fetching questions.');
             }
-        },
-        error: function() {
-            alert('Error occurred while fetching questions.');
-        }
-    });
+        });
+    }
+
+    // Load questions when the page is ready
+    loadQuestions();
 
     checkMultipleChoiceSelection();
-});
 
-// Function to hide the video and show the questions
-$('#end-video-btn').on('click', function(e) {
-    document.getElementById('video-container').style.display = 'none';
-    document.getElementById('questions-container').style.display = 'block';
-    document.getElementById('submit-btn').style.display = 'inline';
-});
+    // Function to hide the video and show the questions
+    $('#end-video-btn').on('click', function(e) {
+        document.getElementById('video-container').style.display = 'none';
+        document.getElementById('questions-container').style.display = 'block';
+        document.getElementById('submit-btn').style.display = 'inline';
+    });
 
-function checkMultipleChoiceSelection() {
-    if ($('.multiple-choice-option:checked').length === 0) {
-        // Handle the case when no options are checked
-        console.log("No multiple choice options are selected.");
-    }
-}
+    // Flag to check if training is completed
+    let trainingCompleted = false;
 
-// Flag to check if training is completed
-let trainingCompleted = false;
+    // Event handler for the submit button click
+    $('#submit-btn').on('click', function(e) {
+        e.preventDefault();
 
-// Event handler for the submit button click
-$('#submit-btn').on('click', function(e) {
-    e.preventDefault();
+        if (!trainingCompleted) {
+            let isValid = true;
+            let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
 
-    if (!trainingCompleted) {
-        let isValid = true;
-        let trainingId = '{$trainingId}'; // Get the trainingId from PHP
-        let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
+            console.log(data);
 
-        console.log(data);
+            // Collect answers for text, number, and range inputs
+            $('.question-input').each(function() {
+                let questionId = $(this).data('question-id');
+                let questionText = $(this).data('question-text');
+                let questionType = $(this).data('question-type');
+                let inputValue = $(this).val();
 
-        // Collect answers for text, number, and range inputs
-        $('.question-input').each(function() {
-            let questionId = $(this).data('question-id');
-            let questionText = $(this).data('question-text');
-            let questionType = $(this).data('question-type');
-            let inputValue = $(this).val();
+                if (!inputValue) {
+                    isValid = false;
+                    $(this).css('border', '2px solid red');
+                } else {
+                    $(this).css('border', '1px solid #dee2e6');
+                }
 
-            if (!inputValue) {
-                isValid = false;
-                $(this).css('border', '2px solid red');
-            } else {
-                $(this).css('border', '1px solid #dee2e6');
-            }
-
-            data.TrainingQuestions[questionId] = {
-                question_id: questionId,
-                question: questionText,
-                answer: inputValue,
-                question_type: questionType
-            };
-
-            console.log("Collected normal data: ", questionId, questionText, questionType, inputValue);
-        });
-
-        // Collect multiple-choice answers
-        $('.multiple-choice-option').each(function() {
-            let questionId = $(this).data('question-id');
-            let questionText = $(this).data('question-text');
-            let questionType = $(this).data('question-type');
-            
-            // Initialize the question if it hasn't been added yet
-            if (!data.TrainingQuestions[questionId]) {
                 data.TrainingQuestions[questionId] = {
                     question_id: questionId,
                     question: questionText,
-                    answer: [],
+                    answer: inputValue,
                     question_type: questionType
                 };
-            }
 
-            // Add the value if the option is checked
-            if ($(this).is(':checked')) {
-                data.TrainingQuestions[questionId].answer.push($(this).val());
-            }
-        });
+                console.log("Collected normal data: ", questionId, questionText, questionType, inputValue);
+            });
 
-        // Check if any multiple-choice options are selected
-        $('.multiple-choice-option').each(function() {
-            let questionId = $(this).data('question-id');
-            if (!data.TrainingQuestions[questionId].answer.length) {
-                console.log("No multiple choice options are selected for questionId: ", questionId);
-            }
-        });
+            // Collect multiple-choice answers
+            $('.multiple-choice-option').each(function() {
+                let questionId = $(this).data('question-id');
+                let questionText = $(this).data('question-text');
+                let questionType = $(this).data('question-type');
 
-        console.log(data);
+                // Initialize the question if it hasn't been added yet
+                if (!data.TrainingQuestions[questionId]) {
+                    data.TrainingQuestions[questionId] = {
+                        question_id: questionId,
+                        question: questionText,
+                        answer: [],
+                        question_type: questionType
+                    };
+                }
 
-        if (isValid) {
-            $.ajax({
-                url: '$completeTrainingUrl',
-                type: 'POST',
-                data: data,
-                success: function(response) {
-                    if (response.success) {
-                        alert('Thank you for completing the training!');
-                        trainingCompleted = true;
-                        var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-                        $('#training-complete-time-' + response.userId).text(currentTime);
-                        window.location.href = $('#submit-btn').attr('href');
-                    } else {
-                        alert('Failed to complete the training. Please try again or contact System Administrator.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-                    alert('Error in AJAX request. Please try again or contact System Administrator.');
+                // Add the value if the option is checked
+                if ($(this).is(':checked')) {
+                    data.TrainingQuestions[questionId].answer.push($(this).val());
                 }
             });
+
+            console.log(data);
+
+            if (isValid) {
+                $.ajax({
+                    url: '$completeTrainingUrl',
+                    type: 'POST',
+                    data: data,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Thank you for completing the training!');
+                            trainingCompleted = true;
+                            var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                            $('#training-complete-time-' + response.userId).text(currentTime);
+                            window.location.href = $('#submit-btn').attr('href');
+                        } else {
+                            alert('Failed to complete the training. Please try again or contact System Administrator.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        alert('Error in AJAX request. Please try again or contact System Administrator.');
+                    }
+                });
+            }
+        }
+    });
+
+    function checkMultipleChoiceSelection() {
+        if ($('.multiple-choice-option:checked').length === 0) {
+            // Handle the case when no options are checked
+            console.log("No multiple choice options are selected.");
         }
     }
 });
 JS;
 $this->registerJs($script);
 ?>
+
 
 <style>
     .employee-training-container {
