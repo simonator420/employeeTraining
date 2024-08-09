@@ -128,6 +128,7 @@ $fetchTitlesUrl = Url::to(['role/fetch-titles']);
 $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
+$removeTrainingUrl = Url::to(['role/remove-training']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
@@ -319,7 +320,9 @@ $(document).on('click', '#assign-users-btn', function() {
             if (response.success) {
                 var profilesHtml = '<ul>';
                 $.each(response.profiles, function(index, profile) {
-                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + (profile.isAssigned ? ' checked' : '') + '> ' + profile.firstname + ' ' + profile.lastname + '</li>';
+                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
+                                (profile.isAssigned ? ' checked data-was-assigned="true"' : '') + '> ' + 
+                                profile.firstname + ' ' + profile.lastname + '</li>';
                 });
                 profilesHtml += '</ul>';
                 $('#profile-list').html(profilesHtml);
@@ -415,42 +418,75 @@ $(document).on('click', '#submit-filter-btn', function() {
 
 $(document).on('click', '#submit-assign-users', function() {
     var selectedUserIds = [];
-    $('#profile-list').find('.profile-checkbox:checked').each(function() {
-        selectedUserIds.push($(this).val());
+    var unassignUserIds = [];
+
+    $('#profile-list').find('.profile-checkbox').each(function() {
+        if ($(this).is(':checked')) {
+            selectedUserIds.push($(this).val());
+        } else if ($(this).data('was-assigned')) {
+            unassignUserIds.push($(this).val());
+        }
     });
 
-    if (selectedUserIds.length === 0) {
-        alert('Please select at least one user to assign the training.');
+    if (selectedUserIds.length === 0 && unassignUserIds.length === 0) {
+        alert('Please select at least one user to assign or unassign the training.');
         return;
     }
 
-    var trainingId = $('h3[data-training-id]').data('training-id'); // Retrieve the trainingId from the data attribute
+    var trainingId = $('h3[data-training-id]').data('training-id');
     var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    $.ajax({
-        url: '$toggleTrainingUrl',
-        type: 'POST',
-        data: {
-            user_ids: selectedUserIds,
-            assigned_training: 1,
-            training_assigned_time: currentTime,
-            training_id: trainingId,
-            _csrf: yii.getCsrfToken()
-        },
-        success: function(response) {
-            if (response.success) {
-                alert(response.count + ' users have been assigned the training.');
-                location.reload(); // Reload the page to see the updated assigned users count
-            } else {
-                alert('Failed to assign training to users.');
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error occurred while assigning training.');
-            console.log("Error details:", xhr.responseText, status, error);
-        }
-    });
+    // Unassign users first
+    if (unassignUserIds.length > 0) {
+        $.ajax({
+            url: '$removeTrainingUrl', // Add a URL or endpoint for unassigning
+            type: 'POST',
+            data: {
+                user_ids: unassignUserIds,
+                training_id: trainingId,
+                _csrf: yii.getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log(response.message); // For debugging
+                } else {
+                    alert('Failed to unassign training from some users.');
+                }
+            },
+        });
+    }
+
+    // Assign training to checked users
+    if (selectedUserIds.length > 0) {
+        $.ajax({
+            url: '$toggleTrainingUrl',
+            type: 'POST',
+            data: {
+                user_ids: selectedUserIds,
+                assigned_training: 1,
+                training_assigned_time: currentTime,
+                training_id: trainingId,
+                _csrf: yii.getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log(response.message);
+                } else {
+                    console.log('User has already training assigned.');
+                }
+            },
+        });
+    }
+
+    if (selectedUserIds.length > 0 || unassignUserIds.length > 0) {
+        location.reload();
+    }
+
 });
+
+
+
+
 
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {

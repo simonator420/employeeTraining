@@ -8,10 +8,10 @@ use yii\helpers\Url;
 <!-- View for displaying informations about the users. -->
 <div class="employee-overview-container">
     <div class="employee-info-card">
-        <h1><?= Yii::t('employeeTraining', 'Employee Training Overview') ?></h1>
+        <h1><?= Yii::t('employeeTraining', 'ILLE Employee Trainings') ?></h1>
 
         <!-- Checkboxes for each title with label "Assign to all" -->
-        <label><?= Yii::t('employeeTraining', 'Assign training to all employees with title:') ?></label>
+        <!-- <label><?= Yii::t('employeeTraining', 'Assign training to all employees with title:') ?></label>
         <div id="title-checkboxes">
             <?php foreach ($titles as $title): ?>
                 <label class="checkbox-label">
@@ -20,10 +20,10 @@ use yii\helpers\Url;
                 </label>
             <?php endforeach; ?>
         </div>
-        <br>
+        <br> -->
 
         <!-- Checkboxes for each storage location with label "with storage location in:" -->
-        <label><?= Yii::t('employeeTraining', 'With storage location in:') ?></label>
+        <!-- <label><?= Yii::t('employeeTraining', 'With storage location in:') ?></label>
         <div id="storage-location-checkboxes">
             <?php foreach ($storage_locations as $location): ?>
                 <label class="checkbox-label">
@@ -32,23 +32,23 @@ use yii\helpers\Url;
                 </label>
             <?php endforeach; ?>
         </div>
-        <br>
+        <br> -->
 
         <!-- Buttons for selecting all employee filters and confirmation of training assignment -->
-        <button id="select-all-btn"><?= Yii::t('employeeTraining', 'Select all') ?></button>
+        <!-- <button id="select-all-btn"><?= Yii::t('employeeTraining', 'Select all') ?></button>
         <button id="confirm-selection-btn"><?= Yii::t('employeeTraining', 'Assign now') ?></button>
 
         <br>
-        <br>
+        <br> -->
 
         <!-- Button to toggle visibility of the user list for specific training assignment -->
-        <button id="toggle-user-list-btn">
+        <!-- <button id="toggle-user-list-btn">
             <?= Yii::t('employeeTraining', 'Assign training to specific users') ?><span id="arrow-down"> ▼</span>
         </button>
-        <br><br>
+        <br><br> -->
 
         <!-- User list for specific training assignment, hidden by default -->
-        <div id="user-list" style="display: none;">
+        <!-- <div id="user-list" style="display: none;">
             <?php foreach ($users as $user): ?>
                 <label class="checkbox-label">
                     <input type="checkbox" class="user-checkbox" value="<?= Html::encode($user->id) ?>">
@@ -63,15 +63,15 @@ use yii\helpers\Url;
                 <button id="confirm-specific-users-btn">
                     <?= Yii::t('employeeTraining', 'Assign now') ?></button>
             </div>
-        </div>
+        </div> -->
 
         <!-- Input for selecting date and time when the training should be assigned -->
-        <label>
+        <!-- <label>
             <?= Yii::t('employeeTraining', 'Or select time when the training should be assigned:') ?>
         </label>
         <input type="datetime-local" id="training-time-picker" name="training-time">
         <button id="confirm-time-btn">OK</button>
-        <br>
+        <br> -->
 
         <hr>
         <!-- Search bar for filtering users -->
@@ -139,7 +139,7 @@ use yii\helpers\Url;
                         <td><?= Html::encode($training['name']) ?></td>
                         <td><?= Html::encode($training['created_at']) ?></td>
                         <td><?= Html::encode($activeAssignedTrainingsCount[$training['id']] ?? 0) ?></td>
-                        </tr>
+                    </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
@@ -228,7 +228,7 @@ var currentTime = null;
 var now = new Date();
 var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
-document.getElementById("training-time-picker").setAttribute("min", currentTime);
+// document.getElementById("training-time-picker").setAttribute("min", currentTime);
     
     // Event handler for creating a new training row
     $('#create-training-btn').on('click', function() {
@@ -932,7 +932,7 @@ document.getElementById("training-time-picker").setAttribute("min", currentTime)
 
     $('#employee-search-bar').on('input', function() {
         var searchTerm = $(this).val().toLowerCase();
-        console.log("Search Term:", searchTerm);
+        console.log("Search Term:", searchTerm);ß
 
         $('.employee-info-container').each(function() {
             var user = $(this).find('.employee-info');

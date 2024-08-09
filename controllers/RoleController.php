@@ -366,13 +366,6 @@ class RoleController extends Controller
         $successCount = 0;
 
         foreach ($userIds as $userId) {
-            // Calculate the deadline
-            if ($deadlineForCompletion && $trainingAssignedTime) {
-                $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
-            } else {
-                $deadline = null;
-            }
-
             // Check if the record already exists
             $userTrainingRecord = Yii::$app->db->createCommand('
                 SELECT * 
@@ -383,24 +376,24 @@ class RoleController extends Controller
                 ->bindValue(':training_id', $trainingId)
                 ->queryOne();
 
+            
             if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 1) {
-                // Update existing record if assigned_training is 1
-                $result = Yii::$app->db->createCommand()
-                    ->update(
-                        'user_training',
-                        [
-                            'assigned_training' => $assignedTraining,
-                            'training_assigned_time' => $trainingAssignedTime,
-                            'deadline' => $deadline,
-                        ],
-                        [
-                            'user_id' => $userId,
-                            'training_id' => $trainingId,
-                        ]
-                    )
-                    ->execute();
+                // If the user already has the training assigned, skip them
+                Yii::warning("User recooooord existuje pro " . $userId);
+                $successCount++;
+                continue;
+            }
+
+            // Calculate the deadline
+            if ($deadlineForCompletion && $trainingAssignedTime) {
+                $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
             } else {
-                // Insert new record if assigned_training is 0 or record doesn't exist
+                $deadline = null;
+            }
+
+            $result = false;
+            // Insert new record or update existing record
+            if (!$userTrainingRecord) {
                 $result = Yii::$app->db->createCommand()
                     ->insert(
                         'user_training',
@@ -438,6 +431,49 @@ class RoleController extends Controller
 
         return ['success' => false, 'message' => "No users assigned to training."];
     }
+
+    public function actionRemoveTraining()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $userIds = Yii::$app->request->post('user_ids', []); // Expect an array of user IDs
+        $trainingId = Yii::$app->request->post('training_id');
+
+        $successCount = 0;
+
+        foreach ($userIds as $userId) {
+            $result = Yii::$app->db->createCommand()
+                ->delete('user_training', [
+                    'user_id' => $userId,
+                    'training_id' => $trainingId,
+                ])
+                ->execute();
+
+            if ($result) {
+                $successCount++;
+            }
+        }
+
+        // Update the training's assigned_users_count with the actual count of user_training records
+        if ($successCount > 0) {
+            Yii::$app->db->createCommand()
+                ->update(
+                    'training',
+                    ['assigned_users_count' => new \yii\db\Expression('(SELECT COUNT(*) FROM user_training WHERE training_id = :training_id AND assigned_training = 1)')],
+                    ['id' => $trainingId]
+                )
+                ->bindValue(':training_id', $trainingId)
+                ->execute();
+        }
+
+        if ($successCount > 0) {
+            return ['success' => true, 'message' => "$successCount users unassigned from training."];
+        }
+
+        return ['success' => false, 'message' => "No users unassigned from training."];
+    }
+
+
 
     public function actionAssignTraining()
     {

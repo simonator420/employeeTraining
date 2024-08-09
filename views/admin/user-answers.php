@@ -3,11 +3,6 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-/* @var $this yii\web\View */
-/* @var $user common\models\User */
-/* @var $trainings array */
-/* @var $answers array */
-
 // $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
 $this->title = 'Training Answers - ';
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
