@@ -5,11 +5,20 @@ use yii\helpers\Html;
 ?>
 
 <div class="side-panel">
+    <?php
+    $trainingId = Yii::$app->db->createCommand('
+        SELECT training_id
+        FROM user_training 
+        WHERE user_id = :userId AND assigned_training = 1;
+        ')
+        ->bindValue(':userId', $user = Yii::$app->user->id, \PDO::PARAM_INT)
+        ->queryScalar();
+    ?>
     <h3> <?= Yii::t('employeeTraining', "Training Assignment") ?></h3>
     <p class="training-message">Dear <b> <?= Html::encode($firstName) ?> </b>, you have been assigned a mandatory
         training. Please complete it at your earliest convenience.</p>
     <div class="text-center">
-        <?= Html::a('Go to Training', ['/employeeTraining/role/employee'], ['class' => 'btn btn-primary']) ?>
+        <?= Html::a('Go to Training', ['/employeeTraining/role/employee', 'id' => $trainingId], ['class' => 'btn btn-primary']) ?>
     </div>
 </div>
 

@@ -26,12 +26,12 @@ use yii\helpers\Url;
         <?php if ($videoUrl != null): ?>
             
             <div class="form-group" id="video-container" style="text-align: center;">
-                <label for="training-video"><?= Yii::t('employeeTraining', 'Training Video') ?></label><br>
+                <!-- <label for="training-video"><?= Yii::t('employeeTraining', 'Training Video') ?></label><br> -->
                 <video id="training-video" width="auto" controls>
                     <source src="<?= Url::to('@web/' . $videoUrl) ?>" type="video/mp4">
                     Your browser does not support the video tag.
                 </video><br>
-                <button id="end-video-btn" class="btn btn-secondary">End Video</button>
+                <button id="end-video-btn" class="btn btn-secondary">Continue</button>
             </div>
             <div id="questions-container" style="display: none;"></div>
             <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>

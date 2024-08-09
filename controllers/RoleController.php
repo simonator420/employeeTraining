@@ -154,6 +154,30 @@ class RoleController extends Controller
         }
     }
 
+    public function actionFetchUsersByRoleAndTitle($role, $title)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $users = User::find()
+            ->joinWith('profile')
+            ->where(['profile.role' => $role, 'profile.title' => $title])
+            ->all();
+
+        if ($users) {
+            $userList = [];
+            foreach ($users as $user) {
+                $userList[] = [
+                    'id' => $user->id,
+                    'firstname' => $user->profile->firstname,
+                    'lastname' => $user->profile->lastname,
+                ];
+            }
+            return ['success' => true, 'users' => $userList];
+        } else {
+            return ['success' => false, 'message' => 'No users found.'];
+        }
+    }
+
     public function actionFetchAllProfiles($trainingId)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -216,12 +240,48 @@ class RoleController extends Controller
         return ['success' => false, 'locations' => []];
     }
 
+    public function actionFetchCollapsibleTitles($role)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            // Fetch distinct titles based on the role provided
+            $titles = \Yii::$app->db->createCommand('
+            SELECT DISTINCT title 
+            FROM profile
+            WHERE role = :role AND title IS NOT NULL AND title != ""
+        ')
+                ->bindValue(':role', $role)
+                ->queryColumn();
+
+            if (!empty($titles)) {
+                return [
+                    'success' => true,
+                    'titles' => $titles
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'titles' => [],
+                    'message' => 'No titles found for the selected role.'
+                ];
+            }
+        } catch (\Exception $e) {
+            \Yii::error("Failed to fetch titles: " . $e->getMessage(), __METHOD__);
+            return [
+                'success' => false,
+                'message' => 'An error occurred while fetching titles.'
+            ];
+        }
+    }
+
+
     public function actionFetchFilteredUsers($title = null, $location = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $query = (new \yii\db\Query())
-            ->select(['user_id', 'firstname', 'lastname'])
+            ->select(['user_id', 'firstname', 'lastname', 'title', 'storage_location'])  // Select necessary fields
             ->from('profile');
 
         if ($title) {
@@ -232,14 +292,49 @@ class RoleController extends Controller
             $query->andWhere(['storage_location' => $location]);
         }
 
-        $users = $query->all();
+        $users = $query->all();  // Fetch all matching users
 
         if ($users) {
-            return ['success' => true, 'users' => $users];
+            foreach ($users as &$user) {
+                // Calculate completed trainings count for each user
+                $user['completed_trainings_count'] = Yii::$app->db->createCommand('
+                    SELECT COUNT(*) 
+                    FROM user_training 
+                    WHERE user_id = :userId 
+                    AND assigned_training = 0
+                ')
+                    ->bindValue(':userId', $user['user_id'])
+                    ->queryScalar();
+
+                // Calculate open trainings count for each user
+                $user['open_trainings_count'] = Yii::$app->db->createCommand('
+                    SELECT COUNT(*) 
+                    FROM user_training 
+                    WHERE user_id = :userId 
+                    AND assigned_training = 1
+                ')
+                    ->bindValue(':userId', $user['user_id'])
+                    ->queryScalar();
+
+                // Get latest training complete time for each user
+                $latestTrainingTime = Yii::$app->db->createCommand('
+                    SELECT MAX(training_assigned_time)
+                    FROM user_training
+                    WHERE user_id = :userId
+                    AND assigned_training = 0
+                ')
+                    ->bindValue(':userId', $user['user_id'])
+                    ->queryScalar();
+
+                // If no training time is found, set to "N/A"
+                $user['latest_training_complete_time'] = $latestTrainingTime ? $latestTrainingTime : 'N/A';
+            }
+            return ['success' => true, 'users' => $users];  // Return users with all calculated fields
         }
 
-        return ['success' => false, 'users' => []];
+        return ['success' => false, 'users' => []];  // No users found
     }
+
 
 
     public function actionAddRole()
@@ -376,12 +471,17 @@ class RoleController extends Controller
                 ->bindValue(':training_id', $trainingId)
                 ->queryOne();
 
-            
+
             if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 1) {
                 // If the user already has the training assigned, skip them
                 Yii::warning("User recooooord existuje pro " . $userId);
                 $successCount++;
                 continue;
+            }
+
+            if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 0) {
+                // If the user already has the training assigned, skip them
+                Yii::warning("User recooooord s NULOUUUU existuje pro " . $userId);
             }
 
             // Calculate the deadline
@@ -405,6 +505,14 @@ class RoleController extends Controller
                             'deadline' => $deadline,
                         ]
                     )
+                    ->execute();
+            } else {
+                Yii::$app->db->createCommand()->update(
+                    'user_training',
+                    [
+                        'assigned_training' => 1,
+                    ]
+                )
                     ->execute();
             }
 

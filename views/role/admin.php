@@ -87,6 +87,9 @@ use yii\helpers\Url;
                 <div class="content">
                     <!-- Content will be populated dynamically -->
                 </div>
+
+
+
                 <button class="collapsible"
                     data-role="team_leader"><?= Yii::t('employeeTraining', 'Team Leader') ?></button>
                 <div class="content">
@@ -117,8 +120,9 @@ use yii\helpers\Url;
 
 
         <h2><?= Yii::t('employeeTraining', 'Trainings') ?></h2>
+
         <!-- Training Information Table -->
-        <table class="table table-striped table-bordered" id="training-table">
+        <table class="table table-training table-bordered" id="training-table">
             <thead>
                 <tr>
                     <th><strong><?= Yii::t('employeeTraining', 'Training ID') ?></strong></th>
@@ -154,8 +158,29 @@ use yii\helpers\Url;
         <br>
         <br>
 
+
         <!-- User Information Table -->
         <table class="table table-striped table-bordered">
+
+            <div id="filter-list" class="flex-container"  style="display: flex; align-items:center;">
+                <form id="filter-form" class="flex-form">
+                    <div class="form-group">
+                        <label for="title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
+                        <select id="title-select" class="form-control">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="location-select"><?= Yii::t('employeeTraining', 'Select Location') ?></label>
+                        <select id="location-select" class="form-control">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    <button type="button" id="submit-filter-btn"
+                        class="btn btn-success"><?= Yii::t('employeeTraining', 'Filter') ?></button>
+                </form>
+            </div>
+
             <thead>
                 <tr>
                     <th><strong><?= Yii::t('employeeTraining', 'ID') ?></strong></th>
@@ -176,7 +201,7 @@ use yii\helpers\Url;
                         data-location="<?= Html::encode($user->profile->storage_location) ?>"
                         data-fullname="<?= Html::encode($user->profile->firstname . ' ' . $user->profile->lastname) ?>"
                         data-username="<?= Html::encode($user->username) ?>">
-                        <td><?= Html::encode($user->id) ?></td>
+                        <td class="user_id"><?= Html::encode($user->id) ?></td>
                         <td>
                             <a href="<?= Url::to(['role/user-answers', 'id' => Html::encode($user->id)]) ?>"
                                 style="color: blue; text-decoration: underline;">
@@ -220,6 +245,9 @@ $createTrainingUrl = Url::to(['role/create-training']);
 $fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
 $removeRoleUrl = Url::to(['role/remove-role']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
+$fetchTitlesUrl = Url::to(['role/fetch-titles']);
+$fetchLocationsUrl = Url::to(['role/fetch-locations']);
+$fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $addRoleUrl = Url::to(['role/add-role']);
 $script = <<<JS
 
@@ -581,8 +609,101 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             }
         });
     });
+
+    $(document).on('click', '#submit-filter-btn', function() {
+        var selectedTitle = $('#title-select').val();
+        var selectedLocation = $('#location-select').val();
+
+        console.log('Selected title: ' + selectedTitle + ' Selected location: ' + selectedLocation);
+
+        $.ajax({
+            url: '$fetchFilteredUsersUrl',  // Replace with the actual URL that fetches filtered users
+            type: 'GET',
+            data: {
+                title: selectedTitle,
+                location: selectedLocation
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Clear the current table body
+                    var tableBody = $('table.table-striped tbody');
+                    tableBody.empty();
+
+                    // Iterate over the filtered users and append them to the table
+                    if (response.users && response.users.length > 0) {
+                        $.each(response.users, function(index, user) {
+                            var userRow = '<tr data-fullname="' + 
+                            user.firstname + ' ' + 
+                            user.lastname + '">';
+                        userRow += '<td>' + user.user_id + '</td>'; // Add user ID as the first column
+                        userRow += '<td><a href="/role/user-answers?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
+                            user.firstname + " " + user.lastname + '</a></td>'
+                        userRow += '<td>' + user.title + '</td>';
+                        userRow += '<td>' + user.storage_location + '</td>';
+                        userRow += '<td>' + user.latest_training_complete_time + '</td>';  // Add latest training complete time (or "N/A")
+                        userRow += '<td>' + user.open_trainings_count + '</td>';
+                        userRow += '<td>' + user.completed_trainings_count + '</td>';
+                        // Add other columns as needed
+                        userRow += '</tr>';
+                            
+                            tableBody.append(userRow);
+                        });
+                    } else {
+                        // If no users match the filter, display a message
+                        tableBody.append('<tr><td colspan="7">No users found for the selected criteria.</td></tr>');
+                    }
+                } else {
+                    alert('No users found for the selected criteria.');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error fetching filtered users');
+                console.log(xhr.responseText);
+            }
+        });
+    });
+
+
     // Function ensuring that the code inside runs only after the whole HTML document has been fully loaded
     $(document).ready(function() {
+        var title = 'Assign Users'; // Adjust the title as needed
+        $('#modal-title').text(title);
+
+        $.ajax({
+            url: '$fetchTitlesUrl',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var titleOptions = '<option value="">All Jobs</option>';
+                    $.each(response.titles, function(index, title) {
+                        titleOptions += '<option value="' + title + '">' + title + '</option>';
+                    });
+                    $('#title-select').html(titleOptions);
+                }
+            },
+            error: function() {
+                alert('Error fetching titles');
+            }
+        });
+
+        $.ajax({
+            url: '$fetchLocationsUrl',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var locationOptions = '<option value="">All Locations</option>';
+                    $.each(response.locations, function(index, location) {
+                        locationOptions += '<option value="' + location + '">' + location + '</option>';
+                    });
+                    $('#location-select').html(locationOptions);
+                }
+            },
+            error: function() {
+                alert('Error fetching locations');
+            }
+        });
+
+
     
     // Variable to track the toggle state of the action (check/uncheck)
     var toggleState = false;

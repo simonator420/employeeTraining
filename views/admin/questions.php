@@ -372,8 +372,6 @@ $(document).on('click', '#assign-users-btn', function() {
     }
 });
 
-
-
 span.onclick = function() {
     modal.style.display = "none";
     $('body').css('overflow', 'auto'); // Enable scrolling
@@ -423,8 +421,10 @@ $(document).on('click', '#submit-assign-users', function() {
     $('#profile-list').find('.profile-checkbox').each(function() {
         if ($(this).is(':checked')) {
             selectedUserIds.push($(this).val());
+            console.log('Tenhle je checked: ', $(this).val())
         } else if ($(this).data('was-assigned')) {
             unassignUserIds.push($(this).val());
+            console.log('Tenhle byl checked: ', $(this).val())
         }
     });
 
@@ -483,10 +483,6 @@ $(document).on('click', '#submit-assign-users', function() {
     }
 
 });
-
-
-
-
 
 // Event handler for the "Add Question" click
 $('#add-question-btn').on('click', function() {

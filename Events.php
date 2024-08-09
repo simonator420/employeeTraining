@@ -87,9 +87,9 @@ class Events
         $user = Yii::$app->user;
         $userId = $user->getId();
         // Retrieve the assigned_training status from the profile table
-        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
-            ->bindValue(':userId', $userId)
-            ->queryScalar();
+        // $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM profile WHERE user_id=:userId')
+        //     ->bindValue(':userId', $userId)
+        //     ->queryScalar();
 
         // Retrieve the training_assigned_time time from the profile table
         $training_assigned_time = Yii::$app->db->createCommand('SELECT training_assigned_time FROM profile WHERE user_id=:userId')
@@ -102,19 +102,23 @@ class Events
             ->queryScalar();
 
         // Checking if all the conditions 
-        if ($training_assigned_time && strtotime($training_assigned_time) <= time() && !$training_complete_time) {
-            // Update the assigned_training status to 1
-            Yii::$app->db->createCommand()
-                ->update('profile', ['assigned_training' => 1], 'user_id = :userId')
-                ->bindValue(':userId', $userId)
-                ->execute();
+        // if ($training_assigned_time && strtotime($training_assigned_time) <= time() && !$training_complete_time) {
+        //     // Update the assigned_training status to 1
+        //     Yii::$app->db->createCommand()
+        //         ->update('profile', ['assigned_training' => 1], 'user_id = :userId')
+        //         ->bindValue(':userId', $userId)
+        //         ->execute();
 
-            // Refresh assigned_training status
-            $assigned_training = 1;
-        }
+        //     // Refresh assigned_training status
+        //     $assigned_training = 1;
+        // }
+
+        $assigned_training = Yii::$app->db->createCommand('SELECT assigned_training FROM user_training WHERE user_id=:userId AND assigned_training = 1')
+            ->bindValue(':userId', $userId)
+            ->queryScalar();
 
         // Check if the user has an assigned training
-        if ($assigned_training == 1) {
+        if ($assigned_training) {
             // Retrieve the first name from the profile of currently logged-in user
             $firstName = $user->identity->profile->firstname;
             // Adds the SidePanel widget to the sidebar, specifies the class name of the widget to be added, passes the user's first name to the widget, specifies the order in which the widget should appear in the sidebar
