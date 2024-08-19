@@ -120,7 +120,7 @@ use yii\helpers\Url;
 </div>
 
 <?php
-$createQuestionsUrl = Url::to(['training-questions/save-questions']);
+$saveQuestionsUrl = Url::to(['training-questions/save-questions']);
 $fetchQuestionsUrl = Url::to(['training-questions/fetch-questions']);
 $updateDeadlineUrl = Url::to(['training-questions/update-deadline']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
@@ -576,7 +576,7 @@ $('#submit-btn').on('click', function() {
 
     if (isValid) {
         $.ajax({
-            url: '$createQuestionsUrl',
+            url: '$saveQuestionsUrl',
             type: 'POST',
             data: formData,
             processData: false,

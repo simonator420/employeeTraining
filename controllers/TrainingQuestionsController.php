@@ -13,7 +13,7 @@ use yii\helpers\Url;
 
 class TrainingQuestionsController extends Controller
 {
-    // Function for displaying the questions page
+    // Function for displaying the questions page for Admin or Team Leader
     public function actionQuestions($id)
     {
         // Get the current user
@@ -29,24 +29,28 @@ class TrainingQuestionsController extends Controller
             return $this->redirect(['site/access-denied']);
         }
 
+        // Retrieve the training name for the specified training ID using a prepared query
         $trainingName = Yii::$app->db->createCommand('SELECT name FROM training WHERE id=:id')
             ->bindValue(':id', $id)
             ->queryScalar(); // Use the prepared query
 
+        // Retrieve the deadline for completing the training for the specified training ID
         $deadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id =:id')
             ->bindValue(':id', $id)
             ->queryScalar();
 
+        // Count the number of users assigned to the specified training
         $assignedUsersCount = Yii::$app->db->createCommand('SELECT COUNT(*) FROM user_training WHERE assigned_training = 1 AND training_id =:training_id')
             ->bindValue(':training_id', $id)
             ->queryScalar();
 
         // Fetch distinct titles from the profile table
         $titles = Yii::$app->db->createCommand('SELECT DISTINCT title FROM profile')->queryColumn();
+
         // Sort the titles alphabetically
         sort($titles);
 
-        // Render the questions view for admin with the fetched titles
+        // Render the questions view for admin, passing the fetched titles, training details, and user role
         return $this->render('/admin/questions', [
             'titles' => $titles,
             'trainingId' => $id,
@@ -57,23 +61,26 @@ class TrainingQuestionsController extends Controller
         ]);
     }
 
-    // Function for retrieving the questions from database and displaying them for ADMIN
+    // Function for retrieving the questions from database and displaying them for ADMIN at questions.php for editing
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        // Fetch the training record based on the provided training ID
         $training = Yii::$app->db->createCommand('SELECT * FROM training WHERE id = :id')
             ->bindValue(':id', $id)
             ->queryOne();
 
+        // Fetch all active questions related to the specified training, ordered by their ID
         $questions = Yii::$app->db->createCommand('SELECT * FROM training_questions WHERE training_id = :id AND is_active = 1 ORDER BY `id`')
             ->bindValue(':id', $id)
             ->queryAll();
 
+        // Initialize an empty string to build the HTML content
         $html = '';
 
 
-        // Display video upload field
+        // If there is a video associated with the training, display it
         if (!empty($training['video_url'])) {
             $html .= '<div class="form-group">';
             // $html .= '<label for="existing-video">' . Yii::t('employeeTraining', 'Existing Training Video') . '</label>';
@@ -85,24 +92,34 @@ class TrainingQuestionsController extends Controller
         }
 
         if ($questions) {
+            // Create a div for each question item
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
                 $html .= '<label>Question ' . ($index + 1) . '</label>';
+
+                // Create a dropdown for selecting the question type (text, number, range, multiple choice)
                 $html .= '<div class="form-group">';
                 $html .= Html::dropDownList("TrainingQuestions[$index][type]", $question['type'], ['text' => 'Text', 'number' => 'Number', 'range' => 'Range', 'multiple_choice' => 'Multiple Choice'], ['class' => 'form-control question-type']);
                 $html .= '</div>';
+
+                // Create a text input for entering the question text
                 $html .= '<div class="form-group">';
                 $html .= Html::textInput("TrainingQuestions[$index][question]", $question['question'], ['class' => 'form-control question-text', 'placeholder' => 'Enter your question here']);
                 $html .= '</div>';
 
+                // If the question type is multiple choice, display the options
                 if ($question['type'] == 'multiple_choice') {
                     $html .= '<div class="form-group multiple-choice-container">';
+
+                    // Fetch all active options for the current multiple choice question
                     $options = Yii::$app->db->createCommand('SELECT * FROM training_multiple_choice_answers WHERE question_id = :question_id AND is_active = 1')
                         ->bindValue(':question_id', $question['id'])
                         ->queryAll();
 
+                    // Loop through each option and generate the corresponding HTML
                     $html .= '<div class="form-group multiple-choice-options">';
                     foreach ($options as $optionIndex => $option) {
+                        // Create an input group for each option
                         $html .= '<div class="input-group" style="display: flex; align-items: center; padding-bottom: 10px; gap: 5px">';
                         $html .= '<div class="input-group-prepend">';
                         $html .= '<div class="input-group-text">';
@@ -113,6 +130,8 @@ class TrainingQuestionsController extends Controller
                         $html .= '</div>';
                     }
                     $html .= '</div>';
+
+                    // Buttons to add or remove options
                     $html .= '<div class="form-group">';
                     $html .= '<button type="button" class="btn btn-secondary add-option-btn">+ Add Option</button>';
                     $html .= '<button type="button" class="btn btn-danger remove-option-btn">- Remove Option</button>';
@@ -120,6 +139,7 @@ class TrainingQuestionsController extends Controller
                     $html .= '</div>';
                 }
 
+                // If the question type is text, display the correct answer field
                 if ($question['type'] == 'text') {
                     $html .= '<div class="form-group" style="display: flex; align-items: center;">';
                     $html .= '<p style="margin-right: 7px; padding-top:10px; font-weight:bold;">Correct answer:</p>';
@@ -128,6 +148,7 @@ class TrainingQuestionsController extends Controller
                 }
 
 
+                // Display an existing image if one is associated with the question, with an option to remove it
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {
                     $html .= Html::img(Url::to('@web/' . $question['image_url']), ['alt' => 'Image', 'style' => 'max-width: 200px; max-height: 200px;']);
@@ -135,79 +156,94 @@ class TrainingQuestionsController extends Controller
                     $html .= Html::button('Remove image', ['class' => 'btn btn-danger remove-image-btn', 'data-index' => $index, 'style' => 'display: block;']);
                     $html .= Html::hiddenInput("TrainingQuestions[$index][remove_image]", 0, ['class' => 'remove-image-input']);
                 }
+                // Input for uploading a new image
                 $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image"' . ($question['image_url'] ? ' style="display:none;"' : '') . '>';
                 $html .= '</div>';
+
                 $html .= '</div>';
                 $html .= '<br>';
             }
+
+            // Return the generated HTML as a successful response
             return ['success' => true, 'html' => $html];
         } else {
+
+            // If no questions are found, return a failure response
             return ['success' => false];
         }
     }
 
-    // Function for saving questions into database by admin
+    // Function for saving questions into database by ADMIN from questions.php
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        // Retrieve the training ID and questions data from the POST request
         $trainingId = Yii::$app->request->post('trainingId');
         $questions = Yii::$app->request->post('TrainingQuestions', []);
+
+        // Retrieve uploaded files for questions and the training video
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
         $videoFile = UploadedFile::getInstanceByName('trainingVideo');
 
+        // Check if training ID is provided
         if (empty($trainingId)) {
             return ['success' => false, 'errors' => 'Training ID is required'];
         }
 
+        // Start a database transaction
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            // Mark existing questions as inactive
+            // Mark existing questions for this training as inactive
             Yii::$app->db->createCommand()->update('training_questions', [
                 'is_active' => false
             ], ['training_id' => $trainingId])->execute();
 
-            // Fetch the question IDs for the given training
+            // Fetch the IDs of existing questions for the given training 
             $questionIds = Yii::$app->db->createCommand('
                 SELECT id FROM training_questions WHERE training_id = :trainingId
             ')
                 ->bindValue(':trainingId', $trainingId)
                 ->queryColumn();
 
-            // Mark existing multiple choice answers as inactive
+            // If there are existing questions, mark their associated multiple choice answers as inactive
             if (!empty($questionIds)) {
                 Yii::$app->db->createCommand()->update('training_multiple_choice_answers', [
                     'is_active' => false
                 ], ['question_id' => $questionIds])->execute();
             }
 
+            // Array the store the IDs of newly inserted questions
             $newQuestionIds = [];
 
+            // Handle the video file upload, if provided
             $videoUrl = null;
             if ($videoFile) {
+                // Define the path to save the video file
                 $videoPath = 'uploads/' . $videoFile->baseName . '.' . $videoFile->extension;
                 if ($videoFile->saveAs($videoPath)) {
                     $videoUrl = $videoPath;
-                    // Save the video URL to the database
+                    // Save the video URL to the training record in the database
                     Yii::$app->db->createCommand()->update('training', [
                         'video_url' => $videoUrl
                     ], ['id' => $trainingId])->execute();
+
                 } else {
                     return ['success' => false, 'errors' => 'Failed to save the video file.'];
                 }
             }
 
-
-            // Process each question
+            // Process each question submitted in the form
             foreach ($questions as $index => $questionData) {
                 $questionText = $questionData['question'];
                 $correctAnswer = isset($questionData['correct_answer']) ? $questionData['correct_answer'] : null;
                 $questionType = $questionData['type'];
 
-                // Handle image upload
+                // Handle image file upload for the question, if provided
                 $imageFile = UploadedFile::getInstanceByName('TrainingQuestions[' . $index . '][image]');
                 $imageUrl = isset($questionData['existing_image']) ? $questionData['existing_image'] : null;
                 if ($imageFile) {
+                    // Define the path to save the image file
                     $imagePath = 'uploads/' . $imageFile->baseName . '.' . $imageFile->extension;
                     if ($imageFile->saveAs($imagePath)) {
                         $imageUrl = $imagePath;
@@ -216,7 +252,7 @@ class TrainingQuestionsController extends Controller
                     }
                 }
 
-                // Insert new question
+                // Insert the new question into the database
                 Yii::$app->db->createCommand()->insert('training_questions', [
                     'training_id' => $trainingId,
                     'type' => $questionType,
@@ -225,15 +261,18 @@ class TrainingQuestionsController extends Controller
                     'correct_answer' => $correctAnswer,
                     'is_active' => true
                 ])->execute();
+
+                // Get the id of the newly inserted question
                 $questionId = Yii::$app->db->getLastInsertID();
                 $newQuestionIds[] = $questionId;
 
+                // If the question is of type 'multiple_choice', process the options
                 if ($questionType == 'multiple_choice') {
                     foreach ($questionData['options'] as $optionIndex => $optionData) {
                         $optionText = $optionData['text'];
                         $isCorrect = isset($optionData['correct']) ? $optionData['correct'] : false;
 
-                        // Insert new option
+                        // Insert each multiple choice option into the database
                         Yii::$app->db->createCommand()->insert('training_multiple_choice_answers', [
                             'question_id' => $questionId,
                             'option_text' => $optionText,
@@ -244,22 +283,25 @@ class TrainingQuestionsController extends Controller
                 }
             }
 
+            // If a video was uploaded, update the training record with new url
             if ($videoUrl) {
-                Yii::warning('Je tady videooooo');
                 Yii::$app->db->createCommand()->update('training', [
                     'video_url' => $videoUrl
                 ], ['id' => $trainingId])->execute();
             }
 
+            // Commit the transaction
             $transaction->commit();
             return ['success' => true];
+
         } catch (\Exception $e) {
+            // Roll back the transaction in case of any errors
             $transaction->rollBack();
             return ['success' => false, 'errors' => $e->getMessage()];
         }
     }
 
-    // Function for displaying the questions from database in the form for the USER
+    // Function for displaying the questions from database in the form for the USER at employee.php
     public function actionDisplayQuestions($training_id)
     {
         // Set response format to JSON
@@ -279,16 +321,19 @@ class TrainingQuestionsController extends Controller
             ->bindValue(':training_id', $training_id)
             ->queryAll();
 
-        // Initialize HTML string
+        // Initialize the html string
         $html = '';
 
+        // Check if there are any questions retrieved from the database
         if ($questions) {
+            // Loop through each question and generate the corresponding HTML
             foreach ($questions as $index => $question) {
                 $html .= '<div class="question-item">';
                 $html .= '<div class="form-group">';
+                // Display the question text
                 $html .= '<p class="question-employee"><b>' . Html::encode($question['question']) . '</b></p>';
 
-                // Display image if available
+                // If the question has associated image, display it
                 if (!empty($question['image_url'])) {
                     $html .= '<div class="question-image">';
                     $html .= Html::img(
@@ -301,9 +346,11 @@ class TrainingQuestionsController extends Controller
                     $html .= '</div>';
                     $html .= '<br>';
                 }
-                // Handle different question types
+
+                // Handle the input fields based on the question type
                 switch ($question['type']) {
                     case 'text':
+                        // Generate a text input field for text-based questions
                         $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', [
                             'class' => 'form-control question-input',
                             'placeholder' => 'Enter your answer here',
@@ -313,6 +360,7 @@ class TrainingQuestionsController extends Controller
                         ]);
                         break;
                     case 'number':
+                        // Generate a number input field for numeric questions
                         $html .= Html::input('number', "TrainingQuestions[$index][answer]", '', [
                             'class' => 'form-control question-input number-input',
                             'min' => '1',
@@ -325,6 +373,7 @@ class TrainingQuestionsController extends Controller
                         ]);
                         break;
                     case 'range':
+                        // Generate a range input field with labels for range-based questions
                         $html .= '<div class="range-container">';
                         $html .= '<span>Not much</span>';
                         $html .= Html::input('range', "TrainingQuestions[$index][answer]", '50', [
@@ -339,7 +388,7 @@ class TrainingQuestionsController extends Controller
                         $html .= '</div>';
                         break;
                     case 'multiple_choice':
-                        // Fetch multiple choice options for the question
+                        // Fetch the multiple-choice options associated with the question
                         $options = Yii::$app->db->createCommand('
                                 SELECT * FROM training_multiple_choice_answers 
                                 WHERE question_id = :question_id AND is_active = 1
@@ -347,7 +396,7 @@ class TrainingQuestionsController extends Controller
                             ->bindValue(':question_id', $question['id'])
                             ->queryAll();
 
-                        // Add checkboxes for each option
+                        // Generate checkboxes for each multiple-choice option
                         $html .= '<div class="multiple-choice-options">';
                         foreach ($options as $option) {
                             $html .= Html::checkbox("TrainingQuestions[$index][answer][]", false, [
@@ -369,21 +418,24 @@ class TrainingQuestionsController extends Controller
 
         $html .= '</div>';
 
-        // Return success response with generated HTML
+        // Return a JSON response with a success status and the generated HTML content
         return ['success' => true, 'html' => $html];
     }
 
 
 
-    // Function for updating the deadline
+    // Function to update deadline for specific training
     public function actionUpdateDeadline()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        // Check if the response method is POST
         if (Yii::$app->request->isPost) {
+            // Get the training ID and the new deadline from the POST request            
             $id = Yii::$app->request->post('id');
             $deadline = Yii::$app->request->post('deadline');
 
+            // Prepare the SQL command to update the deadline for the specified training ID
             $command = Yii::$app->db->createCommand()
                 ->update('training', ['deadline_for_completion' => $deadline], 'id = :id', [':id' => $id]);
 
@@ -404,10 +456,13 @@ class TrainingQuestionsController extends Controller
     // Helper function to check if the deadline is the same, because I wasn't able to save the new date if it was the same as the previous one
     private function isDeadlineSame($id, $deadline)
     {
+
+        // Fetch the current deadline for the specified training ID from the database
         $currentDeadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id = :id')
             ->bindValue(':id', $id)
             ->queryScalar();
 
+        // Compare the current deadline with the new deadline and return true if they are the same, otherwise false
         return $currentDeadline == $deadline;
     }
 }
