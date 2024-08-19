@@ -30,10 +30,10 @@ class Events
         if ($userRole == 'admin' || $userRole == 'team_leader') {
             // Add a new menu item for the administrator
             $menu->addItem([
-                'label' => Yii::t('employeeTraining', 'Training'), // The label of the menu item
-                'url' => Url::to(['/employeeTraining/role/admin']), // The url of the menu item
-                'icon' => '<i class="fa fa-info"></i>', // The icon of the menu item
-                'sortOrder' => 100, // The order in which the menu item should appear
+                'label' => Yii::t('employeeTraining', 'Training'),
+                'url' => Url::to(['/employeeTraining/role/admin']),
+                'icon' => '<i class="fa fa-info"></i>',
+                'sortOrder' => 100,
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
             ]);
         }
@@ -49,10 +49,9 @@ class Events
         if ($trainingRecord) {
             $assignedTrainingId = $trainingRecord['training_id'];
             $menu->addItem([
-                'label' => Yii::t('employeeTraining', 'Training'), // The label of the menu item
-                'url' => Url::to(['/employeeTraining/role/employee', 'id' => $assignedTrainingId]), // The url of the menu item
-                'icon' => '<i class="fa fa-arrow-circle-o-up"></i>', // The icon of the menu item
-                // 'sortOrder' => 100, // The order in which the menu item should appear
+                'label' => '<span style="color: red;">' . Yii::t('employeeTraining', 'Training') . '</span>',
+                'url' => Url::to(['/employeeTraining/role/employee', 'id' => $assignedTrainingId]),
+                'icon' => '<i class="fa fa-arrow-circle-o-up" style="color: red;"></i>',
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
             ]);
         }

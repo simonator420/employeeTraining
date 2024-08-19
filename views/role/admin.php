@@ -5,6 +5,9 @@ use yii\helpers\Url;
 
 $addTeamLeaderText = Yii::t('employeeTraining', 'Add Team Leader');
 $addAdminText = Yii::t('employeeTraining', 'Add Admin');
+$addOptionJobsText = Yii::t('employeeTraining', 'All Jobs');
+$addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
+
 
 ?>
 
@@ -84,11 +87,10 @@ $addAdminText = Yii::t('employeeTraining', 'Add Admin');
         </div>
 
         <?php if ($userRole == 'admin'): ?>
-            <button id="create-training-btn">Create Training</button>
+            <button id="create-training-btn"><?= Yii::t('employeeTraining', 'Create Training') ?></button>
         <?php endif; ?>
         <br>
         <br>
-
 
         <!-- User Information Table -->
         <table class="table table-striped table-bordered">
@@ -613,7 +615,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    var titleOptions = '<option value="">All Jobs</option>';
+                    var titleOptions = '<option value="">$addOptionJobsText</option>';
                     $.each(response.titles, function(index, title) {
                         titleOptions += '<option value="' + title + '">' + title + '</option>';
                     });
@@ -630,7 +632,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    var locationOptions = '<option value="">All Locations</option>';
+                    var locationOptions = '<option value="">$addOptionLocationText</option>';
                     $.each(response.locations, function(index, location) {
                         locationOptions += '<option value="' + location + '">' + location + '</option>';
                     });
