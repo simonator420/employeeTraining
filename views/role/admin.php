@@ -90,7 +90,7 @@ use yii\helpers\Url;
         <!-- User Information Table -->
         <table class="table table-striped table-bordered">
 
-            <div id="filter-list" class="flex-container"  style="display: flex; align-items:center;">
+            <div id="filter-list" class="flex-container" style="display: flex; align-items:center;">
                 <form id="filter-form" class="flex-form">
                     <div class="form-group">
                         <label for="title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
@@ -107,6 +107,11 @@ use yii\helpers\Url;
                     <button type="button" id="submit-filter-btn"
                         class="btn btn-success"><?= Yii::t('employeeTraining', 'Filter') ?></button>
                 </form>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="employee-search-bar" placeholder="Search employees..."
+                    style="padding:10px; width=100%; margin-bottom:20px">
             </div>
 
             <thead>
@@ -160,10 +165,6 @@ use yii\helpers\Url;
             </tbody>
     </div>
 </div>
-
-
-
-
 
 <?php
 // URLs for the function in RoleController
@@ -585,6 +586,11 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 } else {
                     alert('No users found for the selected criteria.');
                 }
+
+                var searchBar = $('#employee-search-bar');
+                if (searchBar.val()) {
+                    searchBar.val(''); // Clear the search bar value if it's not empty
+                }
             },
             error: function(xhr, status, error) {
                 alert('Error fetching filtered users');
@@ -983,23 +989,16 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
     $('#employee-search-bar').on('input', function() {
         var searchTerm = $(this).val().toLowerCase();
-        console.log("Search Term:", searchTerm);ß
+        console.log("Search Term:", searchTerm);
 
-        $('.employee-info-container').each(function() {
-            var user = $(this).find('.employee-info');
-            var id = user.data('id').toString().toLowerCase();
-            var title = user.data('title').toLowerCase();
-            var location = user.data('location').toLowerCase();
-            var fullname = user.data('fullname').toLowerCase();
-            var username = user.data('username').toLowerCase();
+        $('table.table-striped tbody tr').each(function() {
+            var fullName = $(this).data('fullname').toLowerCase(); // Get the full name in lowercase
 
-            console.log("Checking user:", fullname, username, title, location);
-
-            if (id.includes(searchTerm) || title.includes(searchTerm) || location.includes(searchTerm) ||
-                fullname.includes(searchTerm) || username.includes(searchTerm)) {
-                $(this).show();
+            // Check if the full name contains the search term
+            if (fullName.includes(searchTerm)) {
+                $(this).show();  // Show the row if it matches the search term
             } else {
-                $(this).hide();
+                $(this).hide();  // Hide the row if it doesn't match
             }
         });
     });
