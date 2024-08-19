@@ -71,8 +71,7 @@ use yii\helpers\Url;
                 </form>
             </div>
         </div>
-
-
+    
         <br>
 
         <?php if ($userRole == 'admin'): ?>
@@ -91,7 +90,7 @@ use yii\helpers\Url;
             <!-- Video upload field -->
             <div class="form-group">
                 <label for="training-video"><?= Yii::t('employeeTraining', 'Upload Training Video') ?></label>
-                <input type="file" name="trainingVideo" id="training-video" class="form-control">
+                <input type="file" name="trainingVideo" id="training-video" class="form-control" accept="video/*">
             </div>
 
             <!-- Container for displaying all question with their input fields -->
@@ -129,6 +128,7 @@ $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $removeTrainingUrl = Url::to(['role/remove-training']);
+$removeVideoUrl = Url::to(['training-questions/remove-video']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
@@ -141,6 +141,14 @@ function fetchQuestions() {
         success: function(response) {
             if (response.success) {
                 $('#questions-container').html(response.html);
+
+                if ($('#existing-video-section').length > 0) {
+                    console.log('Video se nachazi na strance');
+                    $('#training-video').hide();
+                } else {
+                    console.log('Nenachazi se');
+                }
+
             } else {
                 $('#questions-container').html(
                     '<div class="question-item">' +
@@ -210,38 +218,6 @@ $(document).off('click', '.remove-option-btn').on('click', '.remove-option-btn',
 
     }
 });
-
-// function attachEventHandlers() {
-//     $(document).on('change', '.question-type', function() {
-//         handleQuestionTypeChange.call(this); // Call the function with the correct context
-//     });
-
-//     $(document).on('click', '.add-option-btn', function() {
-//         var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-//         var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
-//         var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
-
-//         var newOptionHtml = 
-//             '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
-//                 '<div class="input-group-prepend">' +
-//                     '<div class="input-group-text">' +
-//                         '<input type="checkbox" name="TrainingQuestions[' + questionIndex + '][correct' + optionIndex + ']">' +
-//                     '</div>' +
-//                 '</div>' +
-//                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
-//             '</div>';
-//         \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
-//     });
-
-//     $(document).on('click', '.remove-option-btn', function() {
-//         var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
-//         var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
-
-//         if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
-//             \$lastOption.remove();
-//         }
-//     });
-// }
 
 $(document).on('change', '.question-type', function() {
     handleQuestionTypeChange.call(this); // Call the function with the correct context
@@ -516,6 +492,24 @@ $('#add-question-btn').on('click', function() {
     }
 });
 
+$(document).on('click', '.remove-video-btn', function() {
+    var videoContainer = $(this).closest('.form-group'); // Find the closest form group containing the video
+    videoContainer.remove(); // Remove the entire video container from the DOM
+    var trainingId = $('h3[data-training-id]').data('training-id');
+    $('#training-video').show();
+    $.ajax({
+        url: '$removeVideoUrl',
+        type: 'POST',
+        data : { deleteVid: true, trainingId : trainingId},
+        success: function(response) {
+            console.log('Presmeruji');
+        },
+        error: function(xhr, status, error) {
+            console.log(xhr.responseText);
+        }
+    })
+});
+
 // Event handler for the "Remove Question" button click
 $('#remove-question-btn').on('click', function() {
     $('.question-item').last().remove();
@@ -525,13 +519,15 @@ $('#remove-question-btn').on('click', function() {
     }
 });
 
-
 // Event handler for "Submit" button click
 $('#submit-btn').on('click', function() {
     var form = $('#training-questions-form')[0];
     var formData = new FormData(form);
     let isValid = true;
+    var loadVid = $('video').length > 0;
 
+    formData.append('loadVid', loadVid);
+    console.log('Tohle je loadVid', loadVid);
     $('.question-item').each(function(index) {
         var fileInput = $(this).find('.question-image')[0];
         if (fileInput.files.length > 0) {

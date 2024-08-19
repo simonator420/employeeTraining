@@ -3,6 +3,9 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
+$addTeamLeaderText = Yii::t('employeeTraining', 'Add Team Leader');
+$addAdminText = Yii::t('employeeTraining', 'Add Admin');
+
 ?>
 
 <!-- View for displaying informations about the users. -->
@@ -40,7 +43,7 @@ use yii\helpers\Url;
                         <!-- The list of users with checkboxes will be populated here -->
                         <div id="profile-list"></div>
                         <br>
-                        <button type="button" id="submit-add-role">Add</button>
+                        <button type="button" id="submit-add-role"><?= Yii::t('employeeTraining', 'Add') ?></button>
                     </form>
                 </div>
             </div>
@@ -289,10 +292,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 var addButtonText = '';
                 switch (role) {
                     case 'team_leader':
-                        addButtonText = 'Add Team Leader';
+                        addButtonText = '$addTeamLeaderText';
                         break;
                     case 'admin':
-                        addButtonText = 'Add Admin';
+                        addButtonText = '$addAdminText';
                         break;
                 }
                 usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
@@ -307,10 +310,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 var addButtonText = '';
                 switch (role) {
                     case 'team_leader':
-                        addButtonText = 'Add Team Leader';
+                        addButtonText = '$addTeamLeaderText';
                         break;
                     case 'admin':
-                        addButtonText = 'Add Admin';
+                        addButtonText = '$addAdminText';
                         break;
                 }
                 usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
@@ -375,10 +378,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         var title = '';
         switch (role) {
             case 'team_leader':
-                title = 'Add Team Leader';
+                title = '$addTeamLeaderText';
                 break;
             case 'admin':
-                title = 'Add Admin';
+                title = '$addAdminText';
                 break;
         }
         $('#modal-title').text(title);
