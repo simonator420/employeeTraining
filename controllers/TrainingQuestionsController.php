@@ -92,7 +92,7 @@ class TrainingQuestionsController extends Controller
                 $html .= 'Your browser does not support the video tag.';
                 $html .= '</video>';
             } elseif (in_array($fileExtension, ['pdf'])) {
-                $html .= '<embed src="' . Url::to('@web/' . $training['initial_file_url']) . '" width="600" height="500" alt="pdf" />';
+                $html .= '<embed src="' . Url::to('@web/' . $training['initial_file_url']) . '" width="360" height="300" alt="pdf" />';
             }
 
             $html .= '<br>';
@@ -172,6 +172,8 @@ class TrainingQuestionsController extends Controller
                 $html .= '</div>';
 
                 $html .= '</div>';
+                $html .= '<br>';
+                $html .= '<hr>';
                 $html .= '<br>';
             }
 
@@ -335,7 +337,7 @@ class TrainingQuestionsController extends Controller
             ->bindValue(':training_id', $training_id)
             ->queryAll();
 
-        // Initialize the html string
+        // Initialize the html string vubec jsem tohle neznal
         $html = '';
 
         // Check if there are any questions retrieved from the database
@@ -363,7 +365,7 @@ class TrainingQuestionsController extends Controller
 
                 // Handle the input fields based on the question type
                 switch ($question['type']) {
-                    case 'text':
+                    case 'text':                
                         // Generate a text input field for text-based questions
                         $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', [
                             'class' => 'form-control question-input',

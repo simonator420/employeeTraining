@@ -38,7 +38,7 @@ use yii\helpers\Url;
                     </video><br>
                 <?php elseif ($fileExtension === 'pdf'): ?>
                     <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                    <embed src="<?= $pdfUrl ?>" width="80%" height="75vh" type="application/pdf" style="min-height: 75vh;" alt="pdf" /><br>
+                    <embed src="<?= $pdfUrl ?>" width="90%" height="75vh" type="application/pdf" style="min-height: 75vh;" alt="pdf" /><br>
                 <?php endif; ?>
 
                 <button id="end-file-btn" class="btn btn-secondary">Continue</button>

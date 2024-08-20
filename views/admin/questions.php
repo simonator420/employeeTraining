@@ -145,9 +145,9 @@ function fetchQuestions() {
             if (response.success) {
                 $('#questions-container').html(response.html);
 
-                if ($('#existing-video-section').length > 0) {
+                if ($('#existing-file-section').length > 0) {
                     console.log('Video se nachazi na strance');
-                    $('#training-video').hide();
+                    $('#training-file').hide();
                 } else {
                     console.log('Nenachazi se');
                 }
@@ -487,7 +487,11 @@ $('#add-question-btn').on('click', function() {
             '<div class="form-group">' +
                 '<input type="file" name="TrainingQuestions[' + questionIndex + '][image]" class="form-control question-image">' +
             '</div>' +
+        '<br>' +
+        '<hr>' +
+        '<br>' +
         '</div>';
+
     $('#questions-container').append(newQuestionItem);
     updateQuestionLabels();
     if ($('.question-item').length > 1) {
