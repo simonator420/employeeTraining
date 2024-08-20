@@ -71,7 +71,7 @@ use yii\helpers\Url;
                 </form>
             </div>
         </div>
-    
+
         <br>
 
         <?php if ($userRole == 'admin'): ?>
@@ -89,9 +89,12 @@ use yii\helpers\Url;
 
             <!-- Video upload field -->
             <div class="form-group">
-                <label for="training-video"><?= Yii::t('employeeTraining', 'Upload Training Video') ?></label>
-                <input type="file" name="trainingVideo" id="training-video" class="form-control" accept="video/*">
+                <label
+                    for="training-file"><?= Yii::t('employeeTraining', 'Upload Training Video or PDF') ?></label>
+                <input type="file" name="trainingFile" id="training-file" class="form-control"
+                    accept="video/*,application/pdf">
             </div>
+
 
             <!-- Container for displaying all question with their input fields -->
             <div id="questions-container">
@@ -492,22 +495,22 @@ $('#add-question-btn').on('click', function() {
     }
 });
 
-$(document).on('click', '.remove-video-btn', function() {
-    var videoContainer = $(this).closest('.form-group'); // Find the closest form group containing the video
-    videoContainer.remove(); // Remove the entire video container from the DOM
+$(document).on('click', '.remove-file-btn', function() {
+    var fileContainer = $(this).closest('.form-group');
+    fileContainer.remove();
     var trainingId = $('h3[data-training-id]').data('training-id');
-    $('#training-video').show();
+    $('#training-file').show();
     $.ajax({
         url: '$removeVideoUrl',
         type: 'POST',
-        data : { deleteVid: true, trainingId : trainingId},
+        data : { deleteVid: true, trainingId: trainingId },
         success: function(response) {
-            console.log('Presmeruji');
+            console.log('File removed successfully');
         },
         error: function(xhr, status, error) {
             console.log(xhr.responseText);
         }
-    })
+    });
 });
 
 // Event handler for the "Remove Question" button click

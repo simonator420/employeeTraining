@@ -15,23 +15,33 @@ use yii\helpers\Url;
 
         <!-- Video container with end button -->
         <?php
-        $videoUrl = Yii::$app->db->createCommand('
-                                        SELECT video_url 
-                                        FROM training 
-                                        WHERE id = :trainingId
-                                        ')
+        $fileUrl = Yii::$app->db->createCommand('
+            SELECT initial_file_url 
+            FROM training 
+            WHERE id = :trainingId
+            ')
             ->bindValue(':trainingId', $trainingId)
             ->queryScalar();
         ?>
-        <?php if ($videoUrl != null): ?>
-            
-            <div class="form-group" id="video-container" style="text-align: center;">
-                <!-- <label for="training-video"><?= Yii::t('employeeTraining', 'Training Video') ?></label><br> -->
-                <video id="training-video" width="auto" controls>
-                    <source src="<?= Url::to('@web/' . $videoUrl) ?>" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video><br>
-                <button id="end-video-btn" class="btn btn-secondary">Continue</button>
+        <?php if ($fileUrl != null): ?>
+            <?php
+            // Determine the file type based on its extension
+            $fileExtension = pathinfo($fileUrl, PATHINFO_EXTENSION);
+            ?>
+
+            <div class="form-group" id="file-container" style="text-align: center;">
+                <!-- Display appropriate content based on the file type -->
+                <?php if (in_array($fileExtension, ['mp4', 'webm', 'ogg'])): ?>
+                    <video id="training-video" width="auto" controls>
+                        <source src="<?= Url::to('@web/' . $fileUrl) ?>" type="video/<?= $fileExtension ?>">
+                        Your browser does not support the video tag.
+                    </video><br>
+                <?php elseif ($fileExtension === 'pdf'): ?>
+                    <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
+                    <embed src="<?= $pdfUrl ?>" width="80%" height="75vh" type="application/pdf" style="min-height: 75vh;" alt="pdf" /><br>
+                <?php endif; ?>
+
+                <button id="end-file-btn" class="btn btn-secondary">Continue</button>
             </div>
             <div id="questions-container" style="display: none;"></div>
             <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
@@ -79,8 +89,8 @@ $(document).ready(function() {
     checkMultipleChoiceSelection();
 
     // Function to hide the video and show the questions
-    $('#end-video-btn').on('click', function(e) {
-        document.getElementById('video-container').style.display = 'none';
+    $('#end-file-btn').on('click', function(e) {
+        document.getElementById('file-container').style.display = 'none';
         document.getElementById('questions-container').style.display = 'block';
         document.getElementById('submit-btn').style.display = 'inline';
     });

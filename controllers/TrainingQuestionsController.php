@@ -80,18 +80,27 @@ class TrainingQuestionsController extends Controller
         $html = '';
 
 
+        // TODO rename the video here
         // If there is a video associated with the training, display it
-        if (!empty($training['video_url'])) {
-            $html .= '<div id="existing-video-section" class="form-group">';
-            $html .= '<video width="320" height="240" controls>';
-            $html .= '<source src="' . Url::to('@web/' . $training['video_url']) . '" type="video/mp4">';
-            $html .= 'Your browser does not support the video tag.';
-            $html .= '</video>';
+        if (!empty($training['initial_file_url'])) {
+            $fileExtension = pathinfo($training['initial_file_url'], PATHINFO_EXTENSION);
+            $html .= '<div id="existing-file-section" class="form-group">';
+
+            if (in_array($fileExtension, ['mp4', 'webm', 'ogg'])) {
+                $html .= '<video width="320" height="240" controls>';
+                $html .= '<source src="' . Url::to('@web/' . $training['initial_file_url']) . '" type="video/' . $fileExtension . '">';
+                $html .= 'Your browser does not support the video tag.';
+                $html .= '</video>';
+            } elseif (in_array($fileExtension, ['pdf'])) {
+                $html .= '<embed src="' . Url::to('@web/' . $training['initial_file_url']) . '" width="600" height="500" alt="pdf" />';
+            }
+
             $html .= '<br>';
-            $html .= '<button type="button" class="btn remove-video-btn">Remove video</button>';
+            $html .= '<button type="button" class="btn remove-file-btn">' . Yii::t('employeeTraining', 'Remove File') . '</button>';
             $html .= '</div>';
         }
-        
+
+
 
         if ($questions) {
             // Create a div for each question item
@@ -187,7 +196,7 @@ class TrainingQuestionsController extends Controller
 
         // Retrieve uploaded files for questions and the training video
         $files = UploadedFile::getInstancesByName('TrainingQuestions');
-        $videoFile = UploadedFile::getInstanceByName('trainingVideo');
+        $uploadedFile = UploadedFile::getInstanceByName('trainingFile');
 
         // Check if training ID is provided
         if (empty($trainingId)) {
@@ -220,19 +229,17 @@ class TrainingQuestionsController extends Controller
             $newQuestionIds = [];
 
             // Handle the video file upload, if provided
-            $videoUrl = null;
-            if ($videoFile) {
-                // Define the path to save the video file
-                $videoPath = 'uploads/' . $videoFile->baseName . '.' . $videoFile->extension;
-                if ($videoFile->saveAs($videoPath)) {
-                    $videoUrl = $videoPath;
-                    // Save the video URL to the training record in the database
+            $fileUrl = null;
+            if ($uploadedFile) {
+                $filePath = 'uploads/' . $uploadedFile->baseName . '.' . $uploadedFile->extension;
+                if ($uploadedFile->saveAs($filePath)) {
+                    $fileUrl = $filePath;
+                    // Save the file URL to the training record in the database
                     Yii::$app->db->createCommand()->update('training', [
-                        'video_url' => $videoUrl
+                        'initial_file_url' => $fileUrl
                     ], ['id' => $trainingId])->execute();
-
                 } else {
-                    return ['success' => false, 'errors' => 'Failed to save the video file.'];
+                    return ['success' => false, 'errors' => 'Failed to save the file.'];
                 }
             }
 
@@ -287,18 +294,14 @@ class TrainingQuestionsController extends Controller
             }
 
             // If a video was uploaded, update the training record with new url
-            if ($videoUrl) {
+            if ($fileUrl) {
                 Yii::$app->db->createCommand()->update('training', [
-                    'video_url' => $videoUrl
+                    'initial_file_url' => $fileUrl
                 ], ['id' => $trainingId])->execute();
-                Yii::warning('Probiha if videoUrl');
             } elseif ($loadVid === false || $loadVid === 'false' || $loadVid === null) {
                 Yii::$app->db->createCommand()->update('training', [
-                    'video_url' => null
+                    'initial_file_url' => null
                 ], ['id' => $trainingId])->execute();
-                Yii::warning('Probiha if loadVid false or null: ' . var_export($loadVid, true));
-            } else {
-                Yii::warning('Probiha else - videoUrl: ' . var_export($videoUrl, true) . ' - loadVid: ' . var_export($loadVid, true));
             }
 
             // Commit the transaction
@@ -477,13 +480,21 @@ class TrainingQuestionsController extends Controller
     public function actionRemoveVideo()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
+    
         if (Yii::$app->request->isPost) {
             $deleteVid = Yii::$app->request->post('deleteVid');
             $trainingId = Yii::$app->request->post('trainingId');
             if ($deleteVid == true) {
-                Yii::warning('Video bude odstraneno for training with id: ' . $trainingId);
+                // Remove the file URL from the training record
+                Yii::$app->db->createCommand()->update('training', [
+                    'initial_file_url' => null
+                ], ['id' => $trainingId])->execute();
+    
+                Yii::warning('File removed for training with id: ' . $trainingId);
+                return ['success' => true];
             }
         }
+    
+        return ['success' => false];
     }
 }
