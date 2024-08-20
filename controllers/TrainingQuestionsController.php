@@ -96,7 +96,7 @@ class TrainingQuestionsController extends Controller
             }
 
             $html .= '<br>';
-            $html .= '<button type="button" class="btn remove-file-btn">' . Yii::t('employeeTraining', 'Remove File') . '</button>';
+            $html .= '<button type="button" class="btn remove-file-btn" style="margin-bottom: 25px;">' . Yii::t('employeeTraining', 'Remove File') . '</button>';
             $html .= '</div>';
         }
 

@@ -558,6 +558,7 @@ class RoleController extends Controller
         $assignedTraining = Yii::$app->request->post('assigned_training');
         $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
 
+
         // Fetch the deadline for completion from the training table
         $training = Yii::$app->db->createCommand('
             SELECT deadline_for_completion 
@@ -573,10 +574,11 @@ class RoleController extends Controller
         // Initialize a counter for successful assignments
         $successCount = 0;
 
-        // Loop through each user id to assign the training
-        foreach ($userIds as $userId) {
+        // Loop through each user id to assign the training, make it unique so new users that didn't have the training assigned before don't get the training assigned twice
+        foreach (array_unique($userIds) as $userId) {
             // Check if the training record already exists for the user
-            $userTrainingRecord = Yii::$app->db->createCommand('
+            Yii::warning('Tohle jsou userId a ocekavame nekde double ' . $userId);
+            $userTrainingRecord = Yii::$app->db->createCommand(' 
                 SELECT * 
                 FROM user_training 
                 WHERE user_id = :user_id AND training_id = :training_id
@@ -605,7 +607,7 @@ class RoleController extends Controller
 
             $result = false;
             // If no record exists for the user, insert a new training record
-            if (!$userTrainingRecord) {
+            // if (!$userTrainingRecord) {
                 $result = Yii::$app->db->createCommand()
                     ->insert(
                         'user_training',
@@ -618,16 +620,16 @@ class RoleController extends Controller
                         ]
                     )
                     ->execute();
-            } else {
-                // Update the existing record to mark the training as assigned
-                Yii::$app->db->createCommand()->update(
-                    'user_training',
-                    [
-                        'assigned_training' => 1,
-                    ]
-                )
-                    ->execute();
-            }
+            // } else {
+            //     // Update the existing record to mark the training as assigned
+            //     Yii::$app->db->createCommand()->update(
+            //         'user_training',
+            //         [
+            //             'assigned_training' => 1,
+            //         ]
+            //     )
+            //         ->execute();
+            // }
             // Increment the success count if the operation was successful
             if ($result) {
                 $successCount++;
@@ -667,12 +669,13 @@ class RoleController extends Controller
         $successCount = 0;
 
         // Loop through each user ID to remove the training assignment
-        foreach ($userIds as $userId) {
+        foreach (array_unique($userIds) as $userId) {
             // Delete the training assignment record for the user
             $result = Yii::$app->db->createCommand()
                 ->delete('user_training', [
                     'user_id' => $userId,
                     'training_id' => $trainingId,
+                    'assigned_training' => 1,
                 ])
                 ->execute();
 

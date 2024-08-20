@@ -88,10 +88,10 @@ use yii\helpers\Url;
             <?= Html::hiddenInput('trainingId', $trainingId) ?>
 
             <!-- Video upload field -->
-            <div class="form-group">
+            <div class="form-group" style="padding-bottom: 25px;" id="training-file">
                 <label
                     for="training-file"><?= Yii::t('employeeTraining', 'Upload Training Video or PDF') ?></label>
-                <input type="file" name="trainingFile" id="training-file" class="form-control"
+                <input type="file" name="trainingFile" class="form-control"
                     accept="video/*,application/pdf">
             </div>
 
@@ -399,11 +399,16 @@ $(document).on('click', '#submit-assign-users', function() {
 
     $('#profile-list').find('.profile-checkbox').each(function() {
         if ($(this).is(':checked')) {
-            selectedUserIds.push($(this).val());
-            console.log('Tenhle je checked: ', $(this).val())
+            // Check if the user ID is not already in selectedUserIds
+            if (!selectedUserIds.includes($(this).val())) {
+                selectedUserIds.push($(this).val());
+                console.log('Tenhle je checked: ', $(this).val());
+            }
         } else if ($(this).data('was-assigned')) {
-            unassignUserIds.push($(this).val());
-            console.log('Tenhle byl checked: ', $(this).val())
+            if (!unassignUserIds.includes($(this).val())) {
+                unassignUserIds.push($(this).val());
+                console.log('Tenhle byl checked: ', $(this).val());
+            }
         }
     });
 
