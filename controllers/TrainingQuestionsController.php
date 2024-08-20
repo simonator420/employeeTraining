@@ -492,7 +492,6 @@ class TrainingQuestionsController extends Controller
                     'initial_file_url' => null
                 ], ['id' => $trainingId])->execute();
     
-                Yii::warning('File removed for training with id: ' . $trainingId);
                 return ['success' => true];
             }
         }

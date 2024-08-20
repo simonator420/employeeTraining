@@ -578,7 +578,7 @@ class RoleController extends Controller
             ')
                 ->bindValue(':user_id', $usersId)
                 ->bindValue(':training_id', $trainingId)
-                ->queryAll();
+                ->queryScalar();
     
             if ($deadlineForCompletion && $trainingAssignedTime) {
                 $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
@@ -587,7 +587,7 @@ class RoleController extends Controller
             }
     
             if (!$existingRecord) {
-                $result = Yii::$app->db->createCommand()
+                Yii::$app->db->createCommand()
                     ->insert(
                         'user_training',
                         [
@@ -599,10 +599,7 @@ class RoleController extends Controller
                         ]
                     )
                     ->execute();
-            }
-    
-            if ($result) {
-                $successCount++;
+                    $successCount++;
             }
         }
     
@@ -757,7 +754,6 @@ class RoleController extends Controller
                 $answer = $questionData['answer'] ?? []; // Default to an empty array if no answer is provided
 
                 // Insert the answer int the training_answers table
-                Yii::warning("Inserting Question: " . $questionText, __METHOD__);
                 Yii::$app->db->createCommand()
                     ->insert(
                         'training_answers',
@@ -778,7 +774,6 @@ class RoleController extends Controller
                 if ($questionType === 'multiple_choice' && !empty($answer)) {
                     // Loop through each selected answer
                     foreach ($answer as $individualAnswer) {
-                        Yii::warning("Inserting Multiple Choice Option: " . $individualAnswer, __METHOD__);
                         Yii::$app->db->createCommand()
                             ->insert(
                                 'training_multiple_choice_user_answers',
@@ -958,7 +953,6 @@ class RoleController extends Controller
                                 $totalScore += $answer['score'];
                                 $scoreAdded = true;
                                 $allNull = false;
-                                Yii::warning('Tohle je iterace mca', __METHOD__);
                             }
                         }
                     } else {

@@ -36,7 +36,7 @@ $heading = $trainingCount > 1 ? Yii::t('employeeTraining', "Mandatory Trainings"
         $trainingName = $activeTraining['training_name'];
         $deadline = $activeTraining['deadline'];
         $completionDeadline = date('j. n. Y', strtotime($deadline));
-    ?>
+        ?>
         <p class="training-name"><b><?= Html::encode(Yii::t('employeeTraining', $trainingName)) ?></b></p>
         <p class="deadline-message">
             <?= Yii::t('employeeTraining', "This training should be completed by <b>{date}</b>.", [
@@ -47,7 +47,7 @@ $heading = $trainingCount > 1 ? Yii::t('employeeTraining', "Mandatory Trainings"
             <?= Html::a(Yii::t('employeeTraining', 'Go to Training'), ['/employeeTraining/role/employee', 'id' => $trainingId], ['class' => 'btn btn-primary']) ?>
         </div>
         <br> <!-- Add spacing between buttons -->
-    <?php
+        <?php
     }
     ?>
 </div>
