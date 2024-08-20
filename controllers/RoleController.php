@@ -551,15 +551,12 @@ class RoleController extends Controller
     public function actionToggleTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        // Get the array of user IDs, training ID, assigned training status, and assigned time for request
-        $userIds = Yii::$app->request->post('user_ids', []); // Expect an array of user IDs
+    
+        $userIds = Yii::$app->request->post('user_ids', []);
         $trainingId = Yii::$app->request->post('training_id');
         $assignedTraining = Yii::$app->request->post('assigned_training');
         $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
-
-
-        // Fetch the deadline for completion from the training table
+    
         $training = Yii::$app->db->createCommand('
             SELECT deadline_for_completion 
             FROM training 
@@ -567,52 +564,34 @@ class RoleController extends Controller
         ')
             ->bindValue(':training_id', $trainingId)
             ->queryOne();
-
-        // Get the deadline for completion from the training record, if available
+    
         $deadlineForCompletion = $training ? $training['deadline_for_completion'] : null;
-
-        // Initialize a counter for successful assignments
+    
         $successCount = 0;
-
-        // Loop through each user id to assign the training, make it unique so new users that didn't have the training assigned before don't get the training assigned twice
-        foreach (array_unique($userIds) as $userId) {
-            // Check if the training record already exists for the user
-            Yii::warning('Tohle jsou userId a ocekavame nekde double ' . $userId);
-            $userTrainingRecord = Yii::$app->db->createCommand(' 
+    
+        foreach (array_unique($userIds) as $usersId) {
+            // Check if there is any record with assigned_training = 1
+            $existingRecord = Yii::$app->db->createCommand(' 
                 SELECT * 
                 FROM user_training 
-                WHERE user_id = :user_id AND training_id = :training_id
+                WHERE user_id = :user_id AND training_id = :training_id AND assigned_training = 1
             ')
-                ->bindValue(':user_id', $userId)
+                ->bindValue(':user_id', $usersId)
                 ->bindValue(':training_id', $trainingId)
-                ->queryOne();
-
-            // If the user already has the training assigned, skip them 
-            if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 1) {
-                $successCount++;
-                continue;
-            }
-
-            // If the user has the training but it is not currently assigned, log a warning
-            if ($userTrainingRecord && $userTrainingRecord['assigned_training'] == 0) {
-                Yii::warning("User record exists with unassigned training for user ID: $userId");
-            }
-
-            // Calculate the deadline based on the assigned time and the deadline for completion
+                ->queryAll();
+    
             if ($deadlineForCompletion && $trainingAssignedTime) {
                 $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
             } else {
                 $deadline = null;
             }
-
-            $result = false;
-            // If no record exists for the user, insert a new training record
-            // if (!$userTrainingRecord) {
+    
+            if (!$existingRecord) {
                 $result = Yii::$app->db->createCommand()
                     ->insert(
                         'user_training',
                         [
-                            'user_id' => $userId,
+                            'user_id' => $usersId,
                             'training_id' => $trainingId,
                             'assigned_training' => $assignedTraining,
                             'training_assigned_time' => $trainingAssignedTime,
@@ -620,23 +599,13 @@ class RoleController extends Controller
                         ]
                     )
                     ->execute();
-            // } else {
-            //     // Update the existing record to mark the training as assigned
-            //     Yii::$app->db->createCommand()->update(
-            //         'user_training',
-            //         [
-            //             'assigned_training' => 1,
-            //         ]
-            //     )
-            //         ->execute();
-            // }
-            // Increment the success count if the operation was successful
+            }
+    
             if ($result) {
                 $successCount++;
             }
         }
-
-        // Update the training's assigned_users_count with the actual count of assigned user_training records
+    
         if ($successCount > 0) {
             Yii::$app->db->createCommand()
                 ->update(
@@ -647,15 +616,14 @@ class RoleController extends Controller
                 ->bindValue(':training_id', $trainingId)
                 ->execute();
         }
-
-        // Return a success response if users were successfully assigned to the training
+    
         if ($successCount > 0) {
             return ['success' => true, 'message' => "$successCount users assigned to training."];
         }
-
-        // Return a failure response if no users were assigned to the training
+    
         return ['success' => false, 'message' => "No users assigned to training."];
     }
+    
 
     // Action to remove training assignments from users
     public function actionRemoveTraining()
