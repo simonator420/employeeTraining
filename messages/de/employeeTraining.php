@@ -49,4 +49,5 @@ return [
     'Training Assignment' => 'Ausbildungsauftrag',
     'Submit' => 'Einreichen',
     'No. of completed trainings' => 'Anzahl der abgeschlossenen Fortbildungskurse',
+    'Mandatory Trainings' => 'Pflichtausbildungen',
 ];
