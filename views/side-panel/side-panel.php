@@ -4,8 +4,6 @@ use yii\helpers\Html;
 
 ?>
 
-<!-- TODO Display all trainings that user has assigned not only one -->
-
 <?php
 // Fetch all active trainings assigned to the user
 $activeTrainings = Yii::$app->db->createCommand('

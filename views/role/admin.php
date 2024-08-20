@@ -14,7 +14,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
 <!-- View for displaying informations about the users. -->
 <div class="employee-overview-container">
     <div class="employee-info-card">
-        <h1><?= Yii::t('employeeTraining', 'ILLE Employee Trainings') ?></h1>
+        <h1 style="padding-bottom:20px;"><?= Yii::t('employeeTraining', 'ILLE Employee Trainings') ?></h1>
 
         <?php if ($userRole == 'admin'): ?>
             <h2><?= Yii::t('employeeTraining', 'User Setup') ?></h2>

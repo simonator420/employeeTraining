@@ -32,26 +32,35 @@ class Events
             $menu->addItem([
                 'label' => Yii::t('employeeTraining', 'Training'),
                 'url' => Url::to(['/employeeTraining/role/admin']),
-                'icon' => '<i class="fa fa-info"></i>',
+                'icon' => '<i class="fa fa-pencil-square-o"></i>',
                 'sortOrder' => 100,
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
             ]);
         }
 
-        $trainingRecord = Yii::$app->db->createCommand('
+        $trainingRecords = Yii::$app->db->createCommand('
             SELECT * FROM user_training
             WHERE user_id = :userId AND assigned_training = 1
             ORDER BY training_assigned_time DESC
         ')
             ->bindValue(':userId', $userId)
-            ->queryOne();
+            ->queryAll();
             
-        if ($trainingRecord) {
+        foreach ($trainingRecords as $trainingRecord) {
             $assignedTrainingId = $trainingRecord['training_id'];
+            
+            $trainingName = Yii::$app->db->createCommand('
+                SELECT name
+                FROM training
+                WHERE id = :trainingId
+            ')
+            ->bindValue(':trainingId', $assignedTrainingId)
+            ->queryScalar();
+            
             $menu->addItem([
-                'label' => '<span style="color: red;">' . Yii::t('employeeTraining', 'Training') . '</span>',
+                'label' => '<span style="color: red;">' . $trainingName . '</span>',
                 'url' => Url::to(['/employeeTraining/role/employee', 'id' => $assignedTrainingId]),
-                'icon' => '<i class="fa fa-arrow-circle-o-up" style="color: red;"></i>',
+                'icon' => '<i class="fa fa-pencil-square-o" style="color: red;"></i>',
                 'isActive' => (Yii::$app->controller->module && Yii::$app->controller->module->id == 'employeeTraining'), // Check if the current menu should be marked as an active
             ]);
         }
