@@ -158,7 +158,6 @@ class TrainingQuestionsController extends Controller
                     $html .= '</div>';
                 }
 
-
                 // Display an existing image if one is associated with the question, with an option to remove it
                 $html .= '<div class="form-group">';
                 if ($question['image_url']) {

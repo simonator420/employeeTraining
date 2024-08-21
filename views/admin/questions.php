@@ -135,24 +135,33 @@ $removeVideoUrl = Url::to(['training-questions/remove-video']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
+// Function to fetch questions for a given training ID
 function fetchQuestions() {
+    // Get the training ID from the JavaScript variable
     var trainingId = $trainingIdJson;
+    // Make an AJAX request to fetch questions for the specified training
     $.ajax({
         url: '$fetchQuestionsUrl',
         type: 'GET',
         data: { id: trainingId },
+
+        // Function to execute if the request is successful
         success: function(response) {
             if (response.success) {
+                // If the response indicates success, populate the questions container with the received HTML
                 $('#questions-container').html(response.html);
 
+                // Check if there's an existing video section on the page
                 if ($('#existing-file-section').length > 0) {
                     console.log('Video se nachazi na strance');
+                    // Hide the section for inputing file if the video is loaded on the page
                     $('#training-file').hide();
                 } else {
                     console.log('Nenachazi se');
                 }
 
             } else {
+                // If no questions were returned, create a default questions form
                 $('#questions-container').html(
                     '<div class="question-item">' +
                         '<label>Question 1</label>' +
@@ -180,16 +189,23 @@ function fetchQuestions() {
                     '<br>'
                 );
             }
+            // Show the questions container and buttons for adding/removing questions
             $('#questions-container').show();
             $('#add-question-btn').show();
             $('#submit-btn').show();
+
+            // Update the labels for questions (e.g., Question 1, Question 2, etc.)
             updateQuestionLabels();
+
+            // Show or hide the "Remove Question" button based on the number of questions
             if ($('.question-item').length > 1) {
                 $('#remove-question-btn').show();
             } else {
                 $('#remove-question-btn').hide();
             }
         },
+
+        // Function to execute if the request fails
         error: function(xhr, status, error) {
             alert('Error occurred while fetching questions.');
             console.log("Error details:", xhr.responseText, status, error);
@@ -197,13 +213,18 @@ function fetchQuestions() {
     });
 }
 
+// Event listener for adding a new option to a multiple-choice question
 $(document).off('click', '.add-option-btn').on('click', '.add-option-btn', function() {
     var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
     var questionIndex = \$multipleChoiceContainer.closest('.question-item').index('.question-item');
     var optionIndex = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').length + 1;
+
+    // Log the container, question index, and option index for debugging
     console.log(\$multipleChoiceContainer)
     console.log(questionIndex)
     console.log(optionIndex)
+
+    // Create the HTML for the new option input
     var newOptionHtml = 
         '<div class="input-group" style="display:flex; align-items:center; padding-bottom: 10px; gap: 5px">' +
             '<div class="input-group-prepend">' +
@@ -213,26 +234,34 @@ $(document).off('click', '.add-option-btn').on('click', '.add-option-btn', funct
             '</div>' +
             '<input type="text" name="TrainingQuestions[' + questionIndex + '][option' + optionIndex + ']" class="form-control" placeholder="Option ' + optionIndex + '">' +
         '</div>';
+
+    // Append the new option to the multiple-choice options container
     \$multipleChoiceContainer.find('.multiple-choice-options').append(newOptionHtml);
 });
 
+// Event listener for removing the last option from a multiple-choice question
 $(document).off('click', '.remove-option-btn').on('click', '.remove-option-btn', function() {
     var \$multipleChoiceContainer = $(this).closest('.multiple-choice-container');
     var \$lastOption = \$multipleChoiceContainer.find('.multiple-choice-options .input-group').last();
+
+    // Remove the last option if there is mroe than one option
     if (\$multipleChoiceContainer.find('.multiple-choice-options .input-group').length > 1) {
         \$lastOption.remove();
 
     }
 });
 
+// Event listener for handling changes in question type
 $(document).on('change', '.question-type', function() {
-    handleQuestionTypeChange.call(this); // Call the function with the correct context
+    handleQuestionTypeChange.call(this);
 });
 
+// Function to handle changes in question type (e.g., text, number, range, multiple choice)
 function handleQuestionTypeChange() {
     var \$questionItem = $(this).closest('.question-item');
     var type = $(this).val();
-    var questionIndex = \$questionItem.index('.question-item'); // Get the index of the current question item
+    // Get the index of the current question item
+    var questionIndex = \$questionItem.index('.question-item');
     \$questionItem.find('.multiple-choice-container').remove();
 
     if (type === 'multiple_choice') {
@@ -269,14 +298,17 @@ function handleQuestionTypeChange() {
                     '<button type="button" class="btn btn-danger remove-option-btn">- Remove Option</button>' +
                 '</div>' +
             '</div>';
-        \$questionItem.find('.form-group').last().before(multipleChoiceHtml); // Insert the multiple choice HTML before the last form-group (which contains the image input)
+
+        // Insert the multiple-choice HTML before the last form-group (which contains the image input)
+        \$questionItem.find('.form-group').last().before(multipleChoiceHtml);
     }
 
 
-    // Hide/show the correct answer field based on the question type
     if (type === 'text') {
+        // Show the correct answer input field if the question type is text
         \$questionItem.find('.correct-answer').closest('.form-group').show();
     } else {
+        // Hide the correct answer input field for other question types
         \$questionItem.find('.correct-answer').closest('.form-group').hide();
     }
 }
@@ -287,42 +319,50 @@ var span = document.getElementsByClassName("close")[0];
 
 var trainingId = $('h3[data-training-id]').data('training-id'); // Retrieve the trainingId from the data attribute
 
+
+// Event listener for showing the modal to assign users to the training
 $(document).on('click', '#assign-users-btn', function() {
-    var title = 'Assign Users'; // Adjust the title as needed
-    $('#modal-title').text(title);
-    modal.style.display = "block";
-    $('body').css('overflow', 'hidden'); // Disable scrolling
+    var title = 'Assign Users';
+    $('#modal-title').text(title); // Update the modal title
+    modal.style.display = "block"; // Show the modal
+    $('body').css('overflow', 'hidden'); // Disable scrolling on the main page 
 
     // Fetch profiles and display them in the modal
     $.ajax({
         url: '$fetchAllProfilesUrl',
         type: 'GET',
-        data: { trainingId: trainingId }, // Send the training ID
+        data: { trainingId: trainingId },
         success: function(response) {
             if (response.success) {
                 var profilesHtml = '<ul>';
+                // Iterate over the profiles and create list items with checkboxes
                 $.each(response.profiles, function(index, profile) {
                     profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
                                 (profile.isAssigned ? ' checked data-was-assigned="true"' : '') + '> ' + 
                                 profile.firstname + ' ' + profile.lastname + '</li>';
                 });
                 profilesHtml += '</ul>';
+                // Insert the profiles into the modal
                 $('#profile-list').html(profilesHtml);
             } else {
+                // If no profiles found, display a message
                 $('#profile-list').html('<p>No profiles found.</p>');
             }
         },
         error: function() {
+            // Handle any errors that occur during the request
             $('#profile-list').html('<p>Error fetching profiles.</p>');
         }
     });
 
+    // Fetch job titles and locatins for filtering users
     if ($('#filter-list').is(':visible')) {
         $.ajax({
             url: '$fetchTitlesUrl',
             type: 'GET',
             success: function(response) {
                 if (response.success) {
+                    // Populate the job title dropdown with fetched data
                     var titleOptions = '<option value="">All Jobs</option>';
                     $.each(response.titles, function(index, title) {
                         titleOptions += '<option value="' + title + '">' + title + '</option>';
@@ -340,6 +380,7 @@ $(document).on('click', '#assign-users-btn', function() {
             type: 'GET',
             success: function(response) {
                 if (response.success) {
+                    // Populate the location dropdown with fetched data
                     var locationOptions = '<option value="">All Locations</option>';
                     $.each(response.locations, function(index, location) {
                         locationOptions += '<option value="' + location + '">' + location + '</option>';
@@ -354,22 +395,26 @@ $(document).on('click', '#assign-users-btn', function() {
     }
 });
 
+// Close the modal when the close button is clicked
 span.onclick = function() {
     modal.style.display = "none";
-    $('body').css('overflow', 'auto'); // Enable scrolling
+    $('body').css('overflow', 'auto'); // Enable scrolling on the main page
 }
 
+// Close the modal if the user clicks outside of it
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
-        $('body').css('overflow', 'auto'); // Enable scrolling
+        $('body').css('overflow', 'auto'); // Enable scrolling on the main page
     }
 }
 
+// Event listener for filtering users based on job title and location
 $(document).on('click', '#submit-filter-btn', function() {
     var selectedTitle = $('#title-select').val();
     var selectedLocation = $('#location-select').val();
 
+    // Fetch users based on the selected filters
     $.ajax({
         url: '$fetchFilteredUsersUrl',
         type: 'GET',
@@ -396,11 +441,15 @@ $(document).on('click', '#submit-filter-btn', function() {
     });
 });
 
+
+// Event listener for submitting the selected users to assign or unassign training
 $(document).on('click', '#submit-assign-users', function() {
+    // Disable the button to prevent the multiple clicks (previously an issue with assigning multiple training instead of just one)
     $(this).prop('disabled', true);
     var selectedUserIds = [];
     var unassignUserIds = [];
 
+    // Collect the IDs of selected users to assign or unassign training
     $('#profile-list').find('.profile-checkbox').each(function() {
         if ($(this).is(':checked')) {
             // Check if the user ID is not already in selectedUserIds
@@ -422,15 +471,17 @@ $(document).on('click', '#submit-assign-users', function() {
     }
 
     var trainingId = $('h3[data-training-id]').data('training-id');
+    
+    // Get the current time in the specified timezone
     var currentTime = new Date().toLocaleString('en-GB', {
         timeZone: 'Europe/Berlin',
-    }).replace(',', ''); // Remove the comma added by toLocaleString
+    }).replace(',', '');
 
     currentTime = currentTime.replace(/\//g, '-');
     // Unassign users first
     if (unassignUserIds.length > 0) {
         $.ajax({
-            url: '$removeTrainingUrl', // Add a URL or endpoint for unassigning
+            url: '$removeTrainingUrl',
             type: 'POST',
             data: {
                 user_ids: unassignUserIds,
@@ -439,7 +490,7 @@ $(document).on('click', '#submit-assign-users', function() {
             },
             success: function(response) {
                 if (response.success) {
-                    console.log(response.message); // For debugging
+                    console.log(response.message);
                 } else {
                     alert('Failed to unassign training from some users.');
                 }
@@ -504,18 +555,31 @@ $('#add-question-btn').on('click', function() {
         '<br>' +
         '</div>';
 
+    // Append the new question items to the question container
     $('#questions-container').append(newQuestionItem);
+    // Update the labels after adding the new questions
     updateQuestionLabels();
     if ($('.question-item').length > 1) {
+        // Show the remove button if there's more than one question
         $('#remove-question-btn').show();
     }
 });
 
+// Event handler for the "Remove File" button click
 $(document).on('click', '.remove-file-btn', function() {
+    // Find the parent form-group of the file input
     var fileContainer = $(this).closest('.form-group');
+    
+    // Remove the entire file input container
     fileContainer.remove();
+    
+    // Get the training ID from the data attribute
     var trainingId = $('h3[data-training-id]').data('training-id');
+    
+    // Show the file input section
     $('#training-file').show();
+
+    // AJAX request to remove the initial file from the server
     $.ajax({
         url: '$removeVideoUrl',
         type: 'POST',
@@ -532,8 +596,12 @@ $(document).on('click', '.remove-file-btn', function() {
 // Event handler for the "Remove Question" button click
 $('#remove-question-btn').on('click', function() {
     $('.question-item').last().remove();
+
+    // Update the labels after removing the question
     updateQuestionLabels();
     if ($('.question-item').length <= 1) {
+        
+        // Remove the question button after load
         $('#remove-question-btn').hide();
     }
 });
