@@ -75,7 +75,16 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                             </a>
                         </td>
                         <td><?= Html::encode($training['name']) ?></td>
-                        <td><?= Html::encode($training['created_at']) ?></td>
+                        <td>
+                            <?php
+                            if (isset($training['created_at']) && $training['created_at']) {
+                                // Format the date and time before displaying
+                                echo Html::encode(date('j. n. Y H:i:s', strtotime($training['created_at'])));
+                            } else {
+                                echo 'N/A';
+                            }
+                            ?>
+                        </td>
                         <td><?= Html::encode($activeAssignedTrainingsCount[$training['id']] ?? 0) ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -159,7 +168,14 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                               echo 'text-black';
                           }
                           ?>">
-                            <?= Html::encode(isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id] ? $trainingCompleteTimes[$user->id] : 'N/A') ?>
+                            <?php
+                            if (isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id]) {
+                                // Format the date before displaying
+                                echo Html::encode(date('j. n. Y H:i:s', strtotime($trainingCompleteTimes[$user->id])));
+                            } else {
+                                echo 'N/A';
+                            }
+                            ?>
                         </td>
                         <td><?= Html::encode($openTrainingsCount[$user->id] !== null ? $openTrainingsCount[$user->id] : 0) ?>
                         </td>

@@ -551,12 +551,12 @@ class RoleController extends Controller
     public function actionToggleTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-    
+
         $userIds = Yii::$app->request->post('user_ids', []);
         $trainingId = Yii::$app->request->post('training_id');
         $assignedTraining = Yii::$app->request->post('assigned_training');
         $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
-    
+
         $training = Yii::$app->db->createCommand('
             SELECT deadline_for_completion 
             FROM training 
@@ -564,11 +564,11 @@ class RoleController extends Controller
         ')
             ->bindValue(':training_id', $trainingId)
             ->queryOne();
-    
+
         $deadlineForCompletion = $training ? $training['deadline_for_completion'] : null;
-    
+
         $successCount = 0;
-    
+
         foreach (array_unique($userIds) as $usersId) {
             // Check if there is any record with assigned_training = 1
             $existingRecord = Yii::$app->db->createCommand(' 
@@ -579,13 +579,13 @@ class RoleController extends Controller
                 ->bindValue(':user_id', $usersId)
                 ->bindValue(':training_id', $trainingId)
                 ->queryScalar();
-    
+
             if ($deadlineForCompletion && $trainingAssignedTime) {
                 $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
             } else {
                 $deadline = null;
             }
-    
+
             if (!$existingRecord) {
                 Yii::$app->db->createCommand()
                     ->insert(
@@ -599,10 +599,10 @@ class RoleController extends Controller
                         ]
                     )
                     ->execute();
-                    $successCount++;
+                $successCount++;
             }
         }
-    
+
         if ($successCount > 0) {
             Yii::$app->db->createCommand()
                 ->update(
@@ -613,14 +613,14 @@ class RoleController extends Controller
                 ->bindValue(':training_id', $trainingId)
                 ->execute();
         }
-    
+
         if ($successCount > 0) {
             return ['success' => true, 'message' => "$successCount users assigned to training."];
         }
-    
+
         return ['success' => false, 'message' => "No users assigned to training."];
     }
-    
+
 
     // Action to remove training assignments from users
     public function actionRemoveTraining()
@@ -729,7 +729,7 @@ class RoleController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $userId = Yii::$app->user->id;
         $requestData = Yii::$app->request->post();
-        
+
         // Extract the training ID from the requested data
         $trainingId = $requestData['training_id'];
 
@@ -997,6 +997,7 @@ class RoleController extends Controller
             'answers' => $answers,
         ]);
     }
+
 
     public function actionSaveScores()
     {
