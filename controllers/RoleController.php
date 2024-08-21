@@ -557,6 +557,11 @@ class RoleController extends Controller
         $assignedTraining = Yii::$app->request->post('assigned_training');
         $trainingAssignedTime = Yii::$app->request->post('training_assigned_time');
 
+        date_default_timezone_set('Europe/Berlin');
+
+        $trainingAssignedTime = date('Y-m-d H:i:s', strtotime($trainingAssignedTime));
+
+
         $training = Yii::$app->db->createCommand('
             SELECT deadline_for_completion 
             FROM training 
@@ -600,6 +605,12 @@ class RoleController extends Controller
                     )
                     ->execute();
                 $successCount++;
+                $user = User::findOne($usersId);
+                $email = $user->email;
+                $name = $user->profile->firstname . ' ' . $user->profile->lastname;
+
+                // TODO Make the sending of the email work
+
             }
         }
 

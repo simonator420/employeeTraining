@@ -394,6 +394,7 @@ $(document).on('click', '#submit-filter-btn', function() {
 });
 
 $(document).on('click', '#submit-assign-users', function() {
+    $(this).prop('disabled', true);
     var selectedUserIds = [];
     var unassignUserIds = [];
 
@@ -420,7 +421,6 @@ $(document).on('click', '#submit-assign-users', function() {
     var trainingId = $('h3[data-training-id]').data('training-id');
     var currentTime = new Date().toLocaleString('en-GB', {
         timeZone: 'Europe/Berlin',
-        hour12: false // Optional, to use 24-hour format
     }).replace(',', ''); // Remove the comma added by toLocaleString
 
     currentTime = currentTime.replace(/\//g, '-');
