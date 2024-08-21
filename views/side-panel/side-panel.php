@@ -35,23 +35,44 @@ $heading = $trainingCount > 1 ? Yii::t('employeeTraining', "Mandatory Trainings"
         $trainingId = $activeTraining['training_id'];
         $trainingName = $activeTraining['training_name'];
         $deadline = $activeTraining['deadline'];
-        $completionDeadline = date('j. n. Y', strtotime($deadline));
         ?>
         <p class="training-name"><b><?= Html::encode(Yii::t('employeeTraining', $trainingName)) ?></b></p>
         <p class="deadline-message">
-            <?= Yii::t('employeeTraining', "This training should be completed by <b>{date}</b>.", [
-                'date' => Html::encode($completionDeadline)
-            ]) ?>
+            <?= Yii::t('employeeTraining', "Time left to complete training is <b><span id='countdown-{$trainingId}'></span></b>.") ?>
         </p>
         <div class="text-center">
             <?= Html::a(Yii::t('employeeTraining', 'Go to Training'), ['/employeeTraining/role/employee', 'id' => $trainingId], ['class' => 'btn btn-primary']) ?>
         </div>
         <br> <!-- Add spacing between buttons -->
+
+        <!-- Add a JavaScript block to handle the countdown timer -->
+        <script>
+            (function() {
+                var countdownElement = document.getElementById('countdown-<?= $trainingId ?>');
+                var deadline = new Date('<?= date('Y-m-d H:i:s', strtotime($deadline)) ?>').getTime();
+
+                var updateCountdown = setInterval(function() {
+                    var now = new Date().getTime();
+                    var distance = deadline - now;
+
+                    if (distance <= 0) {
+                        clearInterval(updateCountdown);
+                        countdownElement.innerHTML = 'Deadline has passed!';
+                    } else {
+                        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                        countdownElement.innerHTML = days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+                    }
+                }, 1000);
+            })();
+        </script>
         <?php
     }
     ?>
 </div>
-
 
 <style>
     .side-panel {
