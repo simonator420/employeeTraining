@@ -173,7 +173,7 @@ class TrainingQuestionsController extends Controller
 
                 $html .= '</div>';
                 $html .= '<br>';
-                $html .= '<hr>';
+                $html .= '<hr style="border-top: 1px solid">';
                 $html .= '<br>';
             }
 

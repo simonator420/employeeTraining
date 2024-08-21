@@ -174,7 +174,10 @@ function fetchQuestions() {
                         '<div class="form-group">' +
                             '<input type="file" name="TrainingQuestions[0][image]" class="form-control question-image">' +
                         '</div>' +
-                    '</div>'
+                    '</div>' +
+                    '<br>' +
+                    '<hr style="border-top: 1px solid">' +
+                    '<br>'
                 );
             }
             $('#questions-container').show();
@@ -497,7 +500,7 @@ $('#add-question-btn').on('click', function() {
                 '<input type="file" name="TrainingQuestions[' + questionIndex + '][image]" class="form-control question-image">' +
             '</div>' +
         '<br>' +
-        '<hr>' +
+        '<hr style="border-top: 1px solid">' +
         '<br>' +
         '</div>';
 
