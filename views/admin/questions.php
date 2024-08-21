@@ -418,8 +418,12 @@ $(document).on('click', '#submit-assign-users', function() {
     }
 
     var trainingId = $('h3[data-training-id]').data('training-id');
-    var currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    var currentTime = new Date().toLocaleString('en-GB', {
+        timeZone: 'Europe/Berlin',
+        hour12: false // Optional, to use 24-hour format
+    }).replace(',', ''); // Remove the comma added by toLocaleString
 
+    currentTime = currentTime.replace(/\//g, '-');
     // Unassign users first
     if (unassignUserIds.length > 0) {
         $.ajax({
