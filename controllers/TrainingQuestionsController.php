@@ -9,11 +9,21 @@ use yii\helpers\Html;
 use yii\web\UploadedFile;
 use yii\helpers\Url;
 
-
-
+/**
+ * Controller for handling training questions within the Employee Training module.
+ */
 class TrainingQuestionsController extends Controller
 {
-    // Function for displaying the questions page for Admin or Team Leader
+
+    /**
+     * Displays the questions page for Admin or Team Leader.
+     *
+     * This function checks the user's role and retrieves the training details
+     * (name, deadline, assigned users count) and renders the 'questions' view.
+     *
+     * @param string $id The ID of the training.
+     * @return string|\yii\web\Response The rendered view or a redirect response.
+     */
     public function actionQuestions($id)
     {
         // Get the current user
@@ -61,7 +71,12 @@ class TrainingQuestionsController extends Controller
         ]);
     }
 
-    // Function for retrieving the questions from database and displaying them for ADMIN at questions.php for editing
+    /**
+     * Retrieves the questions from the database and displays them for Admin at questions.php for editing.
+     *
+     * @param string $id The ID of the training.
+     * @return array JSON response with the questions' HTML or a failure message.
+     */
     public function actionFetchQuestions($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -185,7 +200,14 @@ class TrainingQuestionsController extends Controller
         }
     }
 
-    // Function for saving questions into database by ADMIN from questions.php
+    /**
+     * Saves questions into the database by Admin from questions.php.
+     *
+     * This function handles the saving of questions, including text, number, range,
+     * and multiple choice types, along with associated images and video uploads.
+     *
+     * @return array JSON response indicating success or failure.
+     */
     public function actionSaveQuestions()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -316,7 +338,15 @@ class TrainingQuestionsController extends Controller
         }
     }
 
-    // Function for displaying the questions from database in the form for the USER at employee.php
+    /**
+     * Displays the questions from the database in the form for the User at employee.php.
+     *
+     * This function generates and returns the HTML for displaying the questions,
+     * based on the question type (text, number, range, multiple choice) for the user to answer.
+     *
+     * @param string $training_id The ID of the training.
+     * @return array JSON response with the generated HTML content.
+     */
     public function actionDisplayQuestions($training_id)
     {
         // Set response format to JSON
@@ -437,7 +467,13 @@ class TrainingQuestionsController extends Controller
         return ['success' => true, 'html' => $html];
     }
 
-    // Function to update deadline for specific training
+    /**
+     * Updates the deadline for a specific training.
+     *
+     * This function allows the Admin to update the deadline for completing a training.
+     *
+     * @return array JSON response indicating success or failure.
+     */
     public function actionUpdateDeadline()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -466,7 +502,15 @@ class TrainingQuestionsController extends Controller
         return ['success' => false];
     }
 
-    // Helper function to check if the deadline is the same, because I wasn't able to save the new date if it was the same as the previous one
+    /**
+     * Helper function to check if the deadline is the same as the current one.
+     *
+     * This function compares the new deadline with the existing deadline in the database.
+     *
+     * @param string $id The ID of the training.
+     * @param string $deadline The new deadline to compare.
+     * @return bool True if the deadlines are the same, false otherwise.
+     */
     private function isDeadlineSame($id, $deadline)
     {
         // Fetch the current deadline for the specified training ID from the database
@@ -478,7 +522,14 @@ class TrainingQuestionsController extends Controller
         return $currentDeadline == $deadline;
     }
 
-    public function actionRemoveVideo()
+    /**
+     * Removes the video file associated with a training.
+     *
+     * This function deletes the video file URL from the database record of a training.
+     *
+     * @return array JSON response indicating success or failure.
+     */
+    public function actionRemoveInitialFile()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
     

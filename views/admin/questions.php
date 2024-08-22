@@ -131,7 +131,7 @@ $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $toggleTrainingUrl = Url::to(['role/toggle-training']);
 $removeTrainingUrl = Url::to(['role/remove-training']);
-$removeVideoUrl = Url::to(['training-questions/remove-video']);
+$removeInitialFile = Url::to(['training-questions/remove-initial-file']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 
@@ -581,7 +581,7 @@ $(document).on('click', '.remove-file-btn', function() {
 
     // AJAX request to remove the initial file from the server
     $.ajax({
-        url: '$removeVideoUrl',
+        url: '$removeInitialFile',
         type: 'POST',
         data : { deleteVid: true, trainingId: trainingId },
         success: function(response) {
@@ -666,7 +666,7 @@ $('#submit-btn').on('click', function() {
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    alert('Questions saved successfully!');
+                    location.reload();
                 } else {
                     alert('Failed to save questions.');
                     console.log(response.errors);

@@ -132,7 +132,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 <tr>
                     <th><strong><?= Yii::t('employeeTraining', 'ID') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Full Name') ?></strong></th>
-                    <th><strong><?= Yii::t('employeeTraining', 'Job') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTra ining', 'Job') ?></strong></th>
                     <!-- <th><strong><?= Yii::t('employeeTraining', 'Roles') ?></strong></th> -->
                     <th><strong><?= Yii::t('employeeTraining', 'Location') ?></strong></th>
                     <!-- <th><strong><?= Yii::t('employeeTraining', 'Training assigned time') ?></strong></th> -->
@@ -158,15 +158,9 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                         <td><?= Html::encode($user->profile->title ?: 'N/A') ?></td>
                         <td><?= Html::encode($user->profile->storage_location ?: 'N/A') ?></td>
                         <td id="training-complete-time-<?= $user->id ?>" class="<?php
-                          if ($user->profile->training_complete_time) {
-                              echo 'text-green';
-                          } elseif (!$user->profile->assigned_training && $user->profile->training_assigned_time && !$user->profile->training_complete_time) {
-                              echo 'text-orange';
-                          } elseif ($user->profile->assigned_training) {
-                              echo 'text-red';
-                          } else {
-                              echo 'text-black';
-                          }
+
+                          echo 'text-black';
+
                           ?>">
                             <?php
                             if (isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id]) {

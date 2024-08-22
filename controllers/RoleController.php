@@ -10,11 +10,21 @@ use yii\web\Response;
 use Yii;
 
 
-// Controller for handling actions related to roles within the Employee Training module.
+/**
+ * Controller for handling actions related to roles within the Employee Training module.
+ */
 class RoleController extends Controller
 {
 
-    // Function for displaying the admin page for ADMIN
+    /**
+     * Displays the admin page for ADMIN users.
+     *
+     * This function retrieves various user and training-related data, including the latest answers,
+     * counts of completed and open trainings, and training completion times, and then renders
+     * the admin view with this data.
+     *
+     * @return string
+     */
     public function actionAdmin()
     {
         // Retrieve all users from database
@@ -148,7 +158,12 @@ class RoleController extends Controller
         ]);
     }
 
-    // Function to fetch users based on their role
+    /**
+     * Fetches users based on their role.
+     *
+     * @param string $role The role to filter users by.
+     * @return array The list of users matching the specified role.
+     */
     public function actionFetchUsersByRole($role)
     {
         // Set response format to JSON
@@ -180,7 +195,13 @@ class RoleController extends Controller
         }
     }
 
-    // Function to fetch users by their role and title
+    /**
+     * Fetches users by their role and title.
+     *
+     * @param string $role The role to filter users by.
+     * @param string $title The title to filter users by.
+     * @return array The list of users matching the specified role and title.
+     */
     public function actionFetchUsersByRoleAndTitle($role, $title)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -211,7 +232,12 @@ class RoleController extends Controller
         }
     }
 
-    // Function to fetch all profiles associated with a specific training
+    /**
+     * Fetches all profiles associated with a specific training.
+     *
+     * @param string $trainingId The ID of the training to filter profiles by.
+     * @return array The list of profiles associated with the specified training.
+     */
     public function actionFetchAllProfiles($trainingId)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -252,8 +278,13 @@ class RoleController extends Controller
         }
     }
 
-    // Function to fetch all profiles, adjusted for addinf roles to users
-    // adjusted actionFetchAllProfiles only for adding roles to users
+    /**
+     * Fetches all profiles, adjusted for adding roles to users.
+     *
+     * This function is a variant of actionFetchAllProfiles, specifically for adding roles to users.
+     *
+     * @return array The list of profiles.
+     */
     public function actionFetchProfiles()
     {
         // Set response format to json
@@ -285,7 +316,11 @@ class RoleController extends Controller
         }
     }
 
-    // Function to fetch all distinct job titles from the profile table
+    /**
+     * Fetches all distinct storage locations from the profile table.
+     *
+     * @return array The list of distinct storage locations.
+     */
     public function actionFetchTitles()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -303,7 +338,11 @@ class RoleController extends Controller
         return ['success' => false, 'titles' => []];
     }
 
-    // Function to fetch all distinct storage locations from the profile table
+    /**
+     * Fetches all distinct storage locations from the profile table.
+     *
+     * @return array The list of distinct storage locations.
+     */
     public function actionFetchLocations()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -321,7 +360,12 @@ class RoleController extends Controller
         return ['success' => false, 'locations' => []];
     }
 
-    // Function to fetch distinct job titles based on specific role
+    /**
+     * Fetches distinct job titles based on a specific role.
+     *
+     * @param string $role The role to filter job titles by.
+     * @return array The list of job titles matching the specified role.
+     */
     public function actionFetchCollapsibleTitles($role)
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -364,8 +408,13 @@ class RoleController extends Controller
         }
     }
 
-
-    // Function to fetch users filtered by title and/or location
+    /**
+     * Fetches users filtered by title and/or location.
+     *
+     * @param string|null $title The title to filter users by (optional).
+     * @param string|null $location The location to filter users by (optional).
+     * @return array The list of users matching the specified filters.
+     */
     public function actionFetchFilteredUsers($title = null, $location = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -434,7 +483,11 @@ class RoleController extends Controller
     }
 
 
-    // Function to add a role to selected users
+    /**
+     * Adds a role to selected users.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionAddRole()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -473,7 +526,11 @@ class RoleController extends Controller
         return ['success' => false, 'message' => 'Invalid request'];
     }
 
-    // Function to remove a role from selected users and set it to 'user'
+    /**
+     * Removes a role from selected users and sets it to 'user'.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionRemoveRole()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -514,7 +571,12 @@ class RoleController extends Controller
     }
 
 
-    // Function for handling the request to display employee.php
+    /**
+     * Displays the employee view based on the provided training ID.
+     *
+     * @param string $id The ID of the training to display for the employee.
+     * @return string|\yii\web\Response
+     */
     public function actionEmployee($id)
     {
         // Retrieve the current logged-in user's information
@@ -547,7 +609,11 @@ class RoleController extends Controller
         return $this->redirect(['site/access-denied']);
     }
 
-    // Function to handle the AJAX request to toggle the training assignment for a user
+    /**
+     * Handles the AJAX request to toggle the training assignment for a user.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionToggleTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -561,7 +627,7 @@ class RoleController extends Controller
 
         $trainingAssignedTime = date('Y-m-d H:i:s', strtotime($trainingAssignedTime));
 
-
+        // Fetch the training's deadline for completion.
         $training = Yii::$app->db->createCommand('
             SELECT deadline_for_completion 
             FROM training 
@@ -574,6 +640,7 @@ class RoleController extends Controller
 
         $successCount = 0;
 
+        // Loop through each user ID to process the training assignment.
         foreach (array_unique($userIds) as $usersId) {
             // Check if there is any record with assigned_training = 1
             $existingRecord = Yii::$app->db->createCommand(' 
@@ -585,12 +652,14 @@ class RoleController extends Controller
                 ->bindValue(':training_id', $trainingId)
                 ->queryScalar();
 
+            // Calculate the deadline for the training completion.
             if ($deadlineForCompletion && $trainingAssignedTime) {
                 $deadline = date('Y-m-d H:i:s', strtotime($trainingAssignedTime . ' + ' . $deadlineForCompletion . ' days'));
             } else {
                 $deadline = null;
             }
 
+            // Insert the new training assignment if it doesn't already exist.            
             if (!$existingRecord) {
                 Yii::$app->db->createCommand()
                     ->insert(
@@ -606,11 +675,6 @@ class RoleController extends Controller
                     ->execute();
                 $successCount++;
                 $user = User::findOne($usersId);
-                $email = $user->email;
-                $name = $user->profile->firstname . ' ' . $user->profile->lastname;
-
-                // TODO Make the sending of the email work
-
             }
         }
 
@@ -633,7 +697,11 @@ class RoleController extends Controller
     }
 
 
-    // Action to remove training assignments from users
+    /**
+     * Removes training assignments from users.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionRemoveTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -684,7 +752,11 @@ class RoleController extends Controller
     }
 
 
-    // Function to assign training to users
+    /**
+     * Assigns training to users based on selected criteria.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionAssignTraining()
     {
         // Set the response format to JSON
@@ -716,25 +788,29 @@ class RoleController extends Controller
         }
 
         // Iterate over each user and update their profile with the new training assignment details
-        foreach ($users as $user) {
-            // Update training_assigned_time with the selected time
-            $user->profile->training_assigned_time = $selectedTime;
-            // Reset assigned_training to 0 (not assigned)
-            $user->profile->assigned_training = 0;
-            // Clear training_complete_time (set to null)
-            $user->profile->training_complete_time = null;
+        // foreach ($users as $user) {
+        //     // Update training_assigned_time with the selected time
+        //     // $user->profile->training_assigned_time = $selectedTime;
+        //     // Reset assigned_training to 0 (not assigned)
+        //     // $user->profile->assigned_training = 0;
+        //     // Clear training_complete_time (set to null)
+        //     // $user->profile->training_complete_time = null;
 
-            // Save the updated profile and check for errors
-            if (!$user->profile->save()) {
-                // If saving fails, return a failure response
-                return ['success' => false];
-            }
-        }
+        //     // Save the updated profile and check for errors
+        //     if (!$user->profile->save()) {
+        //         // If saving fails, return a failure response
+        //         return ['success' => false];
+        //     }
+        // }
         // Return a success response if all updates are successful
         return ['success' => true];
     }
 
-    // Handling the AJAX request to mark the training as complete for the current user
+    /**
+     * Marks the training as complete for the current user.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionCompleteTraining()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -819,7 +895,12 @@ class RoleController extends Controller
         return ['success' => true];
     }
 
-    // Function for creating a new training record in the database
+    /**
+     * Creates a new training record in the database.
+     *
+     * @return array The success or failure status of the operation.
+     * @throws BadRequestHttpException If the request method is not POST.
+     */
     public function actionCreateTraining()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -856,7 +937,13 @@ class RoleController extends Controller
         throw new BadRequestHttpException('Only POST requests are allowed');
     }
 
-    // Function for retrieving all training instances where a specific user has submitted answers
+    /**
+     * Retrieves all training instances where a specific user has submitted answers.
+     *
+     * @param int $id The ID of the user.
+     * @return string The rendered view displaying the user's answers.
+     * @throws \yii\web\NotFoundHttpException If the user is not found.
+     */    
     public function actionUserAnswers($id)
     {
         // Find the user by ID
@@ -922,6 +1009,8 @@ class RoleController extends Controller
                 $totalScore = 0;
                 $isScored = true;
 
+                Yii::warning('Tohle jeee instance created_at ' . $instance['created_at']);
+
                 // Fetch the user's answers for this training and timestamp
                 $trainingAnswers = Yii::$app->db->createCommand('
                     SELECT ta.*, tq.question AS question_text, ta.score
@@ -940,6 +1029,7 @@ class RoleController extends Controller
 
                 // Loop through teach answer
                 foreach ($trainingAnswers as &$answer) {
+                    Yii::warning('Tohle jeee answer answer ' . $answer['answer']);
                     // If the answer is of type 'multiple_choice'
                     if ($answer['answer'] == 'multiple_choice') {
                         $scoreAdded = false;
@@ -960,22 +1050,28 @@ class RoleController extends Controller
 
                         // Loop through the multiple choice answers to add their scores
                         foreach ($multipleChoiceAnswers as $mca) {
-                            if ($scoreAdded == false && isset($mca['score'])) {
-                                $totalScore += $answer['score'];
+                            if (isset($mca['score'])) {
+                                $totalScore += $mca['score'];
+                                Yii::warning('Tohle jeee Score Added: ' . $totalScore);
                                 $scoreAdded = true;
                                 $allNull = false;
                             }
                         }
                     } else {
                         if (isset($answer['score'])) {
-                            $totalScore += $answer['score']; // Add the score to the total score
+                            $totalScore += $answer['score'];
+                            Yii::warning('Tohle jeee Score Added: ' . $totalScore);
+                            $allNull = false;
+                            $isScored = true;
                         }
                     }
+
                 }
 
                 // If all scores are null, mark the instace as not scored
                 if ($allNull == true) {
                     $isScored = false;
+                    Yii::warning('Tohle jeee To bylo vyhodnoceno');
                 }
 
                 // Store the scoring status and total score for this instance
@@ -1009,7 +1105,11 @@ class RoleController extends Controller
         ]);
     }
 
-
+    /**
+     * Saves the scores for training questions.
+     *
+     * @return array The success or failure status of the operation.
+     */
     public function actionSaveScores()
     {
         // Read and decode the JSON input from the request body

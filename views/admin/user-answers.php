@@ -20,7 +20,13 @@ $this->params['breadcrumbs'][] = $this->title;
                     $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
                     $formattedScore = number_format($instance['total_score'], 2);
                     Yii::warning('Tohle jeee length: ' . $length);
-                    Yii::warning('Tohle jeee formattedScore ' . $formattedScore)
+                    Yii::warning('Tohle jeee formattedScore ' . $formattedScore);
+                    if ($instance['is_scored'] == true)
+                    {
+                        Yii::warning('Tohle jeee instance is_scored true');
+                    } elseif ($instance['is_scored'] == false) {
+                        Yii::warning('Tohle jeee instance is_scored false');
+                    }
                     ?>
                     <?php
                     $scoreStatus = $instance['is_scored']
