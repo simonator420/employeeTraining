@@ -595,13 +595,16 @@ $(document).on('click', '.remove-file-btn', function() {
 
 // Event handler for the "Remove Question" button click
 $('#remove-question-btn').on('click', function() {
-    $('.question-item').last().remove();
+    var lastQuestionItem = $('.question-item').last();
+    lastQuestionItem.next('br').remove();  // Remove the next <br> element
+    lastQuestionItem.next('hr').remove();  // Remove the next <hr> element
+    lastQuestionItem.remove();
 
     // Update the labels after removing the question
     updateQuestionLabels();
+
+    // Hide the "Remove Question" button if there's only one question left
     if ($('.question-item').length <= 1) {
-        
-        // Remove the question button after load
         $('#remove-question-btn').hide();
     }
 });

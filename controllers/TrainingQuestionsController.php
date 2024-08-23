@@ -185,10 +185,10 @@ class TrainingQuestionsController extends Controller
                 $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image" accept="image/*"' . ($question['image_url'] ? ' style="display:none;"' : '') . '>';
                 $html .= '</div>';
 
-                $html .= '</div>';
                 $html .= '<br>';
                 $html .= '<hr style="border-top: 1px solid">';
                 $html .= '<br>';
+                $html .= '</div>';
             }
 
             // Return the generated HTML as a successful response
