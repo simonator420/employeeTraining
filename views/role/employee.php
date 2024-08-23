@@ -38,7 +38,8 @@ use yii\helpers\Url;
                     </video><br>
                 <?php elseif ($fileExtension === 'pdf'): ?>
                     <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                    <embed src="<?= $pdfUrl ?>" width="90%" height="65vh" type="application/pdf" style="min-height: 65vh;" alt="pdf" /><br>
+                    <embed src="<?= $pdfUrl ?>" width="90%" height="65vh" type="application/pdf" style="min-height: 65vh;"
+                        alt="pdf" /><br>
                 <?php endif; ?>
 
                 <button id="end-file-btn" class="btn btn-secondary">Continue</button>
@@ -58,6 +59,7 @@ $displayQuestionsUrl = Url::to(['training-questions/display-questions', 'title' 
 // URL to complete the training
 $completeTrainingUrl = Url::to(['role/complete-training']);
 $script = <<<JS
+var trainingId = '{$trainingId}';
 // Document ready function to initialize when the page is loaded
 $(document).ready(function() {
     var trainingId = '{$trainingId}';
@@ -90,6 +92,11 @@ $(document).ready(function() {
 
     // Function to hide the video and show the questions
     $('#end-file-btn').on('click', function(e) {
+        var videoElement = document.getElementById('training-video');
+        if (videoElement) {
+            videoElement.pause();
+            videoElement.currentTime = 0;
+        }
         document.getElementById('file-container').style.display = 'none';
         document.getElementById('questions-container').style.display = 'block';
         document.getElementById('submit-btn').style.display = 'inline';
@@ -101,7 +108,7 @@ $(document).ready(function() {
     // Event handler for the submit button click
     $('#submit-btn').on('click', function(e) {
         e.preventDefault();
-
+        console.log('Tohle je trainingId: ', trainingId)
         if (!trainingCompleted) {
             let isValid = true;
             let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
