@@ -11,7 +11,16 @@ $this->params['breadcrumbs'][] = $this->title;
 <!-- TODO Display the items in collapsibles better and not like table -->
 <div class="user-answers-container">
     <div class="user-answers-card">
-        <h1><?= Html::encode($this->title) ?></h1>
+
+        <div style="display:flex; justify-content: space-between; align-items:center;">
+
+            <h1>
+                <?= Html::encode($this->title) ?>
+            </h1>
+            <?= Html::a('&laquo; ' . Yii::t('employeeTraining', 'Back to overview'), Url::to(['role/admin']), ['class' => 'btn go-back-button']) ?>
+
+        </div>
+
         <br>
         <div class="collapsible-container">
             <?php foreach ($trainings as $training): ?>

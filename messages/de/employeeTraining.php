@@ -50,4 +50,9 @@ return [
     'Submit' => 'Einreichen',
     'No. of completed trainings' => 'Anzahl der abgeschlossenen Fortbildungskurse',
     'Mandatory Trainings' => 'Pflichtausbildungen',
+    'Welcome to the ' => 'Willkommen bei der ',
+    'training' => 'ausbildung',
+    ', you have been assigned this training. Please complete it at your earliest convenience. Please note that if the page is refreshed during the training, your inputs will not be saved.' => ', sie haben diese Schulung zugewiesen bekommen. Bitte schließen Sie sie so bald wie möglich ab. Bitte beachten Sie, dass Ihre Eingaben nicht gespeichert werden, wenn die Seite während der Schulung neu geladen wird.',
+    'Dear ' => 'Lieber ',
+    'Continue' => 'Weiter',
 ];

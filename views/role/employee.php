@@ -8,10 +8,8 @@ use yii\helpers\Url;
 <div class="employee-training-container">
     <div class="employee-training-card">
 
-        <h1>Welcome to the <b> <?= Html::encode($trainingId) ?> </b> training</h1>
-        <p class="welcome-text">Dear <b> <?= Html::encode($firstName) ?></b>, you have been assigned this training.
-            Please complete it at your earliest convenience. Please note that if the page is refreshed during the
-            training, your inputs will not be saved.</p><br>
+        <h1><?= Yii::t('employeeTraining', 'Welcome to the ') ?> <b> <?= Html::encode($trainingId) ?> </b> <?= Yii::t('employeeTraining', 'training') ?></h1>
+        <p class="welcome-text"><?= Yii::t('employeeTraining', 'Dear ') ?> <b> <?= Html::encode($firstName) ?></b><?=Yii::t('employeeTraining', ', you have been assigned this training. Please complete it at your earliest convenience. Please note that if the page is refreshed during the training, your inputs will not be saved.')?></p><br>
 
         <!-- Video container with end button -->
         <?php
@@ -42,13 +40,13 @@ use yii\helpers\Url;
                         alt="pdf" /><br>
                 <?php endif; ?>
 
-                <button id="end-file-btn" class="btn btn-secondary">Continue</button>
+                <button id="end-file-btn" class="btn btn-secondary"><?= Yii::t('employeeTraining', 'Continue') ?></button>
             </div>
             <div id="questions-container" style="display: none;"></div>
-            <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
+            <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         <?php else: ?>
             <div id="questions-container"></div>
-            <?= Html::a('Submit', Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn']) ?>
+            <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn']) ?>
         <?php endif; ?>
     </div>
 </div>
