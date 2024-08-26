@@ -122,7 +122,7 @@ class QuestionsController extends Controller
 
                 // Create a dropdown for selecting the question type (text, number, range, multiple choice)
                 $html .= '<div class="form-group">';
-                $html .= Html::dropDownList("TrainingQuestions[$index][type]", $question['type'], ['text' => 'Text', 'number' => 'Number', 'range' => 'Range', 'multiple_choice' => 'Multiple Choice'], ['class' => 'form-control question-type']);
+                $html .= Html::dropDownList("TrainingQuestions[$index][type]", $question['type'], ['text' => 'Text', 'number' => 'Number', 'range' => 'Range', 'multiple_choice' => 'Multiple Choice'], ['class' => 'form-control question-type', 'style' => 'height: 100%; width: 140px;']);
                 $html .= '</div>';
 
                 // Create a text input for entering the question text

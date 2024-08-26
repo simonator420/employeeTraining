@@ -166,7 +166,7 @@ function fetchQuestions() {
                     '<div class="question-item">' +
                         '<label>Question 1</label>' +
                         '<div class="form-group">' +
-                            '<select name="TrainingQuestions[0][type]" class="form-control question-type">' +
+                            '<select name="TrainingQuestions[0][type]" class="form-control question-type" style="height: 100%; width: 140px;">' +
                                 '<option value="text" selected>Text</option>' +
                                 '<option value="number">Number</option>' +
                                 '<option value="range">Range</option>' +
@@ -533,7 +533,7 @@ $('#add-question-btn').on('click', function() {
         '<div class="question-item">' +
             '<label>Question ' + (questionIndex + 1) + '</label>' + 
             '<div class="form-group">' +
-                '<select name="TrainingQuestions[' + questionIndex + '][type]" class="form-control question-type">' +
+                '<select name="TrainingQuestions[' + questionIndex + '][type]" class="form-control question-type" style="height:100%; width: 140px;">' +
                     '<option value="text" selected>Text</option>' +
                     '<option value="number">Number</option>' +
                     '<option value="range">Range</option>' +

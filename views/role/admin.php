@@ -59,6 +59,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
         <table class="table table-training table-bordered" id="training-table">
             <thead>
                 <tr>
+                    <!-- TODO Implement checkbox for deleting the training -->
                     <th><strong><?= Yii::t('employeeTraining', 'Training ID') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Name') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Created At') ?></strong></th>
