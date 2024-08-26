@@ -104,10 +104,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                                     <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
                                                     Wrong
                                                 </label>
-                                                <!-- <label style="color: gray;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][not_scored]', false) ?>
-                                                    Not Scored
-                                                </label> -->
+                                                
                                             </div>
                                         <?php endforeach; ?>
                                         <p style="padding-top:10px; padding-bottom:2px;"><b>Correct answer:</b>
@@ -147,10 +144,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                             ->bindValue(':training_id', $training['training_id'])
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
-
-                                        // Score null but right_answer set
-                    
-
+    
                                         $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
                                         <div class="evaluation">
@@ -173,7 +167,6 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php endif; ?>
                                     <hr>
                                 </div>
-
 
                                 <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1): ?>
                                     <button class="submit-score-btn">Submit Score</button>
