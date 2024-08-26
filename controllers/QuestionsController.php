@@ -12,7 +12,7 @@ use yii\helpers\Url;
 /**
  * Controller for handling training questions within the Employee Training module.
  */
-class TrainingQuestionsController extends Controller
+class QuestionsController extends Controller
 {
 
     /**

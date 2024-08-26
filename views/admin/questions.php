@@ -122,16 +122,16 @@ use yii\helpers\Url;
 </div>
 
 <?php
-$saveQuestionsUrl = Url::to(['training-questions/save-questions']);
-$fetchQuestionsUrl = Url::to(['training-questions/fetch-questions']);
-$updateDeadlineUrl = Url::to(['training-questions/update-deadline']);
+$saveQuestionsUrl = Url::to(['questions/save-questions']);
+$fetchQuestionsUrl = Url::to(['questions/fetch-questions']);
+$updateDeadlineUrl = Url::to(['questions/update-deadline']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
 $fetchTitlesUrl = Url::to(['role/fetch-titles']);
 $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
-$toggleTrainingUrl = Url::to(['role/toggle-training']);
-$removeTrainingUrl = Url::to(['role/remove-training']);
-$removeInitialFile = Url::to(['training-questions/remove-initial-file']);
+$toggleTrainingUrl = Url::to(['training/toggle-training']);
+$removeTrainingUrl = Url::to(['training/remove-training']);
+$removeInitialFile = Url::to(['questions/remove-initial-file']);
 $trainingIdJson = json_encode($trainingId);
 $script = <<<JS
 

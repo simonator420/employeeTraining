@@ -162,8 +162,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 30px;
     text-align: center;
-    max-width: 120vh;
-    width: 100%;
+    width: 120vh;
 }
 
 .employee-training-card h1 {

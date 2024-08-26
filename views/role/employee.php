@@ -8,8 +8,11 @@ use yii\helpers\Url;
 <div class="employee-training-container">
     <div class="employee-training-card">
 
-        <h1><?= Yii::t('employeeTraining', 'Welcome to the ') ?> <b> <?= Html::encode($trainingId) ?> </b> <?= Yii::t('employeeTraining', 'training') ?></h1>
-        <p class="welcome-text"><?= Yii::t('employeeTraining', 'Dear ') ?> <b> <?= Html::encode($firstName) ?></b><?=Yii::t('employeeTraining', ', you have been assigned this training. Please complete it at your earliest convenience. Please note that if the page is refreshed during the training, your inputs will not be saved.')?></p><br>
+        <h1><?= Yii::t('employeeTraining', 'Welcome to the ') ?> <b> <?= Html::encode($trainingId) ?> </b>
+            <?= Yii::t('employeeTraining', 'training') ?></h1>
+        <p class="welcome-text"><?= Yii::t('employeeTraining', 'Dear ') ?> <b>
+                <?= Html::encode($firstName) ?></b><?= Yii::t('employeeTraining', ', you have been assigned this training. Please complete it at your earliest convenience. Please note that if the page is refreshed during the training, your inputs will not be saved.') ?>
+        </p><br>
 
         <!-- Video container with end button -->
         <?php
@@ -37,8 +40,7 @@ use yii\helpers\Url;
                     </video><br>
                 <?php elseif ($fileExtension === 'pdf'): ?>
                     <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                    <embed src="<?= $pdfUrl ?>" width="90%" type="application/pdf" style="min-height: 65vh;"
-                        alt="pdf" /><br>
+                    <embed src="<?= $pdfUrl ?>" width="90%" type="application/pdf" style="min-height: 65vh;" alt="pdf" /><br>
                 <?php endif; ?>
 
                 <button id="end-file-btn" class="btn btn-secondary"><?= Yii::t('employeeTraining', 'Continue') ?></button>
@@ -55,9 +57,9 @@ use yii\helpers\Url;
 
 <?php
 // URL to display questions based on the title
-$displayQuestionsUrl = Url::to(['training-questions/display-questions', 'title' => $title]);
+$displayQuestionsUrl = Url::to(['questions/display-questions', 'title' => $title]);
 // URL to complete the training
-$completeTrainingUrl = Url::to(['role/complete-training']);
+$completeTrainingUrl = Url::to(['training/complete-training']);
 $script = <<<JS
 var trainingId = '{$trainingId}';
 // Document ready function to initialize when the page is loaded

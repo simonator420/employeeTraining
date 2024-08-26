@@ -70,7 +70,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 <?php foreach ($trainings as $training): ?>
                     <tr>
                         <td class="training-id" data-id="<?= Html::encode($training['id']) ?>" style="cursor: pointer;">
-                            <a href="<?= Url::to(['training-questions/questions', 'id' => Html::encode($training['id'])]) ?>"
+                            <a href="<?= Url::to(['questions/questions', 'id' => Html::encode($training['id'])]) ?>"
                                 style="color: blue; text-decoration: underline;">
                                 <?= Html::encode($training['id']) ?>
                             </a>
@@ -185,8 +185,8 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
 
 <?php
 // URLs for the function in RoleController
-$toggleTrainingUrl = Url::to(['role/toggle-training']);
-$createTrainingUrl = Url::to(['role/create-training']);
+$toggleTrainingUrl = Url::to(['training/toggle-training']);
+$createTrainingUrl = Url::to(['training/create-training']);
 $fetchUsersByRoleUrl = Url::to(['role/fetch-users-by-role']);
 $removeRoleUrl = Url::to(['role/remove-role']);
 $fetchAllProfilesUrl = Url::to(['role/fetch-all-profiles']);
