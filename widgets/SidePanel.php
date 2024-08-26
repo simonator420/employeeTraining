@@ -28,6 +28,7 @@ class SidePanel extends Widget
      * the first name of the user as a parameter to the view.
      *
      * @return string The rendered side panel HTML.
+     * 
      */
     public function run()
     {

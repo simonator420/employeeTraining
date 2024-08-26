@@ -66,6 +66,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 </tr>
             </thead>
             <tbody>
+                <!-- Iterate over all trainings and display them in the table -->
                 <?php foreach ($trainings as $training): ?>
                     <tr>
                         <td class="training-id" data-id="<?= Html::encode($training['id']) ?>" style="cursor: pointer;">
@@ -77,10 +78,12 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                         <td><?= Html::encode($training['name']) ?></td>
                         <td>
                             <?php
+                            // If the training creation date was found, display it
                             if (isset($training['created_at']) && $training['created_at']) {
-                                // Format the date and time before displaying
                                 echo Html::encode(date('j. n. Y H:i:s', strtotime($training['created_at'])));
-                            } else {
+                            } 
+                            // If it wasn't found, display N/A
+                            else {
                                 echo 'N/A';
                             }
                             ?>
@@ -95,6 +98,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
             <button id="cancel-training-btn">Cancel</button>
         </div>
 
+        <!-- If the user is admin, display the button for training creation -->
         <?php if ($userRole == 'admin'): ?>
             <button id="create-training-btn"><?= Yii::t('employeeTraining', 'Create Training') ?></button>
         <?php endif; ?>
@@ -133,16 +137,15 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                     <th><strong><?= Yii::t('employeeTraining', 'ID') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Full Name') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTra ining', 'Job') ?></strong></th>
-                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Roles') ?></strong></th> -->
                     <th><strong><?= Yii::t('employeeTraining', 'Location') ?></strong></th>
-                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Training assigned time') ?></strong></th> -->
                     <th><strong><?= Yii::t('employeeTraining', 'Last training complete time') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'No. of open trainings') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'No. of completed trainings') ?></strong></th>
-                    <!-- <th><strong><?= Yii::t('employeeTraining', 'Assigned training') ?></strong></th> -->
                 </tr>
             </thead>
+            
             <tbody>
+                <!-- Iterate throught all users and display the information about them -->
                 <?php foreach ($users as $user): ?>
                     <tr data-id="<?= Html::encode($user->id) ?>" data-title="<?= Html::encode($user->profile->title) ?>"
                         data-location="<?= Html::encode($user->profile->storage_location) ?>"
@@ -164,7 +167,6 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                           ?>">
                             <?php
                             if (isset($trainingCompleteTimes[$user->id]) && $trainingCompleteTimes[$user->id]) {
-                                // Format the date before displaying
                                 echo Html::encode(date('j. n. Y H:i:s', strtotime($trainingCompleteTimes[$user->id])));
                             } else {
                                 echo 'N/A';
@@ -195,14 +197,13 @@ $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $addRoleUrl = Url::to(['role/add-role']);
 $script = <<<JS
 
-// Get the current time and adjust it to the local timezone
+// Get the current time and adjust it to the local time zone
 var currentTime = null;
 var now = new Date();
 var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
-// document.getElementById("training-time-picker").setAttribute("min", currentTime);
     
-    // Event handler for creating a new training row
+    // Button for creating new training
     $('#create-training-btn').on('click', function() {
         var table = $('#training-table tbody');
         var newRow = $('<tr>');
@@ -217,12 +218,14 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         $('#submit-cancel-buttons').show();
     });
 
+    // Button for canceling the create training action
     $('#cancel-training-btn').on('click', function() {
         $('#training-table tbody tr:last').remove();
         $('#create-training-btn').show();
         $('#submit-cancel-buttons').hide();
     });
 
+    // Button for submitting the creation of new training
     $('#submit-training-btn').on('click', function() {
         var trainingId = $('#new-training-id').val();
         var trainingName = $('#new-training-name').val();
@@ -250,11 +253,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     });
 
     $('.training-id').on('click', function() {
-        console.log('click');
         var trainingId = $(this).data('id');
-        console.log("Training ID clicked: " + trainingId);
     });
 
+    // Click on the collapsible item
     $('.collapsible').on('click', function() {
         var content = $(this).next('.content');
 
@@ -278,11 +280,9 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         type: 'GET',
         data: { role: role },
         success: function(response) {
-            console.log('AJAX Response:', response);
             var usersHtml = '<ul>';
             if (response.success && response.users.length > 0) {
                 $.each(response.users, function(index, user) {
-                    console.log('User Data:', user);
                     if (role !== 'user') {
                         usersHtml += '<li><input type="checkbox" class="role-user-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
                     } else {
@@ -335,17 +335,14 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     });
 }
 
-    // Event handler for removing selected users from their current role and setting it to "User"
+    // Button for removing the role and setting the role to User
     $(document).on('click', '.remove-role-btn', function() {
         var role = $(this).data('role');
         var selectedUsers = [];
         $(this).closest('.content').find('.role-user-checkbox:checked').each(function() {
             var userId = $(this).val();
-            console.log('Checkbox value:', userId); // Log the checkbox value to ensure it's correct
             selectedUsers.push(userId);
         });
-
-        console.log('Selected users:', selectedUsers); // Log the selected users
 
         if (selectedUsers.length > 0) {
             $.ajax({
@@ -357,7 +354,6 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                     _csrf: yii.getCsrfToken()
                 },
                 success: function(response) {
-                    console.log('Response:', response); // Log the response
                     if (response.success) {
                         location.reload();
                     } else {
@@ -365,7 +361,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error); // Log AJAX errors
+                    console.error('AJAX Error:', status, error);
                     alert('Error in AJAX request.');
                 }
             });
@@ -383,7 +379,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     // Get the <span> element that closes the modal
     var span = document.getElementsByClassName("close")[0];
 
-    // When the user clicks the button, open the modal 
+    // Button for adding Team Leader or Admin
     $(document).on('click', '.add-role-btn', function() {
         var role = $(this).data('role');
         var title = '';
@@ -397,7 +393,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         }
         $('#modal-title').text(title);
         modal.style.display = "block";
-        $('body').css('overflow', 'hidden'); // Disable scrolling
+        // Disable scrolling
+        $('body').css('overflow', 'hidden');
 
         // Fetch profiles and display them in the modal
         $.ajax({
@@ -413,7 +410,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                         }
                     });
                     profilesHtml += '</ul>';
-                    $('#profile-list').html(profilesHtml); // Populate the profile list
+                    $('#profile-list').html(profilesHtml);
                 } else {
                     $('#profile-list').html('<p>No profiles found.</p>');
                 }
@@ -425,21 +422,23 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
-    // When the user clicks on <span> (x), close the modal
+    // When the user clicks on close button in the modal (x), close the modal
     span.onclick = function() {
         modal.style.display = "none";
-        $('body').css('overflow', 'auto'); // Enable scrolling
+        // Enable scrolling
+        $('body').css('overflow', 'auto');
     }
 
     // When the user clicks anywhere outside of the modal, close it
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = "none";
-            $('body').css('overflow', 'auto'); // Enable scrolling
+            // Enable scrolling
+            $('body').css('overflow', 'auto');
         }
     }
 
-    // Handle the form submission
+    // Button for submitting the new roles in the modal
     $('#submit-add-role').click(function() {
         var selectedProfiles = [];
         $('#add-role-form').find('.profile-checkbox:checked').each(function() {
@@ -448,9 +447,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
         var role = $('#modal-title').text().replace('Add ', '').toLowerCase().replace(' ', '_');
 
-        // Perform the AJAX request to add the profiles to the role
         $.ajax({
-            url: '$addRoleUrl', // Update to match your actual endpoint
+            url: '$addRoleUrl',
             type: 'POST',
             data: {
                 profiles: selectedProfiles,
@@ -460,22 +458,25 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             success: function(response) {
                 if (response.success) {
                     alert('Profiles added successfully');
-                    location.reload(); // Reload the page to see the changes
+                    location.reload();
                 } else {
                     alert('Failed to add profiles');
                 }
                 modal.style.display = "none";
-                $('body').css('overflow', 'auto'); // Enable scrolling
+                // Enable scrolling
+                $('body').css('overflow', 'auto');
             },
             error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error); // Log AJAX errors
+                console.error('AJAX Error:', status, error);
                 alert('Error in AJAX request.');
                 modal.style.display = "none";
-                $('body').css('overflow', 'auto'); // Enable scrolling
+                // Enable scrolling
+                $('body').css('overflow', 'auto');
             }
         });
     });
 
+    // Checkbox for selecting users in the User Setup collapsible
     $(document).on('change', '.role-user-checkbox', function() {
         var role = $(this).closest('.content').prev('.collapsible').data('role');
         if (role === 'team_leader' || role === 'admin') {
@@ -488,14 +489,13 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         }
     });
 
+    // Button for filtering users in the table
     $(document).on('click', '#submit-filter-btn', function() {
         var selectedTitle = $('#title-select').val();
         var selectedLocation = $('#location-select').val();
 
-        console.log('Selected title: ' + selectedTitle + ' Selected location: ' + selectedLocation);
-
         $.ajax({
-            url: '$fetchFilteredUsersUrl',  // Replace with the actual URL that fetches filtered users
+            url: '$fetchFilteredUsersUrl',
             type: 'GET',
             data: {
                 title: selectedTitle,
@@ -513,13 +513,20 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                             var userRow = '<tr data-fullname="' + 
                             user.firstname + ' ' + 
                             user.lastname + '">';
-                        userRow += '<td>' + user.user_id + '</td>'; // Add user ID as the first column
+                        // Add user ID
+                        userRow += '<td>' + user.user_id + '</td>';
+                        // Add user full name with url
                         userRow += '<td><a href="/role/user-answers?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
                             user.firstname + " " + user.lastname + '</a></td>'
+                        // Add user job title
                         userRow += '<td>' + user.title + '</td>';
+                        // Add user storage location
                         userRow += '<td>' + user.storage_location + '</td>';
-                        userRow += '<td>' + user.latest_training_complete_time + '</td>';  // Add latest training complete time (or "N/A")
+                        // Add latest training complete time (or "N/A")
+                        userRow += '<td>' + user.latest_training_complete_time + '</td>';
+                        // Add number of uncompleted trainings
                         userRow += '<td>' + user.open_trainings_count + '</td>';
+                        // Add number of completed trainings
                         userRow += '<td>' + user.completed_trainings_count + '</td>';
                         // Add other columns as needed
                         userRow += '</tr>';
@@ -536,7 +543,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
                 var searchBar = $('#employee-search-bar');
                 if (searchBar.val()) {
-                    searchBar.val(''); // Clear the search bar value if it's not empty
+                     // Clear the search bar value if it's not empty
+                    searchBar.val('');
                 }
             },
             error: function(xhr, status, error) {
@@ -546,11 +554,9 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
-
     // Function ensuring that the code inside runs only after the whole HTML document has been fully loaded
     $(document).ready(function() {
-        var title = 'Assign Users'; // Adjust the title as needed
-        $('#modal-title').text(title);
+        $('#modal-title').text('Assign Users');
 
         $.ajax({
             url: '$fetchTitlesUrl',
@@ -589,18 +595,18 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     // Variable to track the toggle state of the action (check/uncheck)
     var toggleState = false;
 
+    // Search bar for filtering/searching users
     $('#employee-search-bar').on('input', function() {
         var searchTerm = $(this).val().toLowerCase();
-        console.log("Search Term:", searchTerm);
 
         $('table.table-striped tbody tr').each(function() {
-            var fullName = $(this).data('fullname').toLowerCase(); // Get the full name in lowercase
+            var fullName = $(this).data('fullname').toLowerCase();
 
             // Check if the full name contains the search term
             if (fullName.includes(searchTerm)) {
-                $(this).show();  // Show the row if it matches the search term
+                $(this).show();
             } else {
-                $(this).hide();  // Hide the row if it doesn't match
+                $(this).hide();
             }
         });
     });

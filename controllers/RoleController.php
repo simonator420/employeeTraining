@@ -785,23 +785,6 @@ class RoleController extends Controller
                 ->andFilterWhere(['profile.user_id' => $selectedUsers])
                 ->all();
         }
-
-        // Iterate over each user and update their profile with the new training assignment details
-        // foreach ($users as $user) {
-        //     // Update training_assigned_time with the selected time
-        //     // $user->profile->training_assigned_time = $selectedTime;
-        //     // Reset assigned_training to 0 (not assigned)
-        //     // $user->profile->assigned_training = 0;
-        //     // Clear training_complete_time (set to null)
-        //     // $user->profile->training_complete_time = null;
-
-        //     // Save the updated profile and check for errors
-        //     if (!$user->profile->save()) {
-        //         // If saving fails, return a failure response
-        //         return ['success' => false];
-        //     }
-        // }
-        // Return a success response if all updates are successful
         return ['success' => true];
     }
 
@@ -947,6 +930,8 @@ class RoleController extends Controller
     {
         // Find the user by ID
         $user = User::findOne($id);
+        $currentUser = Yii::$app->user;
+        $userRole = $currentUser->identity->profile->role;
 
         // If the user is not found, throw a 404 error
         if (!$user) {
@@ -1008,8 +993,6 @@ class RoleController extends Controller
                 $totalScore = 0;
                 $isScored = true;
 
-                Yii::warning('Tohle jeee instance created_at ' . $instance['created_at']);
-
                 // Fetch the user's answers for this training and timestamp
                 $trainingAnswers = Yii::$app->db->createCommand('
                     SELECT ta.*, tq.question AS question_text, ta.score
@@ -1028,7 +1011,6 @@ class RoleController extends Controller
 
                 // Loop through teach answer
                 foreach ($trainingAnswers as &$answer) {
-                    Yii::warning('Tohle jeee answer answer ' . $answer['answer']);
                     // If the answer is of type 'multiple_choice'
                     if ($answer['answer'] == 'multiple_choice') {
                         $scoreAdded = false;
@@ -1051,7 +1033,6 @@ class RoleController extends Controller
                         foreach ($multipleChoiceAnswers as $mca) {
                             if (isset($mca['score'])) {
                                 $totalScore += $mca['score'];
-                                Yii::warning('Tohle jeee Score Added: ' . $totalScore);
                                 $scoreAdded = true;
                                 $allNull = false;
                             }
@@ -1059,18 +1040,15 @@ class RoleController extends Controller
                     } else {
                         if (isset($answer['score'])) {
                             $totalScore += $answer['score'];
-                            Yii::warning('Tohle jeee Score Added: ' . $totalScore);
                             $allNull = false;
                             $isScored = true;
                         }
                     }
-
                 }
 
                 // If all scores are null, mark the instace as not scored
                 if ($allNull == true) {
                     $isScored = false;
-                    Yii::warning('Tohle jeee To bylo vyhodnoceno');
                 }
 
                 // Store the scoring status and total score for this instance
@@ -1101,6 +1079,7 @@ class RoleController extends Controller
             'user' => $user,
             'trainings' => $trainings,
             'answers' => $answers,
+            'userRole' => $userRole,
         ]);
     }
 

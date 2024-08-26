@@ -42,7 +42,7 @@ class TrainingQuestionsController extends Controller
         // Retrieve the training name for the specified training ID using a prepared query
         $trainingName = Yii::$app->db->createCommand('SELECT name FROM training WHERE id=:id')
             ->bindValue(':id', $id)
-            ->queryScalar(); // Use the prepared query
+            ->queryScalar();
 
         // Retrieve the deadline for completing the training for the specified training ID
         $deadline = Yii::$app->db->createCommand('SELECT deadline_for_completion FROM training WHERE id =:id')
@@ -94,13 +94,12 @@ class TrainingQuestionsController extends Controller
         // Initialize an empty string to build the HTML content
         $html = '';
 
-
-        // TODO rename the video here
         // If there is a video associated with the training, display it
         if (!empty($training['initial_file_url'])) {
             $fileExtension = pathinfo($training['initial_file_url'], PATHINFO_EXTENSION);
             $html .= '<div id="existing-file-section" class="form-group">';
 
+            // Check if the file is video or pdf
             if (in_array($fileExtension, ['mp4', 'webm', 'ogg'])) {
                 $html .= '<video width="320" height="240" controls>';
                 $html .= '<source src="' . Url::to('@web/' . $training['initial_file_url']) . '" type="video/' . $fileExtension . '">';
@@ -114,8 +113,6 @@ class TrainingQuestionsController extends Controller
             $html .= '<button type="button" class="btn remove-file-btn" style="margin-bottom: 25px;">' . Yii::t('employeeTraining', 'Remove File') . '</button>';
             $html .= '</div>';
         }
-
-
 
         if ($questions) {
             // Create a div for each question item

@@ -21,12 +21,13 @@ use yii\helpers\Url;
             ->bindValue(':trainingId', $trainingId)
             ->queryScalar();
         ?>
+        <!-- If the initial file was set -->
         <?php if ($fileUrl != null): ?>
             <?php
+
             // Determine the file type based on its extension
             $fileExtension = pathinfo($fileUrl, PATHINFO_EXTENSION);
             ?>
-
             <div class="form-group" id="file-container" style="text-align: center;">
                 <!-- Display appropriate content based on the file type -->
                 <?php if (in_array($fileExtension, ['mp4', 'webm', 'ogg'])): ?>
@@ -36,12 +37,13 @@ use yii\helpers\Url;
                     </video><br>
                 <?php elseif ($fileExtension === 'pdf'): ?>
                     <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                    <embed src="<?= $pdfUrl ?>" width="90%" height="65vh" type="application/pdf" style="min-height: 65vh;"
+                    <embed src="<?= $pdfUrl ?>" width="90%" type="application/pdf" style="min-height: 65vh;"
                         alt="pdf" /><br>
                 <?php endif; ?>
 
                 <button id="end-file-btn" class="btn btn-secondary"><?= Yii::t('employeeTraining', 'Continue') ?></button>
             </div>
+
             <div id="questions-container" style="display: none;"></div>
             <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-primary', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         <?php else: ?>
@@ -106,12 +108,9 @@ $(document).ready(function() {
     // Event handler for the submit button click
     $('#submit-btn').on('click', function(e) {
         e.preventDefault();
-        console.log('Tohle je trainingId: ', trainingId)
         if (!trainingCompleted) {
             let isValid = true;
             let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
-
-            console.log(data);
 
             // Collect answers for text, number, and range inputs
             $('.question-input').each(function() {
@@ -133,8 +132,6 @@ $(document).ready(function() {
                     answer: inputValue,
                     question_type: questionType
                 };
-
-                console.log("Collected normal data: ", questionId, questionText, questionType, inputValue);
             });
 
             // Collect multiple-choice answers
@@ -158,8 +155,6 @@ $(document).ready(function() {
                     data.TrainingQuestions[questionId].answer.push($(this).val());
                 }
             });
-
-            console.log(data);
 
             if (isValid) {
                 $.ajax({
@@ -188,7 +183,6 @@ $(document).ready(function() {
 
     function checkMultipleChoiceSelection() {
         if ($('.multiple-choice-option:checked').length === 0) {
-            // Handle the case when no options are checked
             console.log("No multiple choice options are selected.");
         }
     }
@@ -196,151 +190,3 @@ $(document).ready(function() {
 JS;
 $this->registerJs($script);
 ?>
-
-
-<style>
-    .employee-training-container {
-        display: flex;
-        justify-content: center;
-        padding: 20px;
-    }
-
-    .employee-training-card {
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 30px;
-        max-width: 70vh;
-        width: 100%;
-    }
-
-    .employee-training-card h1 {
-        color: #333333;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-
-    .questions-container-left {
-        text-align: left;
-    }
-
-    .btn-primary {
-        display: inline-block;
-        margin: 10px 5px 10px 0;
-        padding: 10px 20px;
-        font-size: 16px;
-        color: #ffffff;
-        background-color: rgb(85, 85, 85);
-        border: 2px solid transparent;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
-
-    .btn-primary:hover,
-    .btn-primary:focus,
-    .btn-primary:active {
-        background-color: #ffffff;
-        color: rgb(85, 85, 85) !important;
-        border-color: rgb(85, 85, 85);
-        border-radius: 5px;
-        padding: 10px 20px;
-        border: 2px solid rgb(85, 85, 85);
-        outline: none;
-    }
-
-    .btn-secondary {
-        display: inline-block;
-        margin: 10px 5px 10px 0;
-        padding: 10px 20px;
-        font-size: 16px;
-        color: #ffffff;
-        background-color: #6c757d;
-        border: 2px solid transparent;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
-
-    .btn-secondary:hover,
-    .btn-secondary:focus,
-    .btn-secondary:active {
-        background-color: #ffffff;
-        color: #6c757d !important;
-        border-color: #6c757d;
-        border-radius: 5px;
-        padding: 10px 20px;
-        border: 2px solid #6c757d;
-        outline: none;
-    }
-
-    .question-item {
-        margin-bottom: 20px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-        font-size: 14px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-    }
-
-    .question-employee {
-        text-align: left;
-    }
-
-    .input-number {
-        width: auto;
-        display: inline-block;
-        padding: 5px;
-        font-size: 14px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-    }
-
-    input[type=range] {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 100%;
-        height: 1px;
-        opacity: 0.7;
-        transition: opacity .2s;
-        cursor: pointer;
-        border-radius: 5px;
-    }
-
-    input[type="range"]::-webkit-slider-runnable-track {
-        background: rgb(85, 85, 85);
-        height: 2px;
-    }
-
-    input[type=range]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 30px;
-        height: 30px;
-        background: rgb(85, 85, 85);
-        cursor: pointer;
-        border-radius: 50%;
-        border: 2px solid #ffffff;
-        margin-top: -12px;
-    }
-
-    .welcome-text {
-        font-size: 16px;
-        text-align: center;
-    }
-
-    .range-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .range-container span {
-        font-size: 14px;
-        margin: 0 10px;
-    }
-</style>

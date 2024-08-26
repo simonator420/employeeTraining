@@ -3,12 +3,14 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
+// Set the title of the page
 $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
+
+// Set up the breadcrumbs for navigation
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<!-- TODO Display the items in collapsibles better and not like table -->
 <div class="user-answers-container">
     <div class="user-answers-card">
 
@@ -25,32 +27,33 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="collapsible-container">
             <?php foreach ($trainings as $training): ?>
                 <?php foreach ($training['instances'] as $instance): ?>
+
                     <?php
+                    // Calculate the number of answers and the formatted score
                     $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
                     $formattedScore = number_format($instance['total_score'], 2);
-                    Yii::warning('Tohle jeee length: ' . $length);
-                    Yii::warning('Tohle jeee formattedScore ' . $formattedScore);
-                    if ($instance['is_scored'] == true)
-                    {
-                        Yii::warning('Tohle jeee instance is_scored true');
-                    } elseif ($instance['is_scored'] == false) {
-                        Yii::warning('Tohle jeee instance is_scored false');
-                    }
                     ?>
+
                     <?php
+
+                    // Determine the score status based on whether the instance is scored or not
                     $scoreStatus = $instance['is_scored']
                         ? "<span style='color: green; font-weight: bold; padding-left:5px;'>Score: {$formattedScore}/{$length}</span>"
                         : "<span style='color: red; font-weight: bold; padding-left:5px;'>Training not scored</span>";
                     ?>
+
+                    <!-- Create collapsible for each training instance -->
                     <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
                         <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode($instance['created_at']) ?>
                         <?= $scoreStatus ?>
                     </button>
+
                     <div class="content" style="display:none;">
                         <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
                             <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $index => $answer): ?>
 
                                 <?php
+                                // Retrieve the type of question
                                 $questionType = Yii::$app->db->createCommand('
                                     SELECT type 
                                     FROM training_questions 
@@ -59,6 +62,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ->bindValue(':question_id', $answer['question_id'])
                                     ->queryScalar();
 
+                                // Retreive the correct options for multiple-choice question
                                 $correctOptions = Yii::$app->db->createCommand('
                                             SELECT option_text 
                                             FROM training_multiple_choice_answers 
@@ -76,13 +80,16 @@ $this->params['breadcrumbs'][] = $this->title;
 
                                     <?php if ($questionType === 'multiple_choice'): ?>
                                         <?php
+                                        // Handle multiple-choice answers
                                         $multipleAnswers = $answer['multiple_choice_answers'];
                                         if (empty($multipleAnswers)) {
                                             echo '<p style="padding-top:5px;">User selected no options</p>';
                                         }
 
+                                        // Loop through each selected answer
                                         foreach ($multipleAnswers as $idx => $singleAnswer):
 
+                                            // Retrieve the ID of the user's answer
                                             $tmcuaId = Yii::$app->db->createCommand('
                                                 SELECT id 
                                                 FROM training_multiple_choice_user_answers 
@@ -93,25 +100,31 @@ $this->params['breadcrumbs'][] = $this->title;
                                                 ->queryScalar();
                                             ?>
 
+                                            <!-- Display each selected answer and provide checkboxes to mark as correct or wrong -->
                                             <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
-                                            <div class="evaluation" data-option-id="<?= Html::encode($singleAnswer['id']) ?>"
-                                                data-tmcua-id="<?= Html::encode($tmcuaId) ?>">
-                                                <label style="color: green;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', isset($singleAnswer['score']) ? $singleAnswer['score'] > 0 : $singleAnswer['is_correct'] == 1) ?>
-                                                    Correct
-                                                </label>
-                                                <label style="color: red;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
-                                                    Wrong
-                                                </label>
-                                                
-                                            </div>
+
+                                            <?php if ($userRole == 'admin'): ?>
+                                                <div class="evaluation" data-option-id="<?= Html::encode($singleAnswer['id']) ?>"
+                                                    data-tmcua-id="<?= Html::encode($tmcuaId) ?>">
+                                                    <label style="color: green;">
+                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', isset($singleAnswer['score']) ? $singleAnswer['score'] > 0 : $singleAnswer['is_correct'] == 1) ?>
+                                                        Correct
+                                                    </label>
+                                                    <label style="color: red;">
+                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
+                                                        Wrong
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+
                                         <?php endforeach; ?>
+                                        <!-- Display the correct answer and all possible options -->
                                         <p style="padding-top:10px; padding-bottom:2px;"><b>Correct answer:</b>
                                             <?= empty($correctOptions) ? 'N/A' : Html::encode(implode(', ', $correctOptions)) ?>
                                         </p>
 
                                         <?php
+                                        // Retrieve all possible options for the question
                                         $allOptions = Yii::$app->db->createCommand('
                                             SELECT tma.option_text 
                                             FROM training_multiple_choice_answers tma
@@ -133,8 +146,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
                                     <?php else: ?>
 
+                                        <!-- Display the user's answer for non-multiple-choice questions -->
                                         <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
+
                                         <?php
+                                        // Retrieve the correct answer for comparison
                                         $correctAnswer = Yii::$app->db->createCommand('
                                             SELECT correct_answer 
                                             FROM training_questions 
@@ -144,36 +160,40 @@ $this->params['breadcrumbs'][] = $this->title;
                                             ->bindValue(':training_id', $training['training_id'])
                                             ->bindValue(':question_id', $answer['question_id'])
                                             ->queryScalar();
-    
+                                        // Determine if the user's answer matches the correct answer
                                         $isCorrect = ($correctAnswer == $answer['answer']);
                                         ?>
-                                        <div class="evaluation">
-                                            <label style="color: green;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', isset($answer['score']) ? $answer['score'] > 0 : $isCorrect) ?>
-                                                Correct
-                                            </label>
-                                            <label style="color: red;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
-                                                Wrong
-                                            </label>
-                                            <!-- <label style="color: gray;">
-                                                <?= Html::checkbox('evaluation[' . $answer['id'] . '][not_scored]', false) ?>
-                                                Not Scored
-                                            </label> -->
-                                        </div>
+                                        <?php if ($userRole == 'admin'): ?>
+                                            <div class="evaluation">
+                                                <!-- Checkboxes to mark the answer as correct or wrong -->
+                                                <label style="color: green;">
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', isset($answer['score']) ? $answer['score'] > 0 : $isCorrect) ?>
+                                                    Correct
+                                                </label>
+                                                <label style="color: red;">
+                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
+                                                    Wrong
+                                                </label>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Display the correct answer -->
                                         <p style="padding-top:10px; padding-bottom:10px;"><b>Correct answer:</b>
                                             <?= !$correctAnswer ? 'N/A' : Html::encode($correctAnswer) ?>
                                         </p>
+
                                     <?php endif; ?>
                                     <hr>
                                 </div>
 
-                                <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1): ?>
+                                <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1 && $userRole == 'admin'): ?>
+                                    <!-- Button to submit the score for the entire training instance -->
                                     <button class="submit-score-btn">Submit Score</button>
                                     <label class="score-label"> Score: <span class="score-value">0/0</span></label>
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
+                            <!-- Message displayed if no answers are found for the training -->
                             <p>No answers found for this training.</p>
                         <?php endif; ?>
                     </div>
@@ -182,8 +202,6 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 </div>
-
-
 
 <?php
 $saveScoresUrl = Url::to(['role/save-scores']);
@@ -202,19 +220,10 @@ $(document).ready(function() {
                 correctOptions = correctAnswerLabel.text().replace('Correct answer:', '').split(',').map(function(option) {
                     return option.trim();
                 });
-
-                // console.log('Correct options for question:', questionText);
-                // correctOptions.forEach(function(option) {
-                //     console.log(option);
-                // });
             }
 
             var evaluations = $(this).find('.evaluation');
             var correctAnswers = evaluations.find('input[type="checkbox"][name*="[correct]"]');
-            // console.log('Correct answers:');
-            // correctAnswers.each(function() {
-            //     console.log($(this).closest('label').text().trim());
-            // });
 
             var totalCorrect = correctOptions.length;
             var correctChecked = correctAnswers.filter(':checked').length;
@@ -274,30 +283,27 @@ $(document).ready(function() {
 
         // Update the corresponding button text with the new score
         var button = content.prev('.collapsible');
-        button.find('span').remove(); // Remove the old score or "Training not scored" text
+        button.find('span').remove();
         button.append(' <span style="color: green; font-weight: bold;">  Score: ' + scores.correctCount + '/' + scores.totalCount + '</span>');
 
         // Collect the score data and submit to the server
         var scoreData = [];
         content.find('.question-answer-pair').each(function() {
-            var questionId = $(this).data('question-id'); // Ensure the question-id data attribute is set in the HTML
-            var questionType = $(this).data('question-type'); // Ensure the question-type data attribute is set in the HTML
-            var userTrainingId = $(this).data('user-training-id'); // Ensure the user_training_id data attribute is set in the HTML
-            console.log(userTrainingId)
+            var questionId = $(this).data('question-id');
+            var questionType = $(this).data('question-type');
+            var userTrainingId = $(this).data('user-training-id');
             var evaluation = $(this).find('.evaluation');
             var correctOptions = $(this).data('correct-options');
             
             if (questionType == 'multiple_choice') {
                 var totalCorrectOptions = correctOptions.length;
-                // TODO replace this with count options that are really true, cause this counts only the checkboxes.
                 var correctCheckedOptions = $(this).find('input[type="checkbox"][name*="[correct]"]:checked').length;
                 var score = correctCheckedOptions / totalCorrectOptions;
                 var finalScore = 0;
-                console.log('Tady je skore jeste v poradku? ' + score + " " + totalCorrectOptions);
 
                 $(this).find('.evaluation').each(function() {
-                    var optionId = $(this).data('option-id'); // Get the option ID
-                    var tmcuaId = $(this).data('tmcua-id'); // Get the training_multiple_choice_user_answers ID
+                    var optionId = $(this).data('option-id');
+                    var tmcuaId = $(this).data('tmcua-id');
                     var notScoredChecked = $(this).find('input[name*="[not_scored]"]').prop('checked');
                     var optionScore = notScoredChecked ? null : ($(this).find('input[name*="[correct]"]').prop('checked') ? score : 0);
 
@@ -308,10 +314,6 @@ $(document).ready(function() {
                             finalScore = 1;
                         }
                     }
-
-                    console.log('Final score: ' + finalScore + 'Score of current element: ' + score);
-
-                    console.log('Option ID: ' + optionId + ', TMCUA ID: ' + tmcuaId + ', Score: ' + optionScore);
 
                     scoreData.push({
                         question_id: questionId,
@@ -327,8 +329,6 @@ $(document).ready(function() {
                 var notScoredChecked = $(this).find('input[name*="[not_scored]"]').prop('checked');
                 var score = notScoredChecked ? null : $(this).find('input[name*="[correct]"]').prop('checked') ? 1 : 0;
 
-                console.log('Question ID: ' + questionId + ', Score: ' + score);
-
                 scoreData.push({
                     question_id: questionId,
                     score: score,
@@ -338,7 +338,7 @@ $(document).ready(function() {
             }
         });
 
-        // Submit the score data to the server via AJAX
+        // Submit the score data to the server
         $.ajax({
             url: '$saveScoresUrl',
             type: 'POST',
@@ -374,10 +374,6 @@ $(document).ready(function() {
         }
     });
 });
-
-
-
-
 
 JS;
 $this->registerJs($script);

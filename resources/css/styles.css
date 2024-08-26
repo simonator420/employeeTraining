@@ -50,7 +50,7 @@
 
 
 #select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn, .remove-role-btn, .add-role-btn, #submit-add-role, 
-#edit-deadline-btn, .remove-image-btn, .add-option-btn, #assign-users-btn, #submit-deadline-btn, #submit-filter-btn, #submit-assign-users, .submit-score-btn, #end-video-btn, .remove-file-btn {
+#edit-deadline-btn, .remove-image-btn, .add-option-btn, #assign-users-btn, #submit-deadline-btn, #submit-filter-btn, #submit-assign-users, .submit-score-btn, #end-video-btn, .remove-file-btn, #end-file-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -64,7 +64,7 @@
 }
 
 #select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover, .remove-role-btn:hover, .add-role-btn:hover, #submit-add-role:hover, 
-#edit-deadline-btn:hover, .remove-image-btn:hover, .add-option-btn:hover, #assign-users-btn:hover, #submit-deadline-bt:hover, #submit-filter-btn:hover, #submit-assign-users:hover, .submit-score-btn:hover, #end-video-btn:hover, .remove-file-btn:hover {
+#edit-deadline-btn:hover, .remove-image-btn:hover, .add-option-btn:hover, #assign-users-btn:hover, #submit-deadline-bt:hover, #submit-filter-btn:hover, #submit-assign-users:hover, .submit-score-btn:hover, #end-video-btn:hover, .remove-file-btn:hover, #end-file-btn:hover {
     background-color: #ffffff !important;
     color: rgb(85, 85, 85) !important;
     border-color: rgb(85, 85, 85) !important;
@@ -94,6 +94,11 @@
 
 #submit-filter-btn {
     margin-top: 20px;
+}
+
+#end-file-btn {
+    font-size: 16px;
+    padding: 7px 15px;
 }
 
 #submit-assign-users {
@@ -334,6 +339,7 @@ td, th {
 #location-select, #title-select {
     padding-right: 25px;
     width: auto;
+    height: 100%;
 }
 
 #modal-title {
@@ -342,12 +348,107 @@ td, th {
 
 .multiple-choice-options {
     display: flex;
-    flex-wrap: wrap; /* Allows options to wrap to the next line if they overflow */
+    flex-wrap: wrap;
     gap: 15px;
 }
 
 .multiple-choice-options label {
     font-weight: normal;
+}
+
+.employee-training-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.employee-training-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    max-width: 70vh;
+    width: 100%;
+}
+
+.employee-training-card h1 {
+    color: #333333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.questions-container-left {
+    text-align: left;
+}
+
+.question-item {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.question-employee {
+    text-align: left;
+}
+
+.input-number {
+    width: auto;
+    display: inline-block;
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1px;
+    opacity: 0.7;
+    transition: opacity .2s;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    background: rgb(85, 85, 85);
+    height: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    background: rgb(85, 85, 85);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    margin-top: -12px;
+}
+
+.welcome-text {
+    font-size: 16px;
+    text-align: center;
+}
+
+.range-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.range-container span {
+    font-size: 14px;
+    margin: 0 10px;
 }
 
 /* .user-info-container {
