@@ -11,7 +11,7 @@ use Yii;
 
 
 /**
- * Controller for handling actions related to roles within the Employee Training module.
+ * Controller for handling actions related to roles and user actions within the Employee Training module.
  */
 class RoleController extends Controller
 {

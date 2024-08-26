@@ -45,7 +45,7 @@ $heading = $trainingCount > 1 ? Yii::t('employeeTraining', "Mandatory Trainings"
         </div>
         <br> <!-- Add spacing between buttons -->
 
-        <!-- JavaScript block to handle the countdown timer -->
+        <!-- JavaScript block to handle the countdown timer (not being registered in regular PHP tags) -->
         <script>
             (function() {
                 var countdownElement = document.getElementById('countdown-<?= $trainingId ?>');

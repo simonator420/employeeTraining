@@ -7,6 +7,8 @@ use yii\helpers\Url;
 
 ?>
 
+<!-- TOOD Comment all the views and their purpose -->
+
 <div class="training-question-container">
     <div class="training-questions-form">
 

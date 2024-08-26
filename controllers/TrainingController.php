@@ -13,7 +13,7 @@ use yii\web\BadRequestHttpException;
 use yii\helpers\Url;
 
 /**
- * Controller for handling training questions within the Employee Training module.
+ * Controller for handling functions and endpoints regarding the trainings within the Employee Training module.
  */
 class TrainingController extends Controller
 {

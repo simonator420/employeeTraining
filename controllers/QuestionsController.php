@@ -10,7 +10,7 @@ use yii\web\UploadedFile;
 use yii\helpers\Url;
 
 /**
- * Controller for handling training questions within the Employee Training module.
+ * Controller for handling questions within the Employee Training module.
  */
 class QuestionsController extends Controller
 {
