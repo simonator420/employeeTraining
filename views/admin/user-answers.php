@@ -204,7 +204,7 @@ $this->params['breadcrumbs'][] = $this->title;
 </div>
 
 <?php
-$saveScoresUrl = Url::to(['role/save-scores']);
+$saveScoresUrl = Url::to(['training/save-scores']);
 $script = <<<JS
 $(document).ready(function() {
     function updateScore(content) {

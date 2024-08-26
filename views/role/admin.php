@@ -153,7 +153,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                         data-username="<?= Html::encode($user->username) ?>">
                         <td class="user_id"><?= Html::encode($user->id) ?></td>
                         <td>
-                            <a href="<?= Url::to(['role/user-answers', 'id' => Html::encode($user->id)]) ?>"
+                            <a href="<?= Url::to(['training/user-answers', 'id' => Html::encode($user->id)]) ?>"
                                 style="color: blue; text-decoration: underline;">
                                 <?= Html::encode($user->profile->firstname) ?>     <?= Html::encode($user->profile->lastname) ?>
                             </a>
@@ -516,7 +516,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                         // Add user ID
                         userRow += '<td>' + user.user_id + '</td>';
                         // Add user full name with url
-                        userRow += '<td><a href="/role/user-answers?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
+                        userRow += '<td><a href="/training/user-answers?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
                             user.firstname + " " + user.lastname + '</a></td>'
                         // Add user job title
                         userRow += '<td>' + user.title + '</td>';
