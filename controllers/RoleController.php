@@ -102,7 +102,7 @@ class RoleController extends Controller
         }
 
         // Retrieve all training from the database
-        $trainings = Yii::$app->db->createCommand('SELECT * FROM training')->queryAll();
+        $trainings = Yii::$app->db->createCommand('SELECT * FROM training WHERE is_active = 1')->queryAll();
 
         // Loop through each training to calculate the count of active assigned trainings
         foreach ($trainings as $training) {

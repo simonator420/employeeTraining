@@ -437,13 +437,6 @@ class TrainingController extends Controller
             ];
         }
 
-        // Sort trainings by the latest instance date (newest first)
-        usort($trainings, function ($a, $b) {
-            $a_latest = strtotime($a['instances'][0]['created_at']);
-            $b_latest = strtotime($b['instances'][0]['created_at']);
-            return $b_latest - $a_latest;
-        });
-
         // Render the 'user-answers' view the user, trainings, and answer data
         return $this->render('/admin/user-answers', [
             'user' => $user,
@@ -504,5 +497,22 @@ class TrainingController extends Controller
 
         // Return a success response after all scores have been saved
         return $this->asJson(['status' => 'success', 'message' => 'Scores successfully saved']);
+    }
+
+    public function actionDeleteSelected()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $trainingIds = Yii::$app->request->post('trainingIds', []);
+
+        if (!empty($trainingIds))
+        {
+            Yii::$app->db->createCommand()
+                ->update('training', ['is_active' => 0], ['id' => $trainingIds])
+                ->execute();
+            
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'message' => 'No trainings selected'];
     }
 }

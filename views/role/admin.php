@@ -59,7 +59,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
         <table class="table table-training table-bordered" id="training-table">
             <thead>
                 <tr>
-                    <!-- TODO Implement checkbox for deleting the training -->
+                    <th class="checkbox-column"></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Training ID') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Name') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Created At') ?></strong></th>
@@ -70,6 +70,8 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 <!-- Iterate over all trainings and display them in the table -->
                 <?php foreach ($trainings as $training): ?>
                     <tr>
+                        <td><input type="checkbox" class="training-checkbox" value="<?= Html::encode($training['id']) ?>">
+                        </td>
                         <td class="training-id" data-id="<?= Html::encode($training['id']) ?>" style="cursor: pointer;">
                             <a href="<?= Url::to(['questions/questions', 'id' => Html::encode($training['id'])]) ?>"
                                 style="color: blue; text-decoration: underline;">
@@ -82,7 +84,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                             // If the training creation date was found, display it
                             if (isset($training['created_at']) && $training['created_at']) {
                                 echo Html::encode(date('j. n. Y H:i:s', strtotime($training['created_at'])));
-                            } 
+                            }
                             // If it wasn't found, display N/A
                             else {
                                 echo 'N/A';
@@ -101,7 +103,11 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
 
         <!-- If the user is admin, display the button for training creation -->
         <?php if ($userRole == 'admin'): ?>
-            <button id="create-training-btn"><?= Yii::t('employeeTraining', 'Create Training') ?></button>
+            <div if="training-action-buttons" style="display:flex; align-items:center; gap: 10px">
+                <button id="delete-selected-btn"
+                    style="display:none;"><?= Yii::t('employeeTraining', 'Delete Selected') ?></button>
+                <button id="create-training-btn"><?= Yii::t('employeeTraining', 'Create Training') ?></button>
+            </div>
         <?php endif; ?>
         <br>
         <br>
@@ -144,7 +150,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                     <th><strong><?= Yii::t('employeeTraining', 'No. of completed trainings') ?></strong></th>
                 </tr>
             </thead>
-            
+
             <tbody>
                 <!-- Iterate throught all users and display the information about them -->
                 <?php foreach ($users as $user): ?>
@@ -196,6 +202,7 @@ $fetchTitlesUrl = Url::to(['role/fetch-titles']);
 $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $addRoleUrl = Url::to(['role/add-role']);
+$deleteSelectedUrl = Url::to(['training/delete-selected']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local time zone
@@ -208,6 +215,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     $('#create-training-btn').on('click', function() {
         var table = $('#training-table tbody');
         var newRow = $('<tr>');
+        $('#training-table input[type="checkbox"]').prop('checked', false);
         newRow.html(`
             <td><input type="text" id="new-training-id" placeholder="Training ID"></td>
             <td><input type="text" id="new-training-name" placeholder="Name"></td>
@@ -217,6 +225,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         table.append(newRow);
         $('#create-training-btn').hide();
         $('#submit-cancel-buttons').show();
+        $('.training-checkbox').closest('td').hide();
+        $('th.checkbox-column').hide(); // Hide the header checkbox cell
+        // Hide the "Delete Selected" button if visible
+        $('#delete-selected-btn').hide();
     });
 
     // Button for canceling the create training action
@@ -224,6 +236,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         $('#training-table tbody tr:last').remove();
         $('#create-training-btn').show();
         $('#submit-cancel-buttons').hide();
+        $('.training-checkbox').closest('td').show();
+        $('th.checkbox-column').show();
     });
 
     // Button for submitting the creation of new training
@@ -590,6 +604,34 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             },
             error: function() {
                 alert('Error fetching locations');
+            }
+        });
+
+        $('.training-checkbox').on('change', function() {
+            var anyChecked = $('.training-checkbox:checked').length > 0;
+            $('#delete-selected-btn').toggle(anyChecked);
+        });
+
+        $('#delete-selected-btn').on('click', function() {
+            var selectedIds = $('.training-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (selectedIds.length > 0) {
+                $.ajax({
+                    url: '$deleteSelectedUrl',
+                    type: 'POST',
+                    data: {trainingIds: selectedIds},
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.message || 'Failed to delete selected trainings.');
+                        }
+                    }
+                });
+            } else {
+                alert('Please select at least one training.');
             }
         });
     

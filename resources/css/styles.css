@@ -71,7 +71,7 @@
     border-radius: 4px;
 }
 
-#cancel-training-btn, .remove-option-btn, #cancel-deadline-btn {
+#cancel-training-btn, .remove-option-btn, #cancel-deadline-btn, #delete-selected-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -85,7 +85,7 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-#cancel-training-btn:hover, .remove-option-btn:hover, #cancel-deadline-btn:hover {
+#cancel-training-btn:hover, .remove-option-btn:hover, #cancel-deadline-btn:hover, #delete-selected-btn:hover {
     background-color: rgb(85, 85, 85);
     color: #ffffff !important;
     border-color: rgb(85, 85, 85);
