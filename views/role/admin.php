@@ -58,7 +58,8 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                                     <!-- Options will be populated dynamically -->
                                 </select>
                             </div>
-                            <button type="button" id="modal-submit-filter-btn" class="btn btn-success" style="margin-top:30px">
+                            <button type="button" id="modal-submit-filter-btn" class="btn btn-success"
+                                style="margin-top:30px">
                                 <?= Yii::t('employeeTraining', 'Filter') ?>
                             </button>
                         </div>
@@ -149,8 +150,8 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                             <!-- Options will be populated dynamically -->
                         </select>
                     </div>
-                    <button type="button" id="submit-filter-btn"
-                        class="btn btn-success" style="margin-top:30px"><?= Yii::t('employeeTraining', 'Filter') ?></button>
+                    <button type="button" id="submit-filter-btn" class="btn btn-success"
+                        style="margin-top:30px"><?= Yii::t('employeeTraining', 'Filter') ?></button>
                 </form>
             </div>
 
@@ -223,6 +224,7 @@ $fetchLocationsUrl = Url::to(['role/fetch-locations']);
 $fetchFilteredUsersUrl = Url::to(['role/fetch-filtered-users']);
 $addRoleUrl = Url::to(['role/add-role']);
 $deleteSelectedUrl = Url::to(['training/delete-selected']);
+$baseUserAnswersUrl = Url::to(['training/user-answers']);
 $script = <<<JS
 
 // Get the current time and adjust it to the local time zone
@@ -556,8 +558,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                         // Add user ID
                         userRow += '<td>' + user.user_id + '</td>';
                         // Add user full name with url
-                        userRow += '<td><a href="/training/user-answers?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
-                            user.firstname + " " + user.lastname + '</a></td>'
+                        userRow += '<td><a href="' + '$baseUserAnswersUrl' + '?id=' + user.user_id + '" style="color: blue; text-decoration: underline;">' + 
+                        user.firstname + " " + user.lastname + '</a></td>';
                         // Add user job title
                         userRow += '<td>' + user.title + '</td>';
                         // Add user storage location

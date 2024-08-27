@@ -38,13 +38,13 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     // Determine the score status based on whether the instance is scored or not
                     $scoreStatus = $instance['is_scored']
-                        ? "<span style='color: green; font-weight: bold; padding-left:5px;'>Score: {$formattedScore}/{$length}</span>"
+                        ? "<span style='color: green; font-weight: bold; padding-left:5px;'> Score: {$formattedScore}/{$length}</span>"
                         : "<span style='color: red; font-weight: bold; padding-left:5px;'>Training not scored</span>";
                     ?>
 
                     <!-- Create collapsible for each training instance -->
                     <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
-                        <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode($instance['created_at']) ?>
+                        <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode(date('j. n. Y H:i:s', strtotime($instance['created_at']))) ?>
                         <?= $scoreStatus ?>
                     </button>
 
@@ -346,6 +346,7 @@ $(document).ready(function() {
             contentType: 'application/json; charset=utf-8',
             success: function(response) {
                 console.log('Scores successfully saved:', response);
+                location.reload();
             },
             error: function(xhr, status, error) {
                 console.error('Error saving scores:', error);
