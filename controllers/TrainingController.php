@@ -295,7 +295,7 @@ class TrainingController extends Controller
      * @param int $id The ID of the user.
      * @return string The rendered view displaying the user's answers.
      * @throws \yii\web\NotFoundHttpException If the user is not found.
-     */    
+     */
     public function actionUserAnswers($id)
     {
         // Find the user by ID
@@ -323,9 +323,12 @@ class TrainingController extends Controller
         $trainings = [];
         $answers = [];
 
+        // Initialize an array to hold all instances across all trainings
+        $allInstances = [];
+
         // Loop through each training ID
-        foreach ($trainingIds as $trainingId) {
-            $trainingIdValue = $trainingId['training_id'];
+        foreach ($trainingIds as $trainingData) {
+            $trainingIdValue = $trainingData['training_id'];
 
             // Fetch the name of the training by its ID
             $trainingName = Yii::$app->db->createCommand('
@@ -336,18 +339,9 @@ class TrainingController extends Controller
                 ->bindValue(':trainingId', $trainingIdValue)
                 ->queryScalar();
 
-            // Fetch the user_training ID
-            $userTrainingId = Yii::$app->db->createCommand('
-                SELECT id 
-                FROM user_training 
-                WHERE id = :trainingId
-            ')
-                ->bindValue(':trainingId', $trainingIdValue)
-                ->queryScalar();
-
-            // Fetch distinct created_at timestamps for the user's answers in the training
+            // Fetch distinct created_at timestamps for the user's answers in the training, ordered by created_at DESC
             $instances = Yii::$app->db->createCommand('
-                SELECT DISTINCT ta.created_at
+                SELECT DISTINCT ta.created_at, :trainingId AS training_id, :trainingName AS training_name
                 FROM training_answers ta
                 JOIN training_questions tq ON ta.question_id = tq.id
                 WHERE ta.user_id = :userId AND tq.training_id = :trainingId
@@ -355,87 +349,98 @@ class TrainingController extends Controller
             ')
                 ->bindValue(':userId', $id)
                 ->bindValue(':trainingId', $trainingIdValue)
+                ->bindValue(':trainingName', $trainingName)
                 ->queryAll();
 
-            // Loop through each instance (timestamps)
-            foreach ($instances as &$instance) {
-                $instanceCreatedAt = $instance['created_at'];
-                $totalScore = 0;
-                $isScored = true;
+            // Append each instance to the consolidated array
+            foreach ($instances as $instance) {
+                $allInstances[] = $instance;
+            }
+        }
 
-                // Fetch the user's answers for this training and timestamp
-                $trainingAnswers = Yii::$app->db->createCommand('
-                    SELECT ta.*, tq.question AS question_text, ta.score
-                    FROM training_answers ta
-                    JOIN training_questions tq ON ta.question_id = tq.id
-                    WHERE ta.user_id = :userId 
-                    AND tq.training_id = :trainingId 
-                    AND ta.created_at = :createdAt
-                ')
-                    ->bindValue(':userId', $id)
-                    ->bindValue(':trainingId', $trainingIdValue)
-                    ->bindValue(':createdAt', $instanceCreatedAt)
-                    ->queryAll();
+        // Sort all instances by created_at in descending order (newest first)
+        usort($allInstances, function ($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
+        });
 
-                $allNull = true;
+        // Prepare the output based on the sorted instances
+        $trainings = [];
+        $answers = [];
 
-                // Loop through teach answer
-                foreach ($trainingAnswers as &$answer) {
-                    // If the answer is of type 'multiple_choice'
-                    if ($answer['answer'] == 'multiple_choice') {
-                        $scoreAdded = false;
-                        // Fetch multiple choice answers with ther correctness status
-                        $multipleChoiceAnswers = Yii::$app->db->createCommand('
-                            SELECT tma.option_text, tma.is_correct, tmua.score, tma.id 
-                            FROM training_multiple_choice_user_answers tmua
-                            JOIN training_multiple_choice_answers tma ON tmua.multiple_choice_answer_id = tma.id
-                            WHERE tmua.answer_id = :answerId 
-                            AND tmua.user_id = :userId
-                        ')
-                            ->bindValue(':answerId', $answer['id'])
-                            ->bindValue(':userId', $id)
-                            ->queryAll();
+        foreach ($allInstances as $instance) {
+            $trainingIdValue = $instance['training_id'];
+            $trainingName = $instance['training_name'];
+            $instanceCreatedAt = $instance['created_at'];
 
-                        // Add the multiple choice answers to the answer array
-                        $answer['multiple_choice_answers'] = $multipleChoiceAnswers;
+            // Fetch the user's answers for this training and timestamp
+            $trainingAnswers = Yii::$app->db->createCommand('
+                SELECT ta.*, tq.question AS question_text, ta.score
+                FROM training_answers ta
+                JOIN training_questions tq ON ta.question_id = tq.id
+                WHERE ta.user_id = :userId 
+                AND tq.training_id = :trainingId 
+                AND ta.created_at = :createdAt
+            ')
+                ->bindValue(':userId', $id)
+                ->bindValue(':trainingId', $trainingIdValue)
+                ->bindValue(':createdAt', $instanceCreatedAt)
+                ->queryAll();
 
-                        // Loop through the multiple choice answers to add their scores
-                        foreach ($multipleChoiceAnswers as $mca) {
-                            if (isset($mca['score'])) {
-                                $totalScore += $mca['score'];
-                                $scoreAdded = true;
-                                $allNull = false;
-                            }
-                        }
-                    } else {
-                        if (isset($answer['score'])) {
-                            $totalScore += $answer['score'];
+            $totalScore = 0;
+            $isScored = true;
+            $allNull = true;
+
+            // Loop through each answer
+            foreach ($trainingAnswers as &$answer) {
+                if ($answer['answer'] == 'multiple_choice') {
+                    $scoreAdded = false;
+                    $multipleChoiceAnswers = Yii::$app->db->createCommand('
+                SELECT tma.option_text, tma.is_correct, tmua.score, tma.id 
+                FROM training_multiple_choice_user_answers tmua
+                JOIN training_multiple_choice_answers tma ON tmua.multiple_choice_answer_id = tma.id
+                WHERE tmua.answer_id = :answerId 
+                AND tmua.user_id = :userId
+            ')
+                        ->bindValue(':answerId', $answer['id'])
+                        ->bindValue(':userId', $id)
+                        ->queryAll();
+
+                    $answer['multiple_choice_answers'] = $multipleChoiceAnswers;
+
+                    foreach ($multipleChoiceAnswers as $mca) {
+                        if (isset($mca['score'])) {
+                            $totalScore += $mca['score'];
+                            $scoreAdded = true;
                             $allNull = false;
-                            $isScored = true;
                         }
                     }
+                } else {
+                    if (isset($answer['score'])) {
+                        $totalScore += $answer['score'];
+                        $allNull = false;
+                        $isScored = true;
+                    }
                 }
-
-                // If all scores are null, mark the instace as not scored
-                if ($allNull == true) {
-                    $isScored = false;
-                }
-
-                // Store the scoring status and total score for this instance
-                $instance['is_scored'] = $isScored;
-                $instance['total_score'] = $totalScore;
-
-                // Store the answers for this training and timestamp
-                $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
             }
 
-            // Add the training details and instances to the training array
+            if ($allNull == true) {
+                $isScored = false;
+            }
+
+            $instance['is_scored'] = $isScored;
+            $instance['total_score'] = $totalScore;
+
+            // Store the answers for this training and timestamp
+            $answers[$trainingIdValue][$instanceCreatedAt] = $trainingAnswers;
+
+            // Append the training details and instances to the training array
             $trainings[] = [
                 'training_id' => $trainingIdValue,
                 'training_name' => $trainingName,
-                'instances' => $instances,
+                'instances' => [$instance],
             ];
         }
+
 
         // Render the 'user-answers' view the user, trainings, and answer data
         return $this->render('/admin/user-answers', [
@@ -504,12 +509,11 @@ class TrainingController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $trainingIds = Yii::$app->request->post('trainingIds', []);
 
-        if (!empty($trainingIds))
-        {
+        if (!empty($trainingIds)) {
             Yii::$app->db->createCommand()
                 ->update('training', ['is_active' => 0], ['id' => $trainingIds])
                 ->execute();
-            
+
             return ['success' => true];
         }
 
