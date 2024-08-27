@@ -289,7 +289,7 @@ class TrainingController extends Controller
         throw new BadRequestHttpException('Only POST requests are allowed');
     }
 
-       /**
+    /**
      * Retrieves all training instances where a specific user has submitted answers.
      *
      * @param int $id The ID of the user.
@@ -446,7 +446,7 @@ class TrainingController extends Controller
         ]);
     }
 
-        /**
+    /**
      * Saves the scores for training questions.
      *
      * @return array The success or failure status of the operation.

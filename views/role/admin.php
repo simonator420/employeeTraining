@@ -43,6 +43,27 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                     <h2 id="modal-title"></h2>
                     <!-- Add form elements or any other content here -->
                     <form id="add-role-form">
+                        <!-- Filter Form -->
+                        <div id="modal-filter-list" class="flex-container" style="display: flex; align-items:center;">
+                            <div class="form-group">
+                                <label
+                                    for="modal-title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
+                                <select id="modal-title-select" class="form-control" style="height:100%; width:250px">
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    for="modal-location-select"><?= Yii::t('employeeTraining', 'Select Location') ?></label>
+                                <select id="modal-location-select" class="form-control" style="height:100%; width:250px">
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <button type="button" id="modal-submit-filter-btn" class="btn btn-success" style="margin-top:30px">
+                                <?= Yii::t('employeeTraining', 'Filter') ?>
+                            </button>
+                        </div>
+
                         <!-- The list of users with checkboxes will be populated here -->
                         <div id="profile-list"></div>
                         <br>
@@ -119,13 +140,13 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 <form id="filter-form" class="flex-form">
                     <div class="form-group">
                         <label for="title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
-                        <select id="title-select" class="form-control">
+                        <select id="title-select" class="form-control" style="height:100%; width:250px">
                             <!-- Options will be populated dynamically -->
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="location-select"><?= Yii::t('employeeTraining', 'Select Location') ?></label>
-                        <select id="location-select" class="form-control">
+                        <select id="location-select" class="form-control" style="height:100%; width:250px">
                             <!-- Options will be populated dynamically -->
                         </select>
                     </div>
@@ -136,7 +157,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
 
             <div class="search-bar">
                 <input type="text" id="employee-search-bar" placeholder="Search employees..."
-                    style="padding:10px; width=100%; margin-bottom:20px">
+                    style="padding:10px; width:510px; margin-bottom:20px">
             </div>
 
             <thead>
@@ -396,6 +417,11 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
     // Button for adding Team Leader or Admin
     $(document).on('click', '.add-role-btn', function() {
+        // Reset job title filter
+        $('#modal-title-select').val('');
+        // Reset location filter
+        $('#modal-location-select').val('');
+        $('#profile-list').empty();
         var role = $(this).data('role');
         var title = '';
         switch (role) {
@@ -538,7 +564,13 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                         // Add user storage location
                         userRow += '<td>' + user.storage_location + '</td>';
                         // Add latest training complete time (or "N/A")
-                        userRow += '<td>' + user.latest_training_complete_time + '</td>';
+                        if (user.latest_training_complete_time != 'N/A') {
+                            var date = new Date(user.latest_training_complete_time);
+                            var formattedDate = date.getDate() + '. ' + (date.getMonth() + 1) + '. ' + date.getFullYear() + ' ' + date.toLocaleTimeString('en-GB');
+                            userRow += '<td>' + formattedDate + '</td>';
+                        } else {
+                            userRow += '<td>N/A</td>';
+                        }
                         // Add number of uncompleted trainings
                         userRow += '<td>' + user.open_trainings_count + '</td>';
                         // Add number of completed trainings
@@ -634,6 +666,81 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 alert('Please select at least one training.');
             }
         });
+
+        $.ajax({
+        url: '$fetchTitlesUrl',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                var titleOptions = '<option value="">$addOptionJobsText</option>';
+                $.each(response.titles, function(index, title) {
+                    titleOptions += '<option value="' + title + '">' + title + '</option>';
+                });
+                $('#modal-title-select').html(titleOptions);
+            }
+        },
+        error: function() {
+            alert('Error fetching titles');
+        }
+    });
+
+    $.ajax({
+        url: '$fetchLocationsUrl',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                var locationOptions = '<option value="">$addOptionLocationText</option>';
+                $.each(response.locations, function(index, location) {
+                    locationOptions += '<option value="' + location + '">' + location + '</option>';
+                });
+                $('#modal-location-select').html(locationOptions);
+            }
+        },
+        error: function() {
+            alert('Error fetching locations');
+        }
+    });
+
+    // Filtering logic for the modal
+    $(document).on('click', '#modal-submit-filter-btn', function() {
+        var selectedTitle = $('#modal-title-select').val();
+        var selectedLocation = $('#modal-location-select').val();
+
+        $.ajax({
+            url: '$fetchFilteredUsersUrl',
+            type: 'GET',
+            data: {
+                title: selectedTitle,
+                location: selectedLocation
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Clear the current profile list
+                    var profileList = $('#profile-list');
+                    profileList.empty();
+
+                    // Iterate over the filtered users and append them to the profile list
+                    if (response.users && response.users.length > 0) {
+                        var profilesHtml = '<ul>';
+                        $.each(response.users, function(index, user) {
+                            profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                        });
+                        profilesHtml += '</ul>';
+                        profileList.html(profilesHtml);
+                    } else {
+                        // If no users match the filter, display a message
+                        profileList.html('<p>No users found for the selected criteria.</p>');
+                    }
+                } else {
+                    alert('No users found for the selected criteria.');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error fetching filtered users');
+                console.log(xhr.responseText);
+            }
+        });
+    });
     
     // Variable to track the toggle state of the action (check/uncheck)
     var toggleState = false;

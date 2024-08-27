@@ -461,10 +461,9 @@ class RoleController extends Controller
 
                 // Get latest training completion time for each user
                 $latestTrainingTime = Yii::$app->db->createCommand('
-                    SELECT MAX(training_assigned_time)
-                    FROM user_training
+                    SELECT MAX(created_at)
+                    FROM training_answers
                     WHERE user_id = :userId
-                    AND assigned_training = 0
                 ')
                     ->bindValue(':userId', $user['user_id'])
                     ->queryScalar();

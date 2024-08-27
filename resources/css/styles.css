@@ -49,8 +49,8 @@
 }
 
 
-#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn, .remove-role-btn, .add-role-btn, #submit-add-role, 
-#edit-deadline-btn, .remove-image-btn, .add-option-btn, #assign-users-btn, #submit-deadline-btn, #submit-filter-btn, #submit-assign-users, .submit-score-btn, #end-video-btn, .remove-file-btn, #end-file-btn {
+#select-all-btn, #confirm-selection-btn, #confirm-time-btn, #confirm-specific-users-btn, #select-all-users-btn, #toggle-user-list-btn, #submit-btn, .edit-question-btn, .go-back-button, #create-training-btn, #submit-training-btn, .add-role-btn, #submit-add-role, 
+#edit-deadline-btn, .remove-image-btn, .add-option-btn, #assign-users-btn, #submit-deadline-btn, #submit-filter-btn, #submit-assign-users, .submit-score-btn, #end-video-btn, .remove-file-btn, #end-file-btn, #modal-submit-filter-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -63,15 +63,15 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover, .remove-role-btn:hover, .add-role-btn:hover, #submit-add-role:hover, 
-#edit-deadline-btn:hover, .remove-image-btn:hover, .add-option-btn:hover, #assign-users-btn:hover, #submit-deadline-bt:hover, #submit-filter-btn:hover, #submit-assign-users:hover, .submit-score-btn:hover, #end-video-btn:hover, .remove-file-btn:hover, #end-file-btn:hover {
+#select-all-btn:enabled:hover, #confirm-selection-btn:enabled:hover, #confirm-time-btn:hover, #confirm-specific-user-btn:hover, #select-all-user-btn:hover, #toggle-user-list-btn:enabled:hover, #confirm-specific-users-btn:hover, #select-all-users-btn:hover, #submit-btn:hover, .edit-question-btn:hover, .btn-success:hover, .go-back-button:hover, #create-training-btn:hover, #submit-training-btn:hover, .add-role-btn:hover, #submit-add-role:hover, 
+#edit-deadline-btn:hover, .remove-image-btn:hover, .add-option-btn:hover, #assign-users-btn:hover, #submit-deadline-bt:hover, #submit-filter-btn:hover, #submit-assign-users:hover, .submit-score-btn:hover, #end-video-btn:hover, .remove-file-btn:hover, #end-file-btn:hover, #modal-submit-filter-btn:hover {
     background-color: #ffffff !important;
     color: rgb(85, 85, 85) !important;
     border-color: rgb(85, 85, 85) !important;
     border-radius: 4px;
 }
 
-#cancel-training-btn, .remove-option-btn, #cancel-deadline-btn, #delete-selected-btn {
+#cancel-training-btn, .remove-option-btn, #cancel-deadline-btn, #delete-selected-btn, .remove-role-btn {
     display: inline-block;
     margin: 10px 5px 10px 0;
     padding: 5px 12px;
@@ -85,7 +85,7 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-#cancel-training-btn:hover, .remove-option-btn:hover, #cancel-deadline-btn:hover, #delete-selected-btn:hover {
+#cancel-training-btn:hover, .remove-option-btn:hover, #cancel-deadline-btn:hover, #delete-selected-btn:hover, .remove-role-btn:hover {
     background-color: rgb(85, 85, 85);
     color: #ffffff !important;
     border-color: rgb(85, 85, 85);
