@@ -14,7 +14,6 @@ use yii\helpers\Url;
  */
 class QuestionsController extends Controller
 {
-
     /**
      * Displays the questions page for Admin or Team Leader.
      *
@@ -31,10 +30,12 @@ class QuestionsController extends Controller
 
         $userRole = $currentUser->identity->profile->role;
 
-        Yii::info("Userova role: " . $userRole);
+        $isActive = Yii::$app->db->createCommand('SELECT is_active FROM training WHERE id=:id')
+            ->bindValue(':id', $id)
+            ->queryScalar();
 
         // Check if the logged in user is admin
-        if ($userRole !== 'admin' && $userRole !== 'team_leader') {
+        if (($userRole !== 'admin' && $userRole !== 'team_leader') || $isActive != 1) {
             // Redirect to acces denied if the user isn't admin
             return $this->redirect(['site/access-denied']);
         }
@@ -391,7 +392,7 @@ class QuestionsController extends Controller
 
                 // Handle the input fields based on the question type
                 switch ($question['type']) {
-                    case 'text':                
+                    case 'text':
                         // Generate a text input field for text-based questions
                         $html .= Html::input('text', "TrainingQuestions[$index][answer]", '', [
                             'class' => 'form-control question-input',
@@ -529,7 +530,7 @@ class QuestionsController extends Controller
     public function actionRemoveInitialFile()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-    
+
         if (Yii::$app->request->isPost) {
             $deleteVid = Yii::$app->request->post('deleteVid');
             $trainingId = Yii::$app->request->post('trainingId');
@@ -538,11 +539,11 @@ class QuestionsController extends Controller
                 Yii::$app->db->createCommand()->update('training', [
                     'initial_file_url' => null
                 ], ['id' => $trainingId])->execute();
-    
+
                 return ['success' => true];
             }
         }
-    
+
         return ['success' => false];
     }
 }
