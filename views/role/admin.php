@@ -8,7 +8,6 @@ $addAdminText = Yii::t('employeeTraining', 'Add Admin');
 $addOptionJobsText = Yii::t('employeeTraining', 'All Jobs');
 $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
 
-
 ?>
 
 <!-- View for displaying informations about the users. -->
@@ -151,13 +150,13 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                         </select>
                     </div>
                     <button type="button" id="submit-filter-btn"
-                        class="btn btn-success"><?= Yii::t('employeeTraining', 'Filter') ?></button>
+                        class="btn btn-success" style="margin-top:30px"><?= Yii::t('employeeTraining', 'Filter') ?></button>
                 </form>
             </div>
 
             <div class="search-bar">
                 <input type="text" id="employee-search-bar" placeholder="Search employees..."
-                    style="padding:10px; width:510px; margin-bottom:20px">
+                    style="padding:10px; width:250px; margin-bottom:20px">
             </div>
 
             <thead>

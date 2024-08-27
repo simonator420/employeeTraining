@@ -180,7 +180,7 @@ class QuestionsController extends Controller
                     $html .= Html::hiddenInput("TrainingQuestions[$index][remove_image]", 0, ['class' => 'remove-image-input']);
                 }
                 // Input for uploading a new image
-                $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image" accept="image/*"' . ($question['image_url'] ? ' style="display:none;"' : '') . '>';
+                $html .= '<input type="file" name="TrainingQuestions[' . $index . '][image]" class="form-control question-image" style="height:100%;" accept="image/*"' . ($question['image_url'] ? ' style="display:none; height:100%;"' : '') . '>';
                 $html .= '</div>';
 
                 $html .= '<br>';
@@ -383,7 +383,7 @@ class QuestionsController extends Controller
                         Yii::$app->request->baseUrl . '/' . Html::encode($question['image_url']),
                         [
                             'class' => 'question-image',
-                            'style' => 'max-height: 280px; width: auto; height: auto; max-width:100%; display:block;'
+                            'style' => 'max-height: 280px; width: auto; height: 100%; max-width:100%; display:block;'
                         ]
                     );
                     $html .= '</div>';

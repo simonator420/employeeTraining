@@ -183,7 +183,7 @@ function fetchQuestions() {
                             '<input type="text" name="TrainingQuestions[0][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
                         '</div>' +
                         '<div class="form-group">' +
-                            '<input type="file" name="TrainingQuestions[0][image]" class="form-control question-image">' +
+                            '<input type="file" name="TrainingQuestions[0][image]" class="form-control question-image" style="height:100%">' +
                         '</div>' +
                     '</div>' +
                     '<br>' +
@@ -550,7 +550,7 @@ $('#add-question-btn').on('click', function() {
                 '<input type="text" name="TrainingQuestions[' + questionIndex + '][correct_answer]" class="form-control correct-answer" placeholder="Enter the correct answer here">' +
             '</div>' +
             '<div class="form-group">' +
-                '<input type="file" name="TrainingQuestions[' + questionIndex + '][image]" class="form-control question-image">' +
+                '<input type="file" name="TrainingQuestions[' + questionIndex + '][image]" class="form-control question-image" style="height:100%">' +
             '</div>' +
         '<br>' +
         '<hr style="border-top: 1px solid">' +
