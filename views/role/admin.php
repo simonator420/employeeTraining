@@ -472,6 +472,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     // When the user clicks on close button in the modal (x), close the modal
     span.onclick = function() {
         modal.style.display = "none";
+        // Clear the search bar in the modal
+        $('#modal-employee-search-bar').val('');
         // Enable scrolling
         $('body').css('overflow', 'auto');
     }
@@ -480,6 +482,8 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = "none";
+            // Clear the search bar in the modal
+            $('#modal-employee-search-bar').val('');
             // Enable scrolling
             $('body').css('overflow', 'auto');
         }
