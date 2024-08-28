@@ -64,8 +64,14 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                             </button>
                         </div>
 
+                        <!-- Search bar inside the modal -->
+                        <div class="search-bar">
+                            <input type="text" id="modal-employee-search-bar" placeholder="Search employees..."
+                                style="padding:10px; width:250px; margin-bottom:20px">
+                        </div>
+
                         <!-- The list of users with checkboxes will be populated here -->
-                        <div id="profile-list"></div>
+                        <div id="profile-list" class="profile-list-container"></div>
                         <br>
                         <button type="button" id="submit-add-role"><?= Yii::t('employeeTraining', 'Add') ?></button>
                     </form>
@@ -444,14 +450,13 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             type: 'GET',
             success: function(response) {
                 if (response.success) {
-                    var profilesHtml = '<ul>';
+                    var profilesHtml = '';
                     $.each(response.profiles, function(index, profile) {
                         // Exclude profiles with the current role
                         if (profile.role !== role) {
-                            profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</li>';
+                            profilesHtml += '<div class="profile-item"><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</div>';
                         }
                     });
-                    profilesHtml += '</ul>';
                     $('#profile-list').html(profilesHtml);
                 } else {
                     $('#profile-list').html('<p>No profiles found.</p>');
@@ -754,6 +759,20 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             var fullName = $(this).data('fullname').toLowerCase();
 
             // Check if the full name contains the search term
+            if (fullName.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#modal-employee-search-bar').on('input', function() {
+        var searchTerm = $(this).val().toLowerCase();
+
+        $('#profile-list .profile-item').each(function() {
+            var fullName = $(this).text().toLowerCase();
+
             if (fullName.includes(searchTerm)) {
                 $(this).show();
             } else {
