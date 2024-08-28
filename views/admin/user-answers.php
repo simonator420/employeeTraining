@@ -24,182 +24,188 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
 
         <br>
-        <div class="collapsible-container">
-            <?php foreach ($trainings as $training): ?>
-                <?php foreach ($training['instances'] as $instance): ?>
+        <?php if (!empty($trainings)): ?>
+            <div class="collapsible-container">
+                <?php foreach ($trainings as $training): ?>
+                    <?php foreach ($training['instances'] as $instance): ?>
 
-                    <?php
-                    // Calculate the number of answers and the formatted score
-                    $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
-                    $formattedScore = number_format($instance['total_score'], 2);
-                    ?>
+                        <?php
+                        // Calculate the number of answers and the formatted score
+                        $length = number_format(count($answers[$training['training_id']][$instance['created_at']]), 2);
+                        $formattedScore = number_format($instance['total_score'], 2);
+                        ?>
 
-                    <?php
+                        <?php
 
-                    // Determine the score status based on whether the instance is scored or not
-                    $scoreStatus = $instance['is_scored']
-                        ? "<span style='color: green; font-weight: bold; padding-left:5px;'> Score: {$formattedScore}/{$length}</span>"
-                        : "<span style='color: red; font-weight: bold; padding-left:5px;'>Training not scored</span>";
-                    ?>
+                        // Determine the score status based on whether the instance is scored or not
+                        $scoreStatus = $instance['is_scored']
+                            ? "<span style='color: green; font-weight: bold; padding-left:5px;'> Score: {$formattedScore}/{$length}</span>"
+                            : "<span style='color: red; font-weight: bold; padding-left:5px;'>Training not scored</span>";
+                        ?>
 
-                    <!-- Create collapsible for each training instance -->
-                    <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
-                        <b><?= Html::encode($training['training_name']) ?></b> - <?= Html::encode(date('j. n. Y H:i:s', strtotime($instance['created_at']))) ?>
-                        <?= $scoreStatus ?>
-                    </button>
+                        <!-- Create collapsible for each training instance -->
+                        <button class="collapsible" data-training-id="<?= Html::encode($training['training_id']) ?>">
+                            <b><?= Html::encode($training['training_name']) ?></b> -
+                            <?= Html::encode(date('j. n. Y H:i:s', strtotime($instance['created_at']))) ?>
+                            <?= $scoreStatus ?>
+                        </button>
 
-                    <div class="content" style="display:none;">
-                        <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
-                            <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $index => $answer): ?>
+                        <div class="content" style="display:none;">
+                            <?php if (!empty($answers[$training['training_id']][$instance['created_at']])): ?>
+                                <?php foreach ($answers[$training['training_id']][$instance['created_at']] as $index => $answer): ?>
 
-                                <?php
-                                // Retrieve the type of question
-                                $questionType = Yii::$app->db->createCommand('
+                                    <?php
+                                    // Retrieve the type of question
+                                    $questionType = Yii::$app->db->createCommand('
                                     SELECT type 
                                     FROM training_questions 
                                     WHERE id = :question_id
                                     ')
-                                    ->bindValue(':question_id', $answer['question_id'])
-                                    ->queryScalar();
+                                        ->bindValue(':question_id', $answer['question_id'])
+                                        ->queryScalar();
 
-                                // Retreive the correct options for multiple-choice question
-                                $correctOptions = Yii::$app->db->createCommand('
+                                    // Retreive the correct options for multiple-choice question
+                                    $correctOptions = Yii::$app->db->createCommand('
                                             SELECT option_text 
                                             FROM training_multiple_choice_answers 
                                             WHERE question_id = :question_id AND is_correct = 1
                                         ')
-                                    ->bindValue(':question_id', $answer['question_id'])
-                                    ->queryColumn();
-                                ?>
-                                <div class="question-answer-pair" data-question-id="<?= Html::encode($answer['question_id']) ?>"
-                                    data-question-type="<?= Html::encode($questionType) ?>"
-                                    data-user-training-id="<?= Html::encode($answer['user_training_id']) ?>"
-                                    data-correct-options="<?= Html::encode(json_encode($correctOptions)) ?>">
-                                    <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
+                                        ->bindValue(':question_id', $answer['question_id'])
+                                        ->queryColumn();
+                                    ?>
+                                    <div class="question-answer-pair" data-question-id="<?= Html::encode($answer['question_id']) ?>"
+                                        data-question-type="<?= Html::encode($questionType) ?>"
+                                        data-user-training-id="<?= Html::encode($answer['user_training_id']) ?>"
+                                        data-correct-options="<?= Html::encode(json_encode($correctOptions)) ?>">
+                                        <p><b>Question:</b> <?= Html::encode($answer['question_text']) ?></p>
 
 
-                                    <?php if ($questionType === 'multiple_choice'): ?>
-                                        <?php
-                                        // Handle multiple-choice answers
-                                        $multipleAnswers = $answer['multiple_choice_answers'];
-                                        if (empty($multipleAnswers)) {
-                                            echo '<p style="padding-top:5px;">User selected no options</p>';
-                                        }
+                                        <?php if ($questionType === 'multiple_choice'): ?>
+                                            <?php
+                                            // Handle multiple-choice answers
+                                            $multipleAnswers = $answer['multiple_choice_answers'];
+                                            if (empty($multipleAnswers)) {
+                                                echo '<p style="padding-top:5px;">User selected no options</p>';
+                                            }
 
-                                        // Loop through each selected answer
-                                        foreach ($multipleAnswers as $idx => $singleAnswer):
+                                            // Loop through each selected answer
+                                            foreach ($multipleAnswers as $idx => $singleAnswer):
 
-                                            // Retrieve the ID of the user's answer
-                                            $tmcuaId = Yii::$app->db->createCommand('
+                                                // Retrieve the ID of the user's answer
+                                                $tmcuaId = Yii::$app->db->createCommand('
                                                 SELECT id 
                                                 FROM training_multiple_choice_user_answers 
                                                 WHERE question_id = :question_id AND multiple_choice_answer_id = :option_id
                                             ')
-                                                ->bindValue(':question_id', $answer['question_id'])
-                                                ->bindValue(':option_id', $singleAnswer['id'])
-                                                ->queryScalar();
-                                            ?>
+                                                    ->bindValue(':question_id', $answer['question_id'])
+                                                    ->bindValue(':option_id', $singleAnswer['id'])
+                                                    ->queryScalar();
+                                                ?>
 
-                                            <!-- Display each selected answer and provide checkboxes to mark as correct or wrong -->
-                                            <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
+                                                <!-- Display each selected answer and provide checkboxes to mark as correct or wrong -->
+                                                <p><b>Answer <?= $idx + 1 ?>:</b> <?= Html::encode($singleAnswer['option_text']) ?></p>
 
-                                            <?php if ($userRole == 'admin'): ?>
-                                                <div class="evaluation" data-option-id="<?= Html::encode($singleAnswer['id']) ?>"
-                                                    data-tmcua-id="<?= Html::encode($tmcuaId) ?>">
-                                                    <label style="color: green;">
-                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', isset($singleAnswer['score']) ? $singleAnswer['score'] > 0 : $singleAnswer['is_correct'] == 1) ?>
-                                                        Correct
-                                                    </label>
-                                                    <label style="color: red;">
-                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
-                                                        Wrong
-                                                    </label>
-                                                </div>
-                                            <?php endif; ?>
+                                                <?php if ($userRole == 'admin'): ?>
+                                                    <div class="evaluation" data-option-id="<?= Html::encode($singleAnswer['id']) ?>"
+                                                        data-tmcua-id="<?= Html::encode($tmcuaId) ?>">
+                                                        <label style="color: green;">
+                                                            <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][correct]', isset($singleAnswer['score']) ? $singleAnswer['score'] > 0 : $singleAnswer['is_correct'] == 1) ?>
+                                                            Correct
+                                                        </label>
+                                                        <label style="color: red;">
+                                                            <?= Html::checkbox('evaluation[' . $answer['id'] . '][' . $idx . '][wrong]', isset($singleAnswer['score']) ? $singleAnswer['score'] == 0 : $singleAnswer['is_correct'] == 0) ?>
+                                                            Wrong
+                                                        </label>
+                                                    </div>
+                                                <?php endif; ?>
 
-                                        <?php endforeach; ?>
-                                        <!-- Display the correct answer and all possible options -->
-                                        <p style="padding-top:10px; padding-bottom:2px;"><b>Correct answer:</b>
-                                            <?= empty($correctOptions) ? 'N/A' : Html::encode(implode(', ', $correctOptions)) ?>
-                                        </p>
+                                            <?php endforeach; ?>
+                                            <!-- Display the correct answer and all possible options -->
+                                            <p style="padding-top:10px; padding-bottom:2px;"><b>Correct answer:</b>
+                                                <?= empty($correctOptions) ? 'N/A' : Html::encode(implode(', ', $correctOptions)) ?>
+                                            </p>
 
-                                        <?php
-                                        // Retrieve all possible options for the question
-                                        $allOptions = Yii::$app->db->createCommand('
+                                            <?php
+                                            // Retrieve all possible options for the question
+                                            $allOptions = Yii::$app->db->createCommand('
                                             SELECT tma.option_text 
                                             FROM training_multiple_choice_answers tma
                                             JOIN training_questions tq ON tma.question_id = tq.id
                                             JOIN training_answers ta ON tq.id = ta.question_id
                                             WHERE tq.id = :question_id AND ta.user_training_id = :user_training_id
                                         ')
-                                            ->bindValue(':question_id', $answer['question_id'])
-                                            ->bindValue(':user_training_id', $answer['user_training_id'])
-                                            ->queryAll();
+                                                ->bindValue(':question_id', $answer['question_id'])
+                                                ->bindValue(':user_training_id', $answer['user_training_id'])
+                                                ->queryAll();
 
-                                        // Extract option_text values
-                                        $allOptionTexts = array_column($allOptions, 'option_text');
-                                        ?>
+                                            // Extract option_text values
+                                            $allOptionTexts = array_column($allOptions, 'option_text');
+                                            ?>
 
-                                        <p style="padding-bottom:10px;"><b>All options:</b>
-                                            <?= empty($allOptionTexts) ? 'N/A' : Html::encode(implode(', ', $allOptionTexts)) ?>
-                                        </p>
+                                            <p style="padding-bottom:10px;"><b>All options:</b>
+                                                <?= empty($allOptionTexts) ? 'N/A' : Html::encode(implode(', ', $allOptionTexts)) ?>
+                                            </p>
 
-                                    <?php else: ?>
+                                        <?php else: ?>
 
-                                        <!-- Display the user's answer for non-multiple-choice questions -->
-                                        <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
+                                            <!-- Display the user's answer for non-multiple-choice questions -->
+                                            <p><b>Answer:</b> <?= Html::encode($answer['answer']) ?></p>
 
-                                        <?php
-                                        // Retrieve the correct answer for comparison
-                                        $correctAnswer = Yii::$app->db->createCommand('
+                                            <?php
+                                            // Retrieve the correct answer for comparison
+                                            $correctAnswer = Yii::$app->db->createCommand('
                                             SELECT correct_answer 
                                             FROM training_questions 
                                             WHERE id = :question_id
                                             AND training_id = :training_id
                                         ')
-                                            ->bindValue(':training_id', $training['training_id'])
-                                            ->bindValue(':question_id', $answer['question_id'])
-                                            ->queryScalar();
-                                        // Determine if the user's answer matches the correct answer
-                                        $isCorrect = ($correctAnswer == $answer['answer']);
-                                        ?>
-                                        <?php if ($userRole == 'admin'): ?>
-                                            <div class="evaluation">
-                                                <!-- Checkboxes to mark the answer as correct or wrong -->
-                                                <label style="color: green;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', isset($answer['score']) ? $answer['score'] > 0 : $isCorrect) ?>
-                                                    Correct
-                                                </label>
-                                                <label style="color: red;">
-                                                    <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
-                                                    Wrong
-                                                </label>
-                                            </div>
+                                                ->bindValue(':training_id', $training['training_id'])
+                                                ->bindValue(':question_id', $answer['question_id'])
+                                                ->queryScalar();
+                                            // Determine if the user's answer matches the correct answer
+                                            $isCorrect = ($correctAnswer == $answer['answer']);
+                                            ?>
+                                            <?php if ($userRole == 'admin'): ?>
+                                                <div class="evaluation">
+                                                    <!-- Checkboxes to mark the answer as correct or wrong -->
+                                                    <label style="color: green;">
+                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][correct]', isset($answer['score']) ? $answer['score'] > 0 : $isCorrect) ?>
+                                                        Correct
+                                                    </label>
+                                                    <label style="color: red;">
+                                                        <?= Html::checkbox('evaluation[' . $answer['id'] . '][wrong]', isset($answer['score']) ? $answer['score'] == 0 : !$isCorrect) ?>
+                                                        Wrong
+                                                    </label>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <!-- Display the correct answer -->
+                                            <p style="padding-top:10px; padding-bottom:10px;"><b>Correct answer:</b>
+                                                <?= !$correctAnswer ? 'N/A' : Html::encode($correctAnswer) ?>
+                                            </p>
+
                                         <?php endif; ?>
+                                        <hr>
+                                    </div>
 
-                                        <!-- Display the correct answer -->
-                                        <p style="padding-top:10px; padding-bottom:10px;"><b>Correct answer:</b>
-                                            <?= !$correctAnswer ? 'N/A' : Html::encode($correctAnswer) ?>
-                                        </p>
-
+                                    <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1 && $userRole == 'admin'): ?>
+                                        <!-- Button to submit the score for the entire training instance -->
+                                        <button class="submit-score-btn">Submit Score</button>
+                                        <label class="score-label"> Score: <span class="score-value">0/0</span></label>
                                     <?php endif; ?>
-                                    <hr>
-                                </div>
-
-                                <?php if ($index === count($answers[$training['training_id']][$instance['created_at']]) - 1 && $userRole == 'admin'): ?>
-                                    <!-- Button to submit the score for the entire training instance -->
-                                    <button class="submit-score-btn">Submit Score</button>
-                                    <label class="score-label"> Score: <span class="score-value">0/0</span></label>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <!-- Message displayed if no answers are found for the training -->
-                            <p>No answers found for this training.</p>
-                        <?php endif; ?>
-                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <!-- Message displayed if no answers are found for the training -->
+                                <p>No answers found for this training.</p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
-            <?php endforeach; ?>
-        </div>
+            </div>
+        <?php else: ?>
+            <!-- Message displayed if no trainings are found -->
+            <p>No completed trainings found.</p>
+        <?php endif; ?>
     </div>
 </div>
 
