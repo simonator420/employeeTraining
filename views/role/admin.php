@@ -170,7 +170,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                 <tr>
                     <th><strong><?= Yii::t('employeeTraining', 'ID') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Full Name') ?></strong></th>
-                    <th><strong><?= Yii::t('employeeTra ining', 'Job') ?></strong></th>
+                    <th><strong><?= Yii::t('employeeTraining', 'Job') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Location') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'Last training complete time') ?></strong></th>
                     <th><strong><?= Yii::t('employeeTraining', 'No. of open trainings') ?></strong></th>
@@ -335,7 +335,14 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 usersHtml += '</ul>';
                 // Conditionally add the remove button if the role is not "user" and users are found
                 if (role !== 'user') {
-                    usersHtml += '<button class="remove-role-btn" data-role="' + role + '" style="display:none;">Remove selected</button>';
+                    switch (role) {
+                    case 'team_leader':
+                        usersHtml += '<button class="remove-role-btn" data-role="' + role + '" style="display:none;">Remove Team Leader Role</button>';
+                        break;
+                    case 'admin':
+                        usersHtml += '<button class="remove-role-btn" data-role="' + role + '" style="display:none;">Remove Admin Role</button>';
+                        break;
+                    }
                 }
             } else {
                 usersHtml += '<li>No users found.</li>';
