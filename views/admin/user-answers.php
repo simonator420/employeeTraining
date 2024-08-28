@@ -57,9 +57,9 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php
                                     // Retrieve the type of question
                                     $questionType = Yii::$app->db->createCommand('
-                                    SELECT type 
-                                    FROM training_questions 
-                                    WHERE id = :question_id
+                                        SELECT type 
+                                        FROM training_questions 
+                                        WHERE id = :question_id
                                     ')
                                         ->bindValue(':question_id', $answer['question_id'])
                                         ->queryScalar();
@@ -93,10 +93,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
                                                 // Retrieve the ID of the user's answer
                                                 $tmcuaId = Yii::$app->db->createCommand('
-                                                SELECT id 
-                                                FROM training_multiple_choice_user_answers 
-                                                WHERE question_id = :question_id AND multiple_choice_answer_id = :option_id
-                                            ')
+                                                    SELECT id 
+                                                    FROM training_multiple_choice_user_answers 
+                                                    WHERE question_id = :question_id AND multiple_choice_answer_id = :option_id
+                                                ')
                                                     ->bindValue(':question_id', $answer['question_id'])
                                                     ->bindValue(':option_id', $singleAnswer['id'])
                                                     ->queryScalar();
@@ -128,12 +128,12 @@ $this->params['breadcrumbs'][] = $this->title;
                                             <?php
                                             // Retrieve all possible options for the question
                                             $allOptions = Yii::$app->db->createCommand('
-                                            SELECT tma.option_text 
-                                            FROM training_multiple_choice_answers tma
-                                            JOIN training_questions tq ON tma.question_id = tq.id
-                                            JOIN training_answers ta ON tq.id = ta.question_id
-                                            WHERE tq.id = :question_id AND ta.user_training_id = :user_training_id
-                                        ')
+                                                SELECT tma.option_text 
+                                                FROM training_multiple_choice_answers tma
+                                                JOIN training_questions tq ON tma.question_id = tq.id
+                                                JOIN training_answers ta ON tq.id = ta.question_id
+                                                WHERE tq.id = :question_id AND ta.user_training_id = :user_training_id
+                                            ')
                                                 ->bindValue(':question_id', $answer['question_id'])
                                                 ->bindValue(':user_training_id', $answer['user_training_id'])
                                                 ->queryAll();
@@ -154,11 +154,11 @@ $this->params['breadcrumbs'][] = $this->title;
                                             <?php
                                             // Retrieve the correct answer for comparison
                                             $correctAnswer = Yii::$app->db->createCommand('
-                                            SELECT correct_answer 
-                                            FROM training_questions 
-                                            WHERE id = :question_id
-                                            AND training_id = :training_id
-                                        ')
+                                                SELECT correct_answer 
+                                                FROM training_questions 
+                                                WHERE id = :question_id
+                                                AND training_id = :training_id
+                                            ')
                                                 ->bindValue(':training_id', $training['training_id'])
                                                 ->bindValue(':question_id', $answer['question_id'])
                                                 ->queryScalar();
