@@ -67,7 +67,7 @@ $addOptionLocationText = Yii::t('employeeTraining', 'All Locations');
                         <!-- Search bar inside the modal -->
                         <div class="search-bar">
                             <input type="text" id="modal-employee-search-bar" placeholder="Search employees..."
-                                style="padding:10px; width:250px; margin-bottom:20px">
+                                style="padding:10px; width:250px; margin-bottom:20px; border:2px solid transparent; border-color: lightgray; border-radius: 4px;">
                         </div>
 
                         <!-- The list of users with checkboxes will be populated here -->
