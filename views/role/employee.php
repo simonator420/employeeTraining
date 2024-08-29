@@ -47,13 +47,13 @@ endif;
                 </div>
 
                 <div id="questions-container" style="display: none;"></div>
-                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn', 'style' => 'display: none; ']) ?>
                 <?= Html::button(Yii::t('employeeTraining', 'Previous'), ['class' => 'btn btn-secondary', 'id' => 'prev-btn', 'style' => 'display: none;']) ?>
+                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn', 'style' => 'display: none; ']) ?>
                 <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
             <?php else: ?>
                 <div id="questions-container"></div>
-                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn']) ?>
                 <?= Html::button(Yii::t('employeeTraining', 'Previous'), ['class' => 'btn btn-secondary', 'id' => 'prev-btn', 'style' => 'display: none;']) ?>
+                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn']) ?>
                 <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
             <?php endif; ?>
             <div id="question-navigation" style="text-align: center; margin-top: 20px;">
@@ -85,12 +85,10 @@ $(document).ready(function() {
             data: { training_id: trainingId }, // Pass the training_id dynamically
             success: function(response) {
                 if (response.success) {
-                    // Display the questions in the container
                     $('#questions-container').html(response.html);
                     generateQuestionNavigation();
                     showQuestion(currentQuestionIndex);
                 } else {
-                    // Display a message if no questions are available
                     $('#questions-container').html('<p>No questions available.</p>');
                 }
             },
@@ -104,6 +102,10 @@ $(document).ready(function() {
         var totalQuestions = $('.question-item').length;
         var navHtml = '';
 
+        // Add the video icon at the beginning of the navigation
+        navHtml += '<button class="question-nav-btn video-nav-btn" data-index="video"><i class="fa fa-video-camera"></i></button>';
+
+        // Add the question numbers to the navigation
         for (var i = 0; i < totalQuestions; i++) {
             navHtml += '<button class="question-nav-btn" data-index="' + i + '">' + (i + 1) + '</button>';
         }
@@ -114,29 +116,46 @@ $(document).ready(function() {
 
     function highlightCurrentQuestion(index) {
         $('.question-nav-btn').removeClass('active');
-        $('.question-nav-btn[data-index="' + index + '"]').addClass('active');
+        if (index === 'video') {
+            $('.video-nav-btn').addClass('active');
+        } else {
+            $('.question-nav-btn[data-index="' + index + '"]').addClass('active');
+        }
     }
 
     function showQuestion(index) {
-        var totalQuestions = $('.question-item').length;
-        $('.question-item').hide();
-        $('.question-item').eq(index).show();
-
-        if (index === 0) {
+        if (index === 'video') {
+            $('#questions-container').hide();
+            $('#file-container').show();
+            $('#question-navigation').hide(); // Hide the navigation
             $('#prev-btn').hide();
-        } else {
-            $('#prev-btn').show();
-        }
-
-        if (index === totalQuestions - 1) {
             $('#next-btn').hide();
-            $('#submit-btn').show();
-        } else {
-            $('#next-btn').show();
             $('#submit-btn').hide();
-        }
+            highlightCurrentQuestion('video');
+        } else {
+            $('#file-container').hide();
+            $('#questions-container').show();
+            $('#question-navigation').show(); // Show the navigation
+            var totalQuestions = $('.question-item').length;
+            $('.question-item').hide();
+            $('.question-item').eq(index).show();
 
-        highlightCurrentQuestion(index);
+            if (index === 0) {
+                $('#prev-btn').hide();
+            } else {
+                $('#prev-btn').show();
+            }
+
+            if (index === totalQuestions - 1) {
+                $('#next-btn').hide();
+                $('#submit-btn').show();
+            } else {
+                $('#next-btn').show();
+                $('#submit-btn').hide();
+            }
+
+            highlightCurrentQuestion(index);
+        }
     }
 
     $('#next-btn').on('click', function() {
@@ -154,29 +173,18 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.question-nav-btn', function() {
-        currentQuestionIndex = $(this).data('index');
+        var index = $(this).data('index');
+        currentQuestionIndex = index === 'video' ? 'video' : parseInt(index);
         showQuestion(currentQuestionIndex);
-    });
-
-    // Function to hide the video and show the questions
-    $('#end-file-btn').on('click', function(e) {
-        var videoElement = document.getElementById('training-video');
-        if (videoElement) {
-            videoElement.pause();
-            videoElement.currentTime = 0;
-        }
-        $('#file-container').hide();
-        $('#questions-container').show();
-        loadQuestions();  // Display the first question
-        $('#next-btn').show();  // Show the "Next" button after questions are loaded
     });
 
     $('#submit-btn').on('click', function(e) {
         e.preventDefault();
         let isValid = true;
+        let firstInvalidIndex = -1;
         let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
 
-        $('.question-input').each(function() {
+        $('.question-input').each(function(index) {
             let questionId = $(this).data('question-id');
             let questionText = $(this).data('question-text');
             let questionType = $(this).data('question-type');
@@ -185,6 +193,9 @@ $(document).ready(function() {
             if (!inputValue) {
                 isValid = false;
                 $(this).css('border', '2px solid red');
+                if (firstInvalidIndex === -1) {
+                    firstInvalidIndex = index;
+                }
             } else {
                 $(this).css('border', '1px solid #dee2e6');
             }
@@ -197,7 +208,7 @@ $(document).ready(function() {
             };
         });
 
-        $('.multiple-choice-option').each(function() {
+        $('.multiple-choice-option').each(function(index) {
             let questionId = $(this).data('question-id');
             let questionText = $(this).data('question-text');
             let questionType = $(this).data('question-type');
@@ -233,7 +244,24 @@ $(document).ready(function() {
                     alert('Error in AJAX request. Please try again.');
                 }
             });
+        } else {
+            // Redirect to the first unanswered question
+            if (firstInvalidIndex !== -1) {
+                currentQuestionIndex = firstInvalidIndex;
+                showQuestion(currentQuestionIndex);
+            }
         }
+    });
+
+    // Function to hide the video and show the questions
+    $('#end-file-btn').on('click', function(e) {
+        if (currentQuestionIndex === 'video') {
+            currentQuestionIndex = 0;  // Start with the first question when "Continue" is clicked
+        }
+        $('#file-container').hide();
+        $('#questions-container').show();
+        loadQuestions();  // Display the first question
+        $('#next-btn').show();  // Show the "Next" button after questions are loaded
     });
 
     // Initially hide the "Next" button if a video or PDF is present
@@ -243,6 +271,7 @@ $(document).ready(function() {
 
     $('#prev-btn').hide();
     $('#submit-btn').hide();
+
 
     function checkMultipleChoiceSelection() {
         if ($('.multiple-choice-option:checked').length === 0) {
