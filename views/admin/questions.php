@@ -358,8 +358,7 @@ $(document).on('click', '#assign-users-btn', function() {
                 var profilesHtml = '';
                 // Iterate over the profiles and create divs with checkboxes
                 $.each(response.profiles, function(index, profile) {
-                    console.log('User ID:', profile.id, 'User Name:', profile.firstname + ' ' + profile.lastname);
-                    profilesHtml += '<div><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
+                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
                                 (profile.isAssigned ? ' checked data-was-assigned="true"' : '') + '> ' + 
                                 profile.firstname + ' ' + profile.lastname + '</div>';
                 });
@@ -452,8 +451,7 @@ $(document).on('click', '#submit-filter-btn', function() {
             if (response.success) {
                 var usersHtml = '';
                 $.each(response.users, function(index, user) {
-                    console.log('User ID:', user.user_id, 'User Name:', user.firstname + ' ' + user.lastname);
-                    usersHtml += '<div><input type="checkbox" class="profile-checkbox" value="' + user.user_id + '"> ' + user.firstname + ' ' + user.lastname + '</div>';
+                    usersHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
                 });
                 $('#profile-list').html(usersHtml);
             } else {
