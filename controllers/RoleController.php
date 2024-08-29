@@ -142,7 +142,7 @@ class RoleController extends Controller
         // Sort the storage locations alphabetically
         sort($storage_locations);
 
-        // Render the admin view with the gathered data
+        // Render the admin view with the gathered data that also passed to the view
         return $this->render('admin', [
             'users' => $users,
             'titles' => $titles,
@@ -153,7 +153,7 @@ class RoleController extends Controller
             'completedTrainingsCount' => $completedTrainingsCount,
             'trainingCompleteTimes' => $trainingCompleteTimes,
             'userRole' => $userRole,
-            'activeAssignedTrainingsCount' => $activeAssignedTrainingsCount, // Pass the data to the view
+            'activeAssignedTrainingsCount' => $activeAssignedTrainingsCount,
         ]);
     }
 

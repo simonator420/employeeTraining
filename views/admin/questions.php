@@ -52,19 +52,24 @@ use yii\helpers\Url;
                     <form id="filter-form" class="flex-form">
                         <div class="form-group">
                             <label for="title-select"><?= Yii::t('employeeTraining', 'Select Job Title') ?></label>
-                            <select id="title-select" class="form-control">
+                            <select id="title-select" class="form-control" style="height:100%; width:250px">
                                 <!-- Options will be populated dynamically -->
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="location-select"><?= Yii::t('employeeTraining', 'Select Location') ?></label>
-                            <select id="location-select" class="form-control">
+                            <select id="location-select" class="form-control" style="height:100%; width:250px">
                                 <!-- Options will be populated dynamically -->
                             </select>
                         </div>
                         <button type="button" id="submit-filter-btn"
                             class="btn btn-success"><?= Yii::t('employeeTraining', 'Filter') ?></button>
                     </form>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="modal-user-search-bar"
+                        placeholder="<?= Yii::t('employeeTraining', 'Search users...') ?>"
+                        style="padding:10px; width:250px; margin-bottom:20px; border:2px solid lightgray; border-radius: 4px;">
                 </div>
                 <form id="assign-users-form">
                     <div id="profile-list"></div>
@@ -252,6 +257,21 @@ $(document).off('click', '.remove-option-btn').on('click', '.remove-option-btn',
     }
 });
 
+$(document).on('input', '#modal-user-search-bar', function() {
+    var searchTerm = $(this).val().toLowerCase();
+
+    $('#profile-list > div').each(function() {
+        var userName = $(this).text().toLowerCase();
+
+        // Check if the user's name contains the search term
+        if (userName.includes(searchTerm)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+});
+
 // Event listener for handling changes in question type
 $(document).on('change', '.question-type', function() {
     handleQuestionTypeChange.call(this);
@@ -335,14 +355,14 @@ $(document).on('click', '#assign-users-btn', function() {
         data: { trainingId: trainingId },
         success: function(response) {
             if (response.success) {
-                var profilesHtml = '<ul>';
-                // Iterate over the profiles and create list items with checkboxes
+                var profilesHtml = '';
+                // Iterate over the profiles and create divs with checkboxes
                 $.each(response.profiles, function(index, profile) {
-                    profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
+                    console.log('User ID:', profile.id, 'User Name:', profile.firstname + ' ' + profile.lastname);
+                    profilesHtml += '<div><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"' + 
                                 (profile.isAssigned ? ' checked data-was-assigned="true"' : '') + '> ' + 
-                                profile.firstname + ' ' + profile.lastname + '</li>';
+                                profile.firstname + ' ' + profile.lastname + '</div>';
                 });
-                profilesHtml += '</ul>';
                 // Insert the profiles into the modal
                 $('#profile-list').html(profilesHtml);
             } else {
@@ -399,6 +419,7 @@ $(document).on('click', '#assign-users-btn', function() {
 // Close the modal when the close button is clicked
 span.onclick = function() {
     modal.style.display = "none";
+    $('#modal-user-search-bar').val('');
     $('body').css('overflow', 'auto'); // Enable scrolling on the main page
 }
 
@@ -406,6 +427,7 @@ span.onclick = function() {
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
+        $('#modal-user-search-bar').val('');
         $('body').css('overflow', 'auto'); // Enable scrolling on the main page
     }
 }
@@ -414,6 +436,9 @@ window.onclick = function(event) {
 $(document).on('click', '#submit-filter-btn', function() {
     var selectedTitle = $('#title-select').val();
     var selectedLocation = $('#location-select').val();
+
+    // Clear the previous user list to ensure no old data is displayed
+    $('#profile-list').empty();
 
     // Fetch users based on the selected filters
     $.ajax({
@@ -425,11 +450,11 @@ $(document).on('click', '#submit-filter-btn', function() {
         },
         success: function(response) {
             if (response.success) {
-                var usersHtml = '<ul>';
+                var usersHtml = '';
                 $.each(response.users, function(index, user) {
-                    usersHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                    console.log('User ID:', user.user_id, 'User Name:', user.firstname + ' ' + user.lastname);
+                    usersHtml += '<div><input type="checkbox" class="profile-checkbox" value="' + user.user_id + '"> ' + user.firstname + ' ' + user.lastname + '</div>';
                 });
-                usersHtml += '</ul>';
                 $('#profile-list').html(usersHtml);
             } else {
                 $('#profile-list').html('<p>No users found.</p>');
@@ -441,6 +466,7 @@ $(document).on('click', '#submit-filter-btn', function() {
         }
     });
 });
+
 
 
 // Event listener for submitting the selected users to assign or unassign training
@@ -468,6 +494,7 @@ $(document).on('click', '#submit-assign-users', function() {
 
     if (selectedUserIds.length === 0 && unassignUserIds.length === 0) {
         alert('Please select at least one user to assign or unassign the training.');
+        $(this).prop('disabled', false);
         return;
     }
 

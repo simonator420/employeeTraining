@@ -738,11 +738,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
                     // Iterate over the filtered users and append them to the profile list
                     if (response.users && response.users.length > 0) {
-                        var profilesHtml = '<ul>';
+                        var profilesHtml = '';
                         $.each(response.users, function(index, user) {
-                            profilesHtml += '<li><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</li>';
+                            profilesHtml += '<div class="profile-item"><input type="checkbox" class="profile-checkbox" value="' + user.id + '"> ' + user.firstname + ' ' + user.lastname + '</div>';
                         });
-                        profilesHtml += '</ul>';
                         profileList.html(profilesHtml);
                     } else {
                         // If no users match the filter, display a message

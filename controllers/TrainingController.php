@@ -508,15 +508,32 @@ class TrainingController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $trainingIds = Yii::$app->request->post('trainingIds', []);
-
+    
         if (!empty($trainingIds)) {
-            Yii::$app->db->createCommand()
-                ->update('training', ['is_active' => 0], ['id' => $trainingIds])
-                ->execute();
-
-            return ['success' => true];
+            $db = Yii::$app->db;
+            $transaction = $db->beginTransaction(); // Start a transaction
+            
+            try {
+                // Update the training table to set is_active to 0
+                $db->createCommand()
+                    ->update('training', ['is_active' => 0], ['id' => $trainingIds])
+                    ->execute();
+    
+                // Remove records from user_training where trainingId matches and assigned_training is 1
+                $db->createCommand()
+                    ->delete('user_training', ['training_id' => $trainingIds, 'assigned_training' => 1])
+                    ->execute();
+    
+                $transaction->commit(); // Commit the transaction if everything is successful
+    
+                return ['success' => true];
+            } catch (\Exception $e) {
+                $transaction->rollBack(); // Roll back the transaction in case of error
+                return ['success' => false, 'message' => 'Error occurred: ' . $e->getMessage()];
+            }
         }
-
+    
         return ['success' => false, 'message' => 'No trainings selected'];
     }
+    
 }
