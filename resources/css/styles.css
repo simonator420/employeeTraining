@@ -143,8 +143,6 @@
     margin-left: 7px;
 }
 
-
-
 #select-all-btn:disabled, #confirm-selection-btn:disabled, #toggle-user-list-btn:disabled{
     background-color: lightgray;
     cursor: not-allowed;
