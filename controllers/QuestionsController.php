@@ -383,7 +383,7 @@ class QuestionsController extends Controller
                         Yii::$app->request->baseUrl . '/' . Html::encode($question['image_url']),
                         [
                             'class' => 'question-image',
-                            'style' => 'max-height: 280px; width: auto; height: 100%; max-width:100%; display:block;'
+                            'style' => 'max-height: 16vh; width: auto; height: 100%; max-width:100%; display:block;'
                         ]
                     );
                     $html .= '</div>';

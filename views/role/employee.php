@@ -13,6 +13,8 @@ $fileUrl = Yii::$app->db->createCommand('
             ')
     ->bindValue(':trainingId', $trainingId)
     ->queryScalar();
+
+$fileExtension = '';
 if ($fileUrl != null):
     // Determine the file type based on its extension
     $fileExtension = pathinfo($fileUrl, PATHINFO_EXTENSION);
@@ -21,8 +23,8 @@ endif;
 
 <div class="employee-training-container">
     <div class="employee-training-card"
-        style="height: 70vh; display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="training-content" style="flex-grow: 1; overflow-y: auto;">
+        style="height: 77vh; display: flex; flex-direction: column; justify-content: space-between; padding: 15px;">
+        <div class="training-content" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
             <h1><?= Yii::t('employeeTraining', 'Welcome to the ') ?> <b> <?= Html::encode($trainingId) ?> </b>
                 <?= Yii::t('employeeTraining', 'training') ?></h1>
             <p class="welcome-text"><?= Yii::t('employeeTraining', 'Dear ') ?> <b>
@@ -32,7 +34,7 @@ endif;
             <?php if ($fileUrl != null): ?>
                 <div class="form-group" id="file-container" style="text-align: center;">
                     <?php if (in_array($fileExtension, ['mp4', 'webm', 'ogg'])): ?>
-                        <video id="training-video" width="auto" controls>
+                        <video id="training-video" style="max-height: 35vh;" controls>
                             <source src="<?= Url::to('@web/' . $fileUrl) ?>" type="video/<?= $fileExtension ?>">
                             Your browser does not support the video tag.
                         </video><br>
@@ -47,23 +49,37 @@ endif;
                 </div>
 
                 <div id="questions-container" style="display: none;"></div>
-                <?= Html::button(Yii::t('employeeTraining', 'Previous'), ['class' => 'btn btn-secondary', 'id' => 'prev-btn', 'style' => 'display: none;']) ?>
-                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn', 'style' => 'display: none; ']) ?>
-                <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
             <?php else: ?>
                 <div id="questions-container"></div>
-                <?= Html::button(Yii::t('employeeTraining', 'Previous'), ['class' => 'btn btn-secondary', 'id' => 'prev-btn', 'style' => 'display: none;']) ?>
-                <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn']) ?>
-                <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
             <?php endif; ?>
-            <div id="question-navigation" style="text-align: center; margin-top: 20px;">
-                <!-- Question numbers will be dynamically added here -->
-            </div>
+        </div>
+
+        <div id="question-navigation" style="text-align: center; margin-top: 10px;"></div>
+
+        <div class="button-group" style="text-align: center; margin-top: 20px;">
+            <?= Html::button(Yii::t('employeeTraining', 'Previous'), ['class' => 'btn btn-secondary', 'id' => 'prev-btn', 'style' => 'display: none;']) ?>
+            <?= Html::button(Yii::t('employeeTraining', 'Next'), ['class' => 'btn btn-primary', 'id' => 'next-btn']) ?>
+            <?= Html::a(Yii::t('employeeTraining', 'Submit'), Url::to(['/dashboard']), ['class' => 'btn btn-success', 'id' => 'submit-btn', 'style' => 'display: none;']) ?>
         </div>
     </div>
 </div>
 
-
+<div id="imageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="background:transparent">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    style="color: white; opacity: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Image" style="width: 100%; height: auto;">
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php
 // URL to display questions based on the title
@@ -72,10 +88,18 @@ $displayQuestionsUrl = Url::to(['questions/display-questions', 'title' => $title
 $completeTrainingUrl = Url::to(['training/complete-training']);
 $script = <<<JS
 var trainingId = '{$trainingId}';
+var fileExtension = '{$fileExtension}';
 // Document ready function to initialize when the page is loaded
 $(document).ready(function() {
     var trainingId = '{$trainingId}';
     var currentQuestionIndex = 0;
+    var questionsLoaded = false; // Track if questions have been loaded
+
+    $(document).on('click', '.question-image img', function() {
+        var imgSrc = $(this).attr('src');
+        $('#modalImage').attr('src', imgSrc);
+        $('#imageModal').modal('show');
+    });
 
     function loadQuestions() {
         $.ajax({
@@ -88,6 +112,7 @@ $(document).ready(function() {
                     $('#questions-container').html(response.html);
                     generateQuestionNavigation();
                     showQuestion(currentQuestionIndex);
+                    questionsLoaded = true; // Mark questions as loaded
                 } else {
                     $('#questions-container').html('<p>No questions available.</p>');
                 }
@@ -102,8 +127,15 @@ $(document).ready(function() {
         var totalQuestions = $('.question-item').length;
         var navHtml = '';
 
-        // Add the video icon at the beginning of the navigation
-        navHtml += '<button class="question-nav-btn video-nav-btn" data-index="video"><i class="fa fa-video-camera"></i></button>';
+
+        if (fileExtension !== '') {
+            var fileIcon = fileExtension === 'pdf' ? 'fa-file-pdf-o' : 'fa-video-camera';
+
+            // Add the video icon at the beginning of the navigation
+            navHtml += '<button class="question-nav-btn video-nav-btn" data-index="video"><i class="fa ' + fileIcon + '"></i></button>';
+        }
+
+        
 
         // Add the question numbers to the navigation
         for (var i = 0; i < totalQuestions; i++) {
@@ -253,6 +285,11 @@ $(document).ready(function() {
         }
     });
 
+    if (fileExtension === '') {
+        loadQuestions(); // Load questions immediately if no initial file is present
+        $('#next-btn').show();  // Show the "Next" button
+    }
+
     // Function to hide the video and show the questions
     $('#end-file-btn').on('click', function(e) {
         if (currentQuestionIndex === 'video') {
@@ -260,7 +297,11 @@ $(document).ready(function() {
         }
         $('#file-container').hide();
         $('#questions-container').show();
-        loadQuestions();  // Display the first question
+        if (!questionsLoaded) {
+            loadQuestions();  // Load questions only if they haven't been loaded
+        } else {
+            showQuestion(currentQuestionIndex);  // Show the first question without reloading
+        }
         $('#next-btn').show();  // Show the "Next" button after questions are loaded
     });
 

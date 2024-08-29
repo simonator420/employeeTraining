@@ -6,10 +6,14 @@ use yii\helpers\Url;
 // Set the title of the page
 $this->title = 'Training Answers - ' . Html::encode($user->profile->firstname . ' ' . $user->profile->lastname);
 
+$firstName = $user->profile->firstname;
+$lastName = $user->profile->lastname;
+
 // Set up the breadcrumbs for navigation
 $this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
 
 <div class="user-answers-container">
     <div class="user-answers-card">
@@ -192,6 +196,8 @@ $this->params['breadcrumbs'][] = $this->title;
                                         <!-- Button to submit the score for the entire training instance -->
                                         <button class="submit-score-btn">Submit Score</button>
                                         <label class="score-label"> Score: <span class="score-value">0/0</span></label>
+                                        <button class="btn btn-secondary generate-pdf-btn"
+                                            data-training-name="<?= Html::encode($training['training_name']) ?>">Generate PDF</button>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -212,6 +218,9 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $saveScoresUrl = Url::to(['training/save-scores']);
 $script = <<<JS
+var firstname = '{$firstName}';
+var lastname = '{$lastName}';
+
 $(document).ready(function() {
     function updateScore(content) {
         var correctCount = 0;
@@ -379,6 +388,49 @@ $(document).ready(function() {
         if (content.is(':visible')) {
             updateScore(content);
         }
+    });
+
+        $(document).on('click', '.generate-pdf-btn', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const trainingName = $(this).data('training-name');
+
+        // Add title to the PDF
+        doc.setFontSize(16);
+        doc.text("Training Questions and Answers", 10, 10);
+        doc.setFontSize(14);
+        doc.text(`Training: ahoj`, 10, 20);
+
+        let yOffset = 30;
+
+        // Loop through each question-answer pair
+        $(this).closest('.content').find('.question-answer-pair').each(function() {
+            const questionText = $(this).find('p:contains("Question:")').text().trim();
+            const answerText = $(this).find('p:contains("Answer:")').text().trim();
+            const correctAnswerText = $(this).find('p:contains("Correct answer:")').text().trim();
+
+            doc.setFontSize(12);
+            doc.text(questionText, 10, yOffset);
+            yOffset += 10;
+
+            doc.setFontSize(11);
+            doc.text(answerText, 10, yOffset);
+            yOffset += 10;
+
+            doc.setFontSize(11);
+            doc.text(correctAnswerText, 10, yOffset);
+            yOffset += 10;
+
+            // Check if we need a new page
+            if (yOffset > 270) { // Rough estimate for A4 paper size
+                doc.addPage();
+                yOffset = 20;
+            }
+        });
+
+        // Save the PDF
+        const filename = firstname + '_' + lastname + '_certificate.pdf';
+        doc.save(filename);
     });
 });
 
