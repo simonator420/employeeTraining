@@ -91,10 +91,9 @@ use yii\helpers\Url;
 
             <!-- Video upload field -->
             <div class="form-group" style="padding-bottom: 25px;" id="training-file">
-                <label
-                    for="training-file"><?= Yii::t('employeeTraining', 'Upload Training Video or PDF') ?></label>
-                <input type="file" name="trainingFile" class="form-control"
-                    accept="video/*,application/pdf" style="height:100%">
+                <label for="training-file"><?= Yii::t('employeeTraining', 'Upload Training Video or PDF') ?></label>
+                <input type="file" name="trainingFile" class="form-control" accept="video/*,application/pdf"
+                    style="height:100%">
             </div>
 
 
