@@ -38,7 +38,7 @@ $heading = $trainingCount > 1 ? Yii::t('employeeTraining', "Mandatory Trainings"
         ?>
         <p class="training-name"><b><?= Html::encode(Yii::t('employeeTraining', $trainingName)) ?></b></p>
         <p class="deadline-message">
-            <?= Yii::t('employeeTraining', "Time left to complete training is <b><span id='countdown-{$trainingId}'></span></b>.") ?>
+            <?= Yii::t('employeeTraining', "Time left to complete training is <br><b><span id='countdown-{$trainingId}'></span></b>") ?>
         </p>
         <div class="text-center">
             <?= Html::a(Yii::t('employeeTraining', 'Go to Training'), ['/employeeTraining/role/employee', 'id' => $trainingId], ['class' => 'btn btn-primary']) ?>

@@ -40,8 +40,10 @@ endif;
                         </video><br>
                     <?php elseif ($fileExtension === 'pdf'): ?>
                         <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                        <embed src="<?= $pdfUrl ?>" width="90%" type="application/pdf" style="min-height: 65vh;"
-                            alt="pdf" /><br>
+                        <div style="max-height: 35vh; overflow-y: auto; display: inline-block; width: 90%;">
+                            <embed src="<?= $pdfUrl ?>" type="application/pdf" width="100%" height="100%"
+                                style="min-height: 35vh;" />
+                        </div><br>
                     <?php endif; ?>
 
                     <button id="end-file-btn"
