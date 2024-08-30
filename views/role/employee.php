@@ -40,10 +40,11 @@ endif;
                         </video><br>
                     <?php elseif ($fileExtension === 'pdf'): ?>
                         <?php $pdfUrl = Url::to('@web/' . $fileUrl) . '?t=' . time(); ?>
-                        <div style="max-height: 35vh; overflow-y: auto; display: inline-block; width: 90%;">
-                            <embed src="<?= $pdfUrl ?>" type="application/pdf" width="100%" height="100%"
-                                style="min-height: 35vh;" />
-                        </div><br>
+
+                        <iframe src="/humhub/uploads/test_pdf.pdf?t=1725010208" width="100%" height="500px"
+                            style="border: none; min-height: 500px;">
+                        </iframe>
+                        <br>
                     <?php endif; ?>
 
                     <button id="end-file-btn"
@@ -134,7 +135,7 @@ $(document).ready(function() {
             var fileIcon = fileExtension === 'pdf' ? 'fa-file-pdf-o' : 'fa-video-camera';
 
             // Add the video icon at the beginning of the navigation
-            navHtml += '<button class="question-nav-btn video-nav-btn" data-index="video"><i class="fa ' + fileIcon + '"></i></button>';
+            navHtml += '<button class="question-nav-btn ƒ-nav-btn" data-index="video"><i class="fa ' + fileIcon + '"></i></button>';
         }
 
         
@@ -161,6 +162,14 @@ $(document).ready(function() {
         if (index === 'video') {
             $('#questions-container').hide();
             $('#file-container').show();
+            
+            // Force the PDF to reload by resetting its src attribute
+            var embedElement = $('#file-container').find('embed');
+            var pdfSrc = embedElement.attr('src'); // Get the current src
+            embedElement.attr('src', ''); // Clear the src
+            embedElement.attr('src', pdfSrc); // Set it back to force reload
+            console.log('Reloaded PDF Source:', embedElement.attr('src'));
+
             $('#question-navigation').hide(); // Hide the navigation
             $('#prev-btn').hide();
             $('#next-btn').hide();
