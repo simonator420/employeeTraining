@@ -92,18 +92,21 @@ $completeTrainingUrl = Url::to(['training/complete-training']);
 $script = <<<JS
 var trainingId = '{$trainingId}';
 var fileExtension = '{$fileExtension}';
+
 // Document ready function to initialize when the page is loaded
 $(document).ready(function() {
     var trainingId = '{$trainingId}';
-    var currentQuestionIndex = 0;
+    var currentQuestionIndex = 0; // Initialize the index of the current question
     var questionsLoaded = false; // Track if questions have been loaded
 
+    // Event listener for clicking on an image to display it in a modal
     $(document).on('click', '.question-image img', function() {
         var imgSrc = $(this).attr('src');
         $('#modalImage').attr('src', imgSrc);
         $('#imageModal').modal('show');
     });
 
+    // Function to load questions via AJAX
     function loadQuestions() {
         $.ajax({
             url: '$displayQuestionsUrl',
@@ -112,9 +115,9 @@ $(document).ready(function() {
             data: { training_id: trainingId }, // Pass the training_id dynamically
             success: function(response) {
                 if (response.success) {
-                    $('#questions-container').html(response.html);
-                    generateQuestionNavigation();
-                    showQuestion(currentQuestionIndex);
+                    $('#questions-container').html(response.html); // Load the questions into the container
+                    generateQuestionNavigation(); // Generate the navigation buttons
+                    showQuestion(currentQuestionIndex); // Show the first question
                     questionsLoaded = true; // Mark questions as loaded
                 } else {
                     $('#questions-container').html('<p>No questions available.</p>');
@@ -126,42 +129,42 @@ $(document).ready(function() {
         });
     }
 
+    // Function to generate the question navigation buttons
     function generateQuestionNavigation() {
-        var totalQuestions = $('.question-item').length;
+        var totalQuestions = $('.question-item').length; // Get the total number of questions
         var navHtml = '';
 
-
+        // If there's an initial file (e.g., video or PDF), add a navigation button for it
         if (fileExtension !== '') {
             var fileIcon = fileExtension === 'pdf' ? 'fa-file-pdf-o' : 'fa-video-camera';
 
-            // Add the video icon at the beginning of the navigation
-            navHtml += '<button class="question-nav-btn ƒ-nav-btn" data-index="video"><i class="fa ' + fileIcon + '"></i></button>';
+            navHtml += '<button class="question-nav-btn video-nav-btn" data-index="video"><i class="fa ' + fileIcon + '"></i></button>';
         }
 
-        
-
-        // Add the question numbers to the navigation
+        // Add navigation buttons for each question
         for (var i = 0; i < totalQuestions; i++) {
             navHtml += '<button class="question-nav-btn" data-index="' + i + '">' + (i + 1) + '</button>';
         }
-
-        $('#question-navigation').html(navHtml);
-        highlightCurrentQuestion(currentQuestionIndex);
+ 
+        $('#question-navigation').html(navHtml); // Add the navigation buttons to the navigation container
+        highlightCurrentQuestion(currentQuestionIndex); // Highlight the current question
     }
 
+    // Function to highlight the current question's navigation button
     function highlightCurrentQuestion(index) {
-        $('.question-nav-btn').removeClass('active');
+        $('.question-nav-btn').removeClass('active'); // Remove the active class from all buttons
         if (index === 'video') {
-            $('.video-nav-btn').addClass('active');
+            $('.video-nav-btn').addClass('active'); // Highlight the video navigation button if applicable
         } else {
-            $('.question-nav-btn[data-index="' + index + '"]').addClass('active');
-        }
+            $('.question-nav-btn[data-index="' + index + '"]').addClass('active'); // Highlight the current question's button
+        } 
     }
 
+    // Function to show a specific question or video/PDF based on the index
     function showQuestion(index) {
         if (index === 'video') {
-            $('#questions-container').hide();
-            $('#file-container').show();
+            $('#questions-container').hide(); // Hide the questions container
+            $('#file-container').show(); // Show the file container
             
             // Force the PDF to reload by resetting its src attribute
             var embedElement = $('#file-container').find('embed');
@@ -171,68 +174,75 @@ $(document).ready(function() {
             console.log('Reloaded PDF Source:', embedElement.attr('src'));
 
             $('#question-navigation').hide(); // Hide the navigation
-            $('#prev-btn').hide();
-            $('#next-btn').hide();
-            $('#submit-btn').hide();
-            highlightCurrentQuestion('video');
+            $('#prev-btn').hide(); // Hide the previous button
+            $('#next-btn').hide(); // Hide the next button
+            $('#submit-btn').hide(); // Hide the submit button
+            highlightCurrentQuestion('video'); // Highlight the video/PDF navigation button
         } else {
-            $('#file-container').hide();
-            $('#questions-container').show();
-            $('#question-navigation').show(); // Show the navigation
+            $('#file-container').hide(); // Hide the file container
+            $('#questions-container').show(); // Show the questions container
+            $('#question-navigation').show(); // Show the navigation buttons
             var totalQuestions = $('.question-item').length;
-            $('.question-item').hide();
-            $('.question-item').eq(index).show();
+            $('.question-item').hide(); // Hide all questions
+            $('.question-item').eq(index).show(); // Show the current question
 
+            // Show or hide navigation buttons based on the current question index
             if (index === 0) {
-                $('#prev-btn').hide();
+                $('#prev-btn').hide(); // Hide the previous button if on the first question
             } else {
-                $('#prev-btn').show();
+                $('#prev-btn').show(); // Show the previous button if not on the first question
             }
 
             if (index === totalQuestions - 1) {
-                $('#next-btn').hide();
-                $('#submit-btn').show();
+                $('#next-btn').hide(); // Hide the next button if on the last question
+                $('#submit-btn').show(); // Show the submit button if on the last question
             } else {
-                $('#next-btn').show();
-                $('#submit-btn').hide();
+                $('#next-btn').show(); // Show the next button if not on the last question
+                $('#submit-btn').hide(); // Hide the submit button if not on the last question
             }
 
-            highlightCurrentQuestion(index);
+            highlightCurrentQuestion(index); // Highlight the current question's navigation button
         }
     }
 
+    // Event listener for the "Next" button to navigate to the next question
     $('#next-btn').on('click', function() {
         if (currentQuestionIndex < $('.question-item').length - 1) {
             currentQuestionIndex++;
-            showQuestion(currentQuestionIndex);
+            showQuestion(currentQuestionIndex); // Show the next question
         }
     });
 
+    // Event listener for the "Previous" button to navigate to the previous question
     $('#prev-btn').on('click', function() {
         if (currentQuestionIndex > 0) {
             currentQuestionIndex--;
-            showQuestion(currentQuestionIndex);
+            showQuestion(currentQuestionIndex); // Show the previous question
         }
     });
 
+    // Event listener for clicking on a navigation button to jump to a specific question or video/PDF
     $(document).on('click', '.question-nav-btn', function() {
         var index = $(this).data('index');
         currentQuestionIndex = index === 'video' ? 'video' : parseInt(index);
-        showQuestion(currentQuestionIndex);
+        showQuestion(currentQuestionIndex); // Show the selected question or video/PDF
     });
 
+    // Event listener for submitting the answers and completing the training
     $('#submit-btn').on('click', function(e) {
         e.preventDefault();
         let isValid = true;
         let firstInvalidIndex = -1;
         let data = { _csrf: yii.getCsrfToken(), training_id: trainingId, TrainingQuestions: {} };
 
+        // Loop through each question input to validate and gather answers
         $('.question-input').each(function(index) {
             let questionId = $(this).data('question-id');
             let questionText = $(this).data('question-text');
             let questionType = $(this).data('question-type');
             let inputValue = $(this).val();
 
+            // Validate the input value
             if (!inputValue) {
                 isValid = false;
                 $(this).css('border', '2px solid red');
@@ -243,6 +253,7 @@ $(document).ready(function() {
                 $(this).css('border', '1px solid #dee2e6');
             }
 
+            // Store the answer data
             data.TrainingQuestions[questionId] = {
                 question_id: questionId,
                 question: questionText,
@@ -251,11 +262,13 @@ $(document).ready(function() {
             };
         });
 
+        // Loop through each multiple-choice option to validate and gather answers
         $('.multiple-choice-option').each(function(index) {
             let questionId = $(this).data('question-id');
             let questionText = $(this).data('question-text');
             let questionType = $(this).data('question-type');
 
+            // If no answers have been stored for this question, initialize an empty array
             if (!data.TrainingQuestions[questionId]) {
                 data.TrainingQuestions[questionId] = {
                     question_id: questionId,
@@ -265,11 +278,13 @@ $(document).ready(function() {
                 };
             }
 
+            // If the option is checked, add it to the answers array
             if ($(this).is(':checked')) {
                 data.TrainingQuestions[questionId].answer.push($(this).val());
             }
         });
 
+        // If all inputs are valid, submit the data via AJAX
         if (isValid) {
             $.ajax({
                 url: '$completeTrainingUrl',
@@ -288,7 +303,7 @@ $(document).ready(function() {
                 }
             });
         } else {
-            // Redirect to the first unanswered question
+            // Redirect to the first unanswered question if validation fails
             if (firstInvalidIndex !== -1) {
                 currentQuestionIndex = firstInvalidIndex;
                 showQuestion(currentQuestionIndex);
@@ -296,18 +311,19 @@ $(document).ready(function() {
         }
     });
 
+    // Load questions immediately if no initial file (video/PDF) is present
     if (fileExtension === '') {
-        loadQuestions(); // Load questions immediately if no initial file is present
+        loadQuestions();
         $('#next-btn').show();  // Show the "Next" button
     }
 
-    // Function to hide the video and show the questions
+    // Event listener for the "Continue" button after viewing the video/PDF
     $('#end-file-btn').on('click', function(e) {
         if (currentQuestionIndex === 'video') {
             currentQuestionIndex = 0;  // Start with the first question when "Continue" is clicked
         }
-        $('#file-container').hide();
-        $('#questions-container').show();
+        $('#file-container').hide(); // Hide the file container
+        $('#questions-container').show(); // Show the questions container
         if (!questionsLoaded) {
             loadQuestions();  // Load questions only if they haven't been loaded
         } else {
@@ -321,10 +337,11 @@ $(document).ready(function() {
         $('#next-btn').hide();
     }
 
+    // Hide the "Previous" and "Submit" buttons by default
     $('#prev-btn').hide();
     $('#submit-btn').hide();
 
-
+    // Debugging function to check if any multiple-choice options are selected
     function checkMultipleChoiceSelection() {
         if ($('.multiple-choice-option:checked').length === 0) {
             console.log("No multiple choice options are selected.");

@@ -267,6 +267,9 @@ $(document).ready(function() {
         });
 
         var scoreLabel = content.find('.score-label').find('.score-value');
+
+        // TODO If the percentage is lower than 80 assign the training again
+        var percentage = (correctCount / totalCount) * 100;
         scoreLabel.text(correctCount.toFixed(2) + "/" + totalCount.toFixed(2));
 
         return {

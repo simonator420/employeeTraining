@@ -239,7 +239,7 @@ var now = new Date();
 var localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     
-    // Button for creating new training
+    // Event handler for creating new training
     $('#create-training-btn').on('click', function() {
         var table = $('#training-table tbody');
         var newRow = $('<tr>');
@@ -251,29 +251,29 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             <td><input type="text" disabled></td>
         `);
         table.append(newRow);
-        $('#create-training-btn').hide();
-        $('#submit-cancel-buttons').show();
-        $('.training-checkbox').closest('td').hide();
+        $('#create-training-btn').hide(); // Hide the create button
+        $('#submit-cancel-buttons').show(); // Show the submit and cancel buttons
+        $('.training-checkbox').closest('td').hide(); // Hide the checkboxes for existing trainings
         $('th.checkbox-column').hide(); // Hide the header checkbox cell
-        // Hide the "Delete Selected" button if visible
-        $('#delete-selected-btn').hide();
+        $('#delete-selected-btn').hide(); // Hide the "Delete Selected" button if visible
     });
 
-    // Button for canceling the create training action
+    // Event handler for canceling the create training action
     $('#cancel-training-btn').on('click', function() {
-        $('#training-table tbody tr:last').remove();
-        $('#create-training-btn').show();
-        $('#submit-cancel-buttons').hide();
-        $('.training-checkbox').closest('td').show();
-        $('th.checkbox-column').show();
+        $('#training-table tbody tr:last').remove();  // Remove the newly added row
+        $('#create-training-btn').show(); // Show the create button again
+        $('#submit-cancel-buttons').hide(); // Hide the submit and cancel buttons
+        $('.training-checkbox').closest('td').show(); // Show the checkboxes for existing trainings
+        $('th.checkbox-column').show(); // Show the checkbox column header
     });
 
-    // Button for submitting the creation of new training
+    // Event handler for submitting the creation of new training
     $('#submit-training-btn').on('click', function() {
         var trainingId = $('#new-training-id').val();
         var trainingName = $('#new-training-name').val();
 
         if (trainingId && trainingName) {
+            // Send an AJAX request to create the new training
             $.ajax({
                 url: '$createTrainingUrl',
                 type: 'POST',
@@ -295,28 +295,30 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         }
     });
 
+    // Event handler for clicking on a training ID (opens the training questions)
     $('.training-id').on('click', function() {
         var trainingId = $(this).data('id');
     });
 
-    // Click on the collapsible item
+    // Event handler for toggling the collapsible content (e.g., users, team leaders, admins)
     $('.collapsible').on('click', function() {
         var content = $(this).next('.content');
 
-        // Close all other open contents
+        // Close all other open collapsibles
         $('.collapsible').not(this).removeClass('active');
         $('.content').not(content).slideUp();
 
-        // Toggle the clicked collapsible
+        // Toggle the current collapsible
         this.classList.toggle('active');
         content.slideToggle();
 
         if (content.is(':visible')) {
             var role = $(this).data('role');
-            fetchUsersByRole(role, content);
+            fetchUsersByRole(role, content); // Fetch users associated with the role
         }
     });
     
+    // Function to fetch users by role and populate the collapsible content
     function fetchUsersByRole(role, contentElement) {
     $.ajax({
         url: '$fetchUsersByRoleUrl',
@@ -333,7 +335,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                     }
                 });
                 usersHtml += '</ul>';
-                // Conditionally add the remove button if the role is not "user" and users are found
+                // Add a remove button if the role is not "user"
                 if (role !== 'user') {
                     switch (role) {
                     case 'team_leader':
@@ -362,7 +364,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
             }
 
-            contentElement.html(usersHtml);
+            contentElement.html(usersHtml); // Populate the content with the fetched users
         },
         error: function() {
             var usersHtml = '<ul><li>Error fetching users.</li></ul>';
@@ -380,12 +382,12 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 usersHtml += '<button class="add-role-btn" data-role="' + role + '">' + addButtonText + '</button>';
             }
 
-            contentElement.html(usersHtml);
+            contentElement.html(usersHtml); // Handle errors by displaying a message
         }
     });
 }
 
-    // Button for removing the role and setting the role to User
+    // Event handler for removing a role (sets the role back to User)
     $(document).on('click', '.remove-role-btn', function() {
         var role = $(this).data('role');
         var selectedUsers = [];
@@ -395,6 +397,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
 
         if (selectedUsers.length > 0) {
+            // Send an AJAX request to remove the role
             $.ajax({
                 url: '$removeRoleUrl',
                 type: 'POST',
@@ -429,11 +432,10 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     // Get the <span> element that closes the modal
     var span = document.getElementsByClassName("close")[0];
 
-    // Button for adding Team Leader or Admin
+    // Event handler for opening the modal to add a new role to users
     $(document).on('click', '.add-role-btn', function() {
-        // Reset job title filter
+        // Reset filters and clear previous search results
         $('#modal-title-select').val('');
-        // Reset location filter
         $('#modal-location-select').val('');
         $('#profile-list').empty();
         var role = $(this).data('role');
@@ -446,12 +448,11 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 title = '$addAdminText';
                 break;
         }
-        $('#modal-title').text(title);
-        modal.style.display = "block";
-        // Disable scrolling
-        $('body').css('overflow', 'hidden');
+        $('#modal-title').text(title); // Set the modal title based on the role
+        modal.style.display = "block"; // Show the modal
+        $('body').css('overflow', 'hidden'); // Disable page scrolling
 
-        // Fetch profiles and display them in the modal
+        // Fetch and display profiles in the modal
         $.ajax({
             url: '$fetchProfilesUrl',
             type: 'GET',
@@ -459,7 +460,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
                 if (response.success) {
                     var profilesHtml = '';
                     $.each(response.profiles, function(index, profile) {
-                        // Exclude profiles with the current role
+                        // Exclude profiles that already have the current role
                         if (profile.role !== role) {
                             profilesHtml += '<div class="profile-item"><input type="checkbox" class="profile-checkbox" value="' + profile.id + '"> ' + profile.firstname + ' ' + profile.lastname + '</div>';
                         }
@@ -476,27 +477,23 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
-    // When the user clicks on close button in the modal (x), close the modal
+    // Event handler for closing the modal
     span.onclick = function() {
-        modal.style.display = "none";
-        // Clear the search bar in the modal
-        $('#modal-employee-search-bar').val('');
-        // Enable scrolling
-        $('body').css('overflow', 'auto');
+        modal.style.display = "none"; // Hide the modal
+        $('#modal-employee-search-bar').val(''); // Clear the search bar in the modal
+        $('body').css('overflow', 'auto'); // Re-enable page scrolling
     }
 
-    // When the user clicks anywhere outside of the modal, close it
+    // Event handler for closing the modal when clicking outside of it
     window.onclick = function(event) {
         if (event.target == modal) {
-            modal.style.display = "none";
-            // Clear the search bar in the modal
-            $('#modal-employee-search-bar').val('');
-            // Enable scrolling
-            $('body').css('overflow', 'auto');
+            modal.style.display = "none"; // Hide the modal
+            $('#modal-employee-search-bar').val(''); // Clear the search bar in the modal
+            $('body').css('overflow', 'auto'); // Re-enable page scrolling
         }
     }
 
-    // Button for submitting the new roles in the modal
+    // Event handler for submitting the selected users for role assignment
     $('#submit-add-role').click(function() {
         var selectedProfiles = [];
         $('#add-role-form').find('.profile-checkbox:checked').each(function() {
@@ -505,6 +502,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
 
         var role = $('#modal-title').text().replace('Add ', '').toLowerCase().replace(' ', '_');
 
+        // Send an AJAX request to assign the role to the selected users
         $.ajax({
             url: '$addRoleUrl',
             type: 'POST',
@@ -534,24 +532,25 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
-    // Checkbox for selecting users in the User Setup collapsible
+    // Event handler for showing or hiding the remove role button based on user selection
     $(document).on('change', '.role-user-checkbox', function() {
         var role = $(this).closest('.content').prev('.collapsible').data('role');
         if (role === 'team_leader' || role === 'admin') {
             var anyChecked = $(this).closest('.content').find('.role-user-checkbox:checked').length > 0;
             if (anyChecked) {
-                $(this).closest('.content').find('.remove-role-btn').show();
+                $(this).closest('.content').find('.remove-role-btn').show(); // Show the remove button if any checkbox is checked
             } else {
-                $(this).closest('.content').find('.remove-role-btn').hide();
+                $(this).closest('.content').find('.remove-role-btn').hide(); // Hide the remove button if none are checked
             }
         }
     });
 
-    // Button for filtering users in the table
+    // Event handler for filtering users in the user information table
     $(document).on('click', '#submit-filter-btn', function() {
         var selectedTitle = $('#title-select').val();
         var selectedLocation = $('#location-select').val();
 
+        // Send an AJAX request to filter users based on the selected job title and location
         $.ajax({
             url: '$fetchFilteredUsersUrl',
             type: 'GET',
@@ -618,10 +617,11 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
-    // Function ensuring that the code inside runs only after the whole HTML document has been fully loaded
+    // Run when the document is fully loaded
     $(document).ready(function() {
         $('#modal-title').text('Assign Users');
 
+        // Fetch job titles for the filter dropdown
         $.ajax({
             url: '$fetchTitlesUrl',
             type: 'GET',
@@ -639,6 +639,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             }
         });
 
+        // Fetch locations for the filter dropdown
         $.ajax({
             url: '$fetchLocationsUrl',
             type: 'GET',
@@ -656,11 +657,13 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             }
         });
 
+        // Event handler for showing or hiding the delete button based on training selection
         $('.training-checkbox').on('change', function() {
             var anyChecked = $('.training-checkbox:checked').length > 0;
             $('#delete-selected-btn').toggle(anyChecked);
         });
 
+        // Event handler for deleting selected trainings
         $('#delete-selected-btn').on('click', function() {
             var selectedIds = $('.training-checkbox:checked').map(function() {
                 return $(this).val();
@@ -684,6 +687,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
             }
         });
 
+        // Fetch job titles for the modal filter dropdown
         $.ajax({
         url: '$fetchTitlesUrl',
         type: 'GET',
@@ -701,6 +705,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         }
     });
 
+    // Fetch locations for the modal filter dropdown
     $.ajax({
         url: '$fetchLocationsUrl',
         type: 'GET',
@@ -718,7 +723,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         }
     });
 
-    // Filtering logic for the modal
+    // Event handler for filtering profiles in the modal based on job title and location
     $(document).on('click', '#modal-submit-filter-btn', function() {
         var selectedTitle = $('#modal-title-select').val();
         var selectedLocation = $('#modal-location-select').val();
@@ -761,7 +766,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
     // Variable to track the toggle state of the action (check/uncheck)
     var toggleState = false;
 
-    // Search bar for filtering/searching users
+    // Search bar for filtering/searching users in the user information table
     $('#employee-search-bar').on('input', function() {
         var searchTerm = $(this).val().toLowerCase();
 
@@ -777,6 +782,7 @@ currentTime = localTime.toISOString().slice(0, 19).replace('T', ' ');
         });
     });
 
+    // Search bar for filtering/searching profiles in the modal
     $('#modal-employee-search-bar').on('input', function() {
         var searchTerm = $(this).val().toLowerCase();
 
